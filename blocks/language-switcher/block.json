@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "webactueel/translate-language-switcher",
+  "version": "1.6.5",
+  "title": "Webactueel taalkiezer",
+  "category": "widgets",
+  "icon": "translation",
+  "description": "Toont de Webactueel Translate taalkiezer.",
+  "textdomain": "webactueel-translate-language-dropdowns",
+  "supports": {
+    "html": false,
+    "align": [
+      "wide",
+      "full"
+    ]
+  },
+  "editorScript": "webactueel-translate-language-switcher-editor",
+  "style": "webactueel-translate-language-dropdowns-switcher",
+  "editorStyle": "webactueel-translate-language-dropdowns-switcher"
+}
