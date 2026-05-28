@@ -137,5 +137,4 @@ trait DetectsCompatibilityPlugins
         }
         return __('Handmatig testen op staging aanbevolen.', 'webactueel-translate-language-dropdowns');
     }
-
 }

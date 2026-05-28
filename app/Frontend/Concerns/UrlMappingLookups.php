@@ -78,7 +78,7 @@ trait UrlMappingLookups
         $parent = (int) $term->parent;
         while ($parent > 0) {
             $ancestor = get_term($parent, $term->taxonomy);
-            if (! $ancestor instanceof \WP_Term || is_wp_error($ancestor)) {
+            if (! $ancestor instanceof \WP_Term) {
                 break;
             }
             array_unshift($slugs, $ancestor->slug);

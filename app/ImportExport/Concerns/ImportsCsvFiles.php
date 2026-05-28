@@ -15,9 +15,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait ImportsCsvFiles
 {
@@ -62,36 +62,37 @@ trait ImportsCsvFiles
             $line++;
             if (($line - 1) > $maxRows) {
                 $truncated = true;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('CSV import gestopt na %d regels. Verdeel grotere imports in kleinere bestanden.', 'webactueel-translate-language-dropdowns'), $maxRows);
                 break;
             }
             if (count($row) !== count($header)) {
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %d: ongeldig aantal kolommen.', 'webactueel-translate-language-dropdowns'), $line);
                 continue;
             }
 
             $data = array_combine($header, $row);
-            if (! is_array($data)) {
-                $errors[] = sprintf(__('Regel %d: ongeldig aantal kolommen.', 'webactueel-translate-language-dropdowns'), $line);
-                continue;
-            }
             $hash = Input::text($data['hash'] ?? '');
             $lang = Input::key($data['language_code'] ?? '');
             $translated = trim(wp_kses_post(Input::scalar_string($data['translated_text'] ?? '')));
             $rowKey = $hash . ':' . $lang;
             if (isset($seen[$rowKey])) {
                 $skipped++;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %d: dubbele hash/language combinatie in import overgeslagen.', 'webactueel-translate-language-dropdowns'), $line);
                 continue;
             }
             $seen[$rowKey] = true;
             if ($hash === '' || strlen($hash) < 16 || $lang === '') {
                 $skipped++;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %d: hash of language_code ontbreekt of is ongeldig.', 'webactueel-translate-language-dropdowns'), $line);
                 continue;
             }
             if ($translated === '') {
                 $skipped++;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %d: translated_text ontbreekt.', 'webactueel-translate-language-dropdowns'), $line);
                 continue;
             }
@@ -101,9 +102,11 @@ trait ImportsCsvFiles
             }
             if (! $this->is_translatable_language($lang)) {
                 $skipped++;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %1$d: taal %2$s is geen actieve vertaaltaal.', 'webactueel-translate-language-dropdowns'), $line, $lang);
                 continue;
             }
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table name is escaped with Tables::sql_identifier(); value uses prepare().
             $stringId = (int) $wpdb->get_var($wpdb->prepare("SELECT id FROM `" . Tables::sql_identifier(Tables::strings()) . "` WHERE hash = %s", $hash));
             if (! $stringId) {
                 $stringId = $repo->upsert_string(
@@ -116,6 +119,7 @@ trait ImportsCsvFiles
             $status = Input::key($data['status'] ?? '');
             if ($status !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
                 $skipped++;
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
                 $errors[] = sprintf(__('Regel %d: status is ongeldig.', 'webactueel-translate-language-dropdowns'), $line);
                 continue;
             }
@@ -126,7 +130,7 @@ trait ImportsCsvFiles
                 $imported++;
             }
         }
-            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
         fclose($handle);
         CacheInvalidator::bump();
         do_action('wat_after_csv_import', $imported, $errors);
@@ -138,5 +142,4 @@ trait ImportsCsvFiles
             'errors' => array_slice($errors, 0, 50),
         ];
     }
-
 }

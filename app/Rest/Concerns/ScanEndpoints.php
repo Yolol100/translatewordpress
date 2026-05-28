@@ -4,24 +4,13 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Rest\Concerns;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
-use Webactueel\Translate\Compatibility\CompatibilityRegistry;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\ImportExport\CsvExporter;
-use Webactueel\Translate\ImportExport\CsvImporter;
-use Webactueel\Translate\ImportExport\CsvPreviewer;
 use Webactueel\Translate\Scanner\ScanBatchRunner;
 use Webactueel\Translate\Scanner\ScanJobManager;
-use Webactueel\Translate\Seo\HreflangManager;
 use Webactueel\Translate\Support\Logger;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
-use Webactueel\Translate\Translation\TranslationRepository;
-use Webactueel\Translate\Translation\GlossaryRepository;
 use WP_Error;
 use WP_REST_Request;
-use WP_REST_Response;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -34,7 +23,7 @@ trait ScanEndpoints
         $bufferLevel = ob_get_level();
         ob_start();
         try {
-            $params = $request->get_json_params() ?: [];
+            $params = $request->get_params();
             $job = (new ScanJobManager())->create(Input::key($params['type'] ?? 'full'), $params);
             $leakedOutput = ob_get_clean();
             if (is_string($leakedOutput) && $leakedOutput !== '') {
@@ -61,7 +50,7 @@ trait ScanEndpoints
         $bufferLevel = ob_get_level();
         ob_start();
         try {
-            $params = $request->get_json_params() ?: [];
+            $params = $request->get_params();
             $result = (new ScanBatchRunner())->run(absint($request['id']), Input::absint($params['batch_size'] ?? Settings::all()['scan_batch_size'], (int) Settings::all()['scan_batch_size']));
             $leakedOutput = ob_get_clean();
             if (is_string($leakedOutput) && $leakedOutput !== '') {

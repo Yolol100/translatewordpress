@@ -10,9 +10,8 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
-
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Reviewed: custom prefixed tables and public wat_* hooks are intentional.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names.
 
 final class CsvExporter
 {
@@ -69,6 +68,10 @@ final class CsvExporter
     {
         // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- php://temp is used to generate CSV output in memory.
         $handle = fopen('php://temp', 'r+');
+        if (! is_resource($handle)) {
+            return '';
+        }
+
         fputcsv($handle, ['hash', 'source_type', 'source_id', 'context', 'original_text', 'language_code', 'translated_text', 'status'], ',', '"', '');
         foreach ($this->rows($languages, $mode) as $row) {
             foreach ($row as $field => $value) {

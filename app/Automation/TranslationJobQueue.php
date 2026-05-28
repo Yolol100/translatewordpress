@@ -10,7 +10,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 final class TranslationJobQueue
 {
@@ -32,7 +32,7 @@ final class TranslationJobQueue
             'found_strings' => 0,
             'skipped_items' => 0,
             'errors_count' => 0,
-            'options_json' => wp_json_encode($options),
+            'options_json' => self::encode_options($options),
             'message' => __('AI-vertaling staat in de wachtrij. Configureer eerst een provider voordat workers taken uitvoeren.', 'webactueel-translate-language-dropdowns'),
             'created_at' => $now,
             'updated_at' => $now,
@@ -49,5 +49,12 @@ final class TranslationJobQueue
             'worker_available' => false,
             'status' => __('Queue-basis is aanwezig; provider-connectors moeten expliciet worden geconfigureerd voordat automatische vertaling draait.', 'webactueel-translate-language-dropdowns'),
         ];
+    }
+
+    /** @param array<string, mixed> $options */
+    private static function encode_options(array $options): string
+    {
+        $encoded = wp_json_encode($options);
+        return is_string($encoded) ? $encoded : '{}';
     }
 }

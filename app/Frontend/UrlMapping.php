@@ -104,7 +104,6 @@ final class UrlMapping
         return '';
     }
 
-
     public static function current_context_path_for_post(int $postId, string $language): string
     {
         $language = sanitize_key($language);
@@ -116,7 +115,6 @@ final class UrlMapping
         return $mapped !== '' ? $mapped : self::post_path($postId);
     }
 
-
     public static function current_context_path_for_term(int $termId, string $language): string
     {
         $language = sanitize_key($language);
@@ -125,7 +123,7 @@ final class UrlMapping
         }
 
         $term = get_term($termId);
-        if (! $term instanceof \WP_Term || is_wp_error($term)) {
+        if (! $term instanceof \WP_Term) {
             return '';
         }
 

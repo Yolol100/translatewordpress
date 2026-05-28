@@ -12,7 +12,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Reviewed: plugin-owned translation tables and cached language lookups are intentional.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// Reviewed: plugin-owned translation tables and cached language lookups are intentional.
 
 final class LanguageDetector
 {

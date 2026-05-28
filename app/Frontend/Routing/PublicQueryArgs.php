@@ -46,7 +46,6 @@ trait PublicQueryArgs
         return $clean;
     }
 
-
     /**
      * Sanitize query values while preserving nested public filter arrays.
      *

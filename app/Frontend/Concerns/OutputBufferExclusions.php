@@ -49,7 +49,7 @@ trait OutputBufferExclusions
             if ($attribute === '') {
                 return '';
             }
-            if (isset($matches[2]) && $matches[2] !== '') {
+            if (isset($matches[2])) {
                 return 'ancestor-or-self::*[@' . $attribute . '=' . $this->xpath_literal($matches[2]) . ']';
             }
             return 'ancestor-or-self::*[@' . $attribute . ']';

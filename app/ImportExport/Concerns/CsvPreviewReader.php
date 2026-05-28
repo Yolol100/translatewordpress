@@ -35,6 +35,7 @@ trait CsvPreviewReader
         if ($missing) {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
             fclose($handle);
+            // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
             return ['valid' => false, 'errors' => [sprintf(__('CSV header mist: %s', 'webactueel-translate-language-dropdowns'), implode(', ', $missing))], 'warnings' => [], 'rows' => [], 'stats' => ['total' => 0, 'valid' => 0]];
         }
         $errors = [];
@@ -46,23 +47,24 @@ trait CsvPreviewReader
         while (($row = fgetcsv($handle, 0, $delimiter, '"', '')) !== false) {
             $total++;
             if ($total > $limit) {
-                $warnings[] = 'Preview is beperkt tot ' . $limit . ' regels.';
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+                $warnings[] = sprintf(__('Preview is beperkt tot %d regels.', 'webactueel-translate-language-dropdowns'), $limit);
                 break;
             }
             if (count($row) !== count($header)) {
-                $errors[] = 'Regel ' . ($total + 1) . ': kolommen komen niet overeen met header.';
+                // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+                $errors[] = sprintf(__('Regel %d: kolommen komen niet overeen met header.', 'webactueel-translate-language-dropdowns'), $total + 1);
                 continue;
             }
 
             $data = array_combine($header, $row);
-            if (! is_array($data)) {
-                $errors[] = 'Regel ' . ($total + 1) . ': kolommen komen niet overeen met header.';
-                continue;
-            }
             $rowErrors = $this->validate_row($data, $total + 1, $seen);
             $safe = $data;
             foreach ($safe as $k => $v) {
-                $safe[$k] = is_string($v) ? sanitize_text_field($v) : $v;
+                if (! is_string($v)) {
+                    continue;
+                }
+                $safe[$k] = in_array((string) $k, ['original_text', 'translated_text'], true) ? wp_kses_post($v) : sanitize_text_field($v);
             }
             $safe['_errors'] = $rowErrors;
             $rows[] = $safe;

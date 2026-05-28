@@ -13,7 +13,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 trait OutputBufferUrlRewriter
 {
@@ -31,7 +31,7 @@ trait OutputBufferUrlRewriter
             }
             $query = (string) $target['query'];
             $attribute = preg_replace('/[^a-zA-Z0-9_:\-]/', '', (string) $target['attribute']);
-            if ($query === '' || $attribute === '') {
+            if ($attribute === '') {
                 continue;
             }
             $nodes = $xpath->query($query);
@@ -39,6 +39,9 @@ trait OutputBufferUrlRewriter
                 continue;
             }
             foreach ($nodes as $node) {
+                if (! $node instanceof DOMElement) {
+                    continue;
+                }
                 if ($this->should_skip_url_rewrite($node)) {
                     continue;
                 }

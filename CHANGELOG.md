@@ -1,4 +1,22 @@
+## 1.7.0
+
+- Added runtime health endpoint for enterprise self-diagnostics.
+- Added admin Systeemcontrole tab for database, REST, AI, frontend, compatibility and debug status.
+- Added Omniscience roadmap documentation while preserving existing translation, CSV, AI, SEO, WooCommerce and visual editor functionality.
+
 # Changelog
+
+## 1.6.47
+
+- Preserved WordPress-safe HTML in AI translation input and provider output.
+- Added DeepL HTML tag handling for translated markup.
+- Made AI API-key detection include server constants and the `wat_ai_api_key` filter.
+- Added optional `WAT_DISABLE_DB_AI_CREDENTIALS` support.
+- Expanded opt-in uninstall cleanup for credentials, plugin options, transients, role capabilities and temporary CSV files.
+- Relaxed REST validation for safe OpenAI-compatible model identifiers while keeping provider normalization.
+- Hardened scanner decoding for serialized arrays by disabling class instantiation.
+- Completed CSV preview localization and preserved safe HTML in preview rows.
+
 
 ## 1.6.46
 - Security/release hardening: removed activation-time automatic plugin deletion, clarified AI API-key storage behavior, sanitized AI provider output, and aligned block/language asset versions.
@@ -173,3 +191,11 @@
 - Added Yoast SEO and Rank Math filters for translated title and description output.
 - Added lightweight frontend translation performance snapshots and admin-only Server-Timing diagnostics.
 - Kept WooCommerce conversion-page safeguards, existing public hooks and fail-open frontend behavior intact.
+
+## 1.7.0 Gutenberg/React polish patch
+
+- Prefer `wp.element.createRoot()` for the admin React mount, with `wp.element.render()` kept as a fallback.
+- Stop mutating the global `wp.components` object for fallback components; local wrappers are used instead.
+- Add an editable `src/admin/` source entry mirroring the compiled admin asset.
+- Add `package.json` with `@wordpress/scripts` build/lint/format commands.
+- Add `docs/GUTENBERG-REACT-BUILD.md` with build and manual UX/a11y release checks.

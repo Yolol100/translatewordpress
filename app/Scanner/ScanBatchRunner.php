@@ -12,11 +12,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
-
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
-
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Reviewed: custom prefixed tables and public wat_* hooks are intentional.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom posts_where cursor clause uses WordPress-owned posts table.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 final class ScanBatchRunner
 {
@@ -71,20 +69,22 @@ final class ScanBatchRunner
             return $where;
         };
         add_filter('posts_where', $cursorFilter, 10, 2);
-
-        $ids = get_posts([
-            'post_type' => $postTypes,
-            'post_status' => 'publish',
-            'posts_per_page' => $batchSize,
-            'orderby' => 'ID',
-            'order' => 'ASC',
-            'fields' => 'ids',
-            'no_found_rows' => true,
-            'suppress_filters' => false,
-            'ignore_sticky_posts' => true,
-            'wat_cursor' => $lastCursor,
-        ]);
-        remove_filter('posts_where', $cursorFilter, 10);
+        try {
+            $ids = get_posts([
+                'post_type' => $postTypes,
+                'post_status' => 'publish',
+                'posts_per_page' => $batchSize,
+                'orderby' => 'ID',
+                'order' => 'ASC',
+                'fields' => 'ids',
+                'no_found_rows' => true,
+                'suppress_filters' => false,
+                'ignore_sticky_posts' => true,
+                'wat_cursor' => $lastCursor,
+            ]);
+        } finally {
+            remove_filter('posts_where', $cursorFilter, 10);
+        }
 
         $ids = array_values(array_filter(array_map('absint', $ids)));
         if (! $ids) {
@@ -120,7 +120,8 @@ final class ScanBatchRunner
             'processed_items' => absint($job['processed_items'] ?? 0) + $processed,
             'found_strings' => absint($job['found_strings'] ?? 0) + $found,
             'errors_count' => absint($job['errors_count'] ?? 0) + $errors,
-            'message' => $isDone ? __('Scan voltooid.', 'webactueel-translate-language-dropdowns') : sprintf(__('Batch verwerkt: %d items, %d strings.', 'webactueel-translate-language-dropdowns'), $processed, $found),
+            // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+            'message' => $isDone ? __('Scan voltooid.', 'webactueel-translate-language-dropdowns') : sprintf(__('Batch verwerkt: %1$d items, %2$d strings.', 'webactueel-translate-language-dropdowns'), $processed, $found),
             'started_at' => $job['started_at'] ?: current_time('mysql'),
             'completed_at' => $isDone ? current_time('mysql') : null,
         ]);

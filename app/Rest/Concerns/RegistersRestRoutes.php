@@ -4,24 +4,6 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Rest\Concerns;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
-use Webactueel\Translate\Compatibility\CompatibilityRegistry;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\ImportExport\CsvExporter;
-use Webactueel\Translate\ImportExport\CsvImporter;
-use Webactueel\Translate\ImportExport\CsvPreviewer;
-use Webactueel\Translate\Scanner\ScanBatchRunner;
-use Webactueel\Translate\Scanner\ScanJobManager;
-use Webactueel\Translate\Seo\HreflangManager;
-use Webactueel\Translate\Support\Logger;
-use Webactueel\Translate\Support\Settings;
-use Webactueel\Translate\Translation\TranslationRepository;
-use Webactueel\Translate\Translation\GlossaryRepository;
-use WP_Error;
-use WP_REST_Request;
-use WP_REST_Response;
-
 if (! defined('ABSPATH')) {
     exit;
 }
@@ -48,17 +30,19 @@ trait RegistersRestRoutes
     private function register_routes(): void
     {
         $this->route('/dashboard', 'GET', 'dashboard');
+        $this->route('/health', 'GET', 'health');
         register_rest_route($this->namespace, '/languages', [
             ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->language_args()],
         ]);
         register_rest_route($this->namespace, '/languages/(?P<id>\d+)', [
-            ['methods' => 'PUT', 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => array_merge($this->id_arg(), $this->language_args())],
+            ['methods' => ['PUT', 'POST'], 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => array_merge($this->id_arg(), $this->language_args())],
             ['methods' => 'DELETE', 'callback' => [$this, 'delete_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->id_arg()],
         ]);
+        $this->route('/languages/(?P<id>\d+)/delete', 'POST', 'delete_language', $this->id_arg());
         $this->route('/strings', 'GET', 'strings', $this->strings_args());
         $this->route('/strings/(?P<id>\d+)/translations', 'GET', 'string_translations', $this->id_arg());
-        $this->route('/strings/(?P<id>\d+)', 'PUT', 'update_string', array_merge($this->id_arg(), $this->translation_args()));
+        $this->route('/strings/(?P<id>\d+)', ['PUT', 'POST'], 'update_string', array_merge($this->id_arg(), $this->translation_args()));
         $this->route('/scan/start', 'POST', 'scan_start', $this->scan_start_args());
         $this->route('/scan/status/(?P<id>\d+)', 'GET', 'scan_status', $this->id_arg());
         $this->route('/scan/run-batch/(?P<id>\d+)', 'POST', 'scan_run_batch', array_merge($this->id_arg(), $this->scan_batch_args()));
@@ -75,20 +59,22 @@ trait RegistersRestRoutes
         register_rest_route($this->namespace, '/glossary/(?P<id>\d+)', [
             ['methods' => 'DELETE', 'callback' => [$this, 'delete_glossary'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->id_arg()],
         ]);
+        $this->route('/glossary/(?P<id>\d+)/delete', 'POST', 'delete_glossary', $this->id_arg());
         register_rest_route($this->namespace, '/settings', [
             ['methods' => 'GET', 'callback' => [$this, 'settings'], 'permission_callback' => [$this, 'can_manage']],
-            ['methods' => 'PUT', 'callback' => [$this, 'save_settings'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->settings_args()],
+            ['methods' => ['PUT', 'POST'], 'callback' => [$this, 'save_settings'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->settings_args()],
         ]);
         $this->route('/compatibility', 'GET', 'compatibility');
         $this->route('/cache/clear', 'POST', 'cache_clear');
         register_rest_route($this->namespace, '/preferences', [
             ['methods' => 'GET', 'callback' => [$this, 'preferences'], 'permission_callback' => [$this, 'can_manage']],
-            ['methods' => 'PUT', 'callback' => [$this, 'save_preferences'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->preferences_args()],
+            ['methods' => ['PUT', 'POST'], 'callback' => [$this, 'save_preferences'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->preferences_args()],
         ]);
         register_rest_route($this->namespace, '/logs', [
             ['methods' => 'GET', 'callback' => [$this, 'logs'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'DELETE', 'callback' => [$this, 'clear_logs'], 'permission_callback' => [$this, 'can_manage']],
         ]);
+        $this->route('/logs/clear', 'POST', 'clear_logs');
     }
 
     /**
@@ -99,7 +85,7 @@ trait RegistersRestRoutes
      *
      * @param array<string, mixed> $args REST argument schema.
      */
-    private function route(string $path, string $methods, string $callback, array $args = []): void
+    private function route(string $path, string|array $methods, string $callback, array $args = []): void
     {
         $route = [
             'methods' => $methods,
@@ -111,5 +97,4 @@ trait RegistersRestRoutes
         }
         register_rest_route($this->namespace, $path, $route);
     }
-
 }

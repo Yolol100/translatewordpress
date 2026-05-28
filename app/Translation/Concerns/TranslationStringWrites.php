@@ -6,7 +6,6 @@ namespace Webactueel\Translate\Translation\Concerns;
 
 use Webactueel\Translate\Cache\CacheInvalidator;
 use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
 use Webactueel\Translate\Translation\StringNormalizer;
 
@@ -14,7 +13,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait TranslationStringWrites
 {
@@ -50,7 +49,6 @@ trait TranslationStringWrites
         ]);
         return (int) $wpdb->insert_id;
     }
-
 
     public function save_translation(int $stringId, string $languageCode, string $translatedText, string $status = 'published', string $origin = 'manual'): bool
     {

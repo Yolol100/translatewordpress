@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\ImportExport;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
 use Webactueel\Translate\ImportExport\CsvPreviewer;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
-use Webactueel\Translate\Translation\TranslationRepository;
 use Webactueel\Translate\ImportExport\Concerns\ImportsCsvFiles;
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Reviewed: custom prefixed tables and public wat_* hooks are intentional.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+// Reviewed: custom prefixed tables and public wat_* hooks are intentional.
 
 final class CsvImporter
 {
@@ -47,5 +46,4 @@ final class CsvImporter
         delete_transient('wat_csv_preview_' . $token);
         return $result;
     }
-
 }

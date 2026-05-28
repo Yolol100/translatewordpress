@@ -7,27 +7,20 @@ namespace Webactueel\Translate\Rest\Concerns;
 use Webactueel\Translate\Cache\CacheInvalidator;
 use Webactueel\Translate\Compatibility\CompatibilityRegistry;
 use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\ImportExport\CsvExporter;
-use Webactueel\Translate\ImportExport\CsvImporter;
-use Webactueel\Translate\ImportExport\CsvPreviewer;
-use Webactueel\Translate\Scanner\ScanBatchRunner;
-use Webactueel\Translate\Scanner\ScanJobManager;
-use Webactueel\Translate\Seo\HreflangManager;
 use Webactueel\Translate\Support\Logger;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
-use Webactueel\Translate\Translation\TranslationRepository;
 use Webactueel\Translate\Translation\GlossaryRepository;
 use WP_Error;
 use WP_REST_Request;
-use WP_REST_Response;
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are normalized through Tables::sql_identifier().
+
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait GlossarySettingsEndpoints
 {
@@ -39,7 +32,7 @@ trait GlossarySettingsEndpoints
 
     public function save_glossary(WP_REST_Request $request)
     {
-        $params = $request->get_json_params() ?: [];
+        $params = $request->get_params();
         $language = Input::key($params['language_code'] ?? '');
         if (! $this->is_translatable_language($language)) {
             return new WP_Error('wat_invalid_glossary_language', __('Kies een actieve niet-standaardtaal voor woordenlijst-items.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
@@ -67,8 +60,8 @@ trait GlossarySettingsEndpoints
 
     public function save_settings(WP_REST_Request $request): array
     {
-        $params = $request->get_json_params();
-        return Settings::update(is_array($params) ? $params : []);
+        $params = $request->get_params();
+        return Settings::update($params);
     }
 
     public function compatibility(): array
@@ -93,7 +86,7 @@ trait GlossarySettingsEndpoints
 
     public function save_preferences(WP_REST_Request $request): array
     {
-        $params = $request->get_json_params() ?: [];
+        $params = $request->get_params();
         $allowed = ['languages', 'scan', 'translate', 'switcher'];
         $order = [];
         if (isset($params['dashboard_order']) && is_array($params['dashboard_order'])) {
@@ -121,7 +114,7 @@ trait GlossarySettingsEndpoints
     {
         global $wpdb;
         $table = Tables::sql_identifier(Tables::logs());
-        $wpdb->query("TRUNCATE TABLE `{$table}`"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is generated from the plugin-owned logs table helper.
-        return ['cleared' => true];
+        $result = $wpdb->query("DELETE FROM `{$table}`"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is generated from the plugin-owned logs table helper.
+        return ['cleared' => $result !== false];
     }
 }

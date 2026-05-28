@@ -10,6 +10,8 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Temporary error handlers are used to safely inspect malformed serialized data.
+
 trait ScannerValueHelpers
 {
     private function maybe_decode_value(string $value)
@@ -25,12 +27,29 @@ trait ScannerValueHelpers
             }
         }
         if (is_serialized($trimmed) && strlen($trimmed) < 1000000) {
-            $unserialized = maybe_unserialize($trimmed);
+            $unserialized = $this->safe_unserialize_array($trimmed);
             if (is_array($unserialized)) {
                 return $unserialized;
             }
         }
         return null;
+    }
+
+    private function safe_unserialize_array(string $value): ?array
+    {
+        set_error_handler(static function (): bool {
+            return true;
+        });
+        try {
+            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Read-only scanner decode with classes disabled; only arrays are accepted.
+            $unserialized = unserialize($value, ['allowed_classes' => false]);
+        } catch (\Throwable $e) {
+            $unserialized = null;
+        } finally {
+            restore_error_handler();
+        }
+
+        return is_array($unserialized) ? $unserialized : null;
     }
 
     private function split_text(string $text): array

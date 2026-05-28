@@ -12,6 +12,8 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* filter names are backward-compatible plugin API.
+
 final class AiTranslationService
 {
     /** @return array<string, mixed> */
@@ -19,6 +21,7 @@ final class AiTranslationService
     {
         $settings = Settings::all();
         $provider = self::provider($settings);
+        $databaseKeyStorageDisabled = defined('WAT_DISABLE_DB_AI_CREDENTIALS') && (bool) WAT_DISABLE_DB_AI_CREDENTIALS;
         return [
             'enabled' => ! empty($settings['ai_enabled']),
             'provider' => $provider,
@@ -29,9 +32,10 @@ final class AiTranslationService
             'hasEndpoint' => $provider !== 'openai_compatible' || self::custom_endpoint($settings) !== '',
             'providers' => self::providers(),
             'supportsReviewWorkflow' => true,
-            'storesApiKey' => Settings::ai_api_key($provider) !== '',
+            'storesApiKey' => ! $databaseKeyStorageDisabled && Settings::ai_api_key($provider) !== '',
+            'databaseKeyStorageDisabled' => $databaseKeyStorageDisabled,
             'supportsServerConstants' => true,
-            'note' => __('AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden.', 'webactueel-translate-language-dropdowns'),
+            'note' => __('AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen tenzij WAT_DISABLE_DB_AI_CREDENTIALS actief is. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden.', 'webactueel-translate-language-dropdowns'),
         ];
     }
 
@@ -47,13 +51,13 @@ final class AiTranslationService
             return new WP_Error('wat_ai_disabled', __('AI-vertaling staat uit.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
 
-        $text = trim(wp_strip_all_tags($text));
+        $text = self::sanitize_translatable_markup($text);
         $sourceLanguage = sanitize_key($sourceLanguage);
         $targetLanguage = sanitize_key($targetLanguage);
-        if ($text === '' || $targetLanguage === '') {
+        if ($text === '' || trim(wp_strip_all_tags($text)) === '' || $targetLanguage === '') {
             return new WP_Error('wat_ai_invalid_request', __('Tekst en doeltaal zijn verplicht.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
-        if (function_exists('mb_strlen') ? mb_strlen($text) > 5000 : strlen($text) > 5000) {
+        if (self::string_length($text) > 5000) {
             return new WP_Error('wat_ai_text_too_long', __('AI-vertaling is beperkt tot 5000 tekens per verzoek.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
 
@@ -169,6 +173,9 @@ final class AiTranslationService
         if ($endpoint === '') {
             return new WP_Error('wat_ai_missing_endpoint', __('Geen OpenAI-compatible endpoint ingesteld. Vul een HTTPS API basis-URL in of definieer WAT_OPENAI_COMPATIBLE_API_BASE.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
+        if (Settings::sanitize_ai_endpoint($endpoint) === '') {
+            return new WP_Error('wat_ai_endpoint_blocked', __('Het OpenAI-compatible endpoint is niet toegestaan.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
+        }
         return $this->translate_chat_completion('openai_compatible', $endpoint, $apiKey, $text, $sourceLanguage, $targetLanguage, $settings, $context);
     }
 
@@ -178,13 +185,25 @@ final class AiTranslationService
         $model = self::model($settings, $provider);
         $system = sprintf(
             /* translators: 1: source language code, 2: target language code. */
-            __('You are a professional WordPress website translator. Translate from %1$s to %2$s. Preserve HTML entities, brand names, shortcodes, variables, placeholders and URLs. Return only the translation.', 'webactueel-translate-language-dropdowns'),
+            __('You are a professional WordPress website translator. Translate from %1$s to %2$s. Preserve allowed HTML tags and attributes, HTML entities, brand names, shortcodes, variables, placeholders and URLs. Do not add markdown fences. Return only the translation.', 'webactueel-translate-language-dropdowns'),
             $sourceLanguage ?: 'auto',
             $targetLanguage
         );
         $tone = sanitize_text_field(Input::scalar_string($settings['ai_tone'] ?? 'professional'));
         $formality = sanitize_text_field(Input::scalar_string($settings['ai_formality'] ?? 'default'));
         $prompt = trim($text . "\n\n" . 'Tone: ' . $tone . "\n" . 'Formality: ' . $formality);
+
+        $payload = wp_json_encode([
+            'model' => $model,
+            'temperature' => 0.2,
+            'messages' => [
+                ['role' => 'system', 'content' => $system],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ]);
+        if (! is_string($payload)) {
+            return new WP_Error('wat_ai_payload_encoding_failed', __('AI-verzoek voorbereiden mislukt.', 'webactueel-translate-language-dropdowns'), ['status' => 500]);
+        }
 
         $response = wp_remote_post($endpoint, [
             'timeout' => 30,
@@ -195,14 +214,7 @@ final class AiTranslationService
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ],
-            'body' => wp_json_encode([
-                'model' => $model,
-                'temperature' => 0.2,
-                'messages' => [
-                    ['role' => 'system', 'content' => $system],
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]),
+            'body' => $payload,
         ]);
 
         if (is_wp_error($response)) {
@@ -220,15 +232,51 @@ final class AiTranslationService
         return ['translated_text' => $translation, 'origin' => 'ai', 'provider' => $provider, 'model' => $model, 'review_status' => 'needs_review'];
     }
 
+    /**
+     * Preserve safe translation markup while removing unsafe provider output.
+     *
+     * AI providers may return valid translated snippets containing links, emphasis or
+     * short inline markup. Stripping all tags here broke the documented "preserve
+     * HTML" behavior; `wp_kses_post()` keeps the WordPress-safe subset and removes
+     * unsafe tags/attributes before anything is stored or returned to the admin UI.
+     */
     private static function sanitize_provider_translation(string $translation): string
     {
-        $translation = trim(wp_strip_all_tags($translation));
-        if (function_exists('mb_substr')) {
-            $translation = mb_substr($translation, 0, 6000);
-        } else {
-            $translation = substr($translation, 0, 6000);
+        $translation = self::strip_markdown_fence($translation);
+        $translation = wp_kses_post(str_replace("\0", '', $translation));
+        return trim(self::limit_string($translation, 6000));
+    }
+
+    private static function sanitize_translatable_markup(string $text): string
+    {
+        return trim(wp_kses_post(str_replace("\0", '', $text)));
+    }
+
+    private static function strip_markdown_fence(string $text): string
+    {
+        $text = trim($text);
+        if (preg_match('/^```(?:html|xml|text)?\s*(.*?)\s*```$/is', $text, $matches)) {
+            return trim((string) $matches[1]);
         }
-        return trim($translation);
+        return $text;
+    }
+
+    private static function string_length(string $text): int
+    {
+        return function_exists('mb_strlen') ? mb_strlen($text) : strlen($text);
+    }
+
+    private static function limit_string(string $text, int $limit): string
+    {
+        if (self::string_length($text) <= $limit) {
+            return $text;
+        }
+        return function_exists('mb_substr') ? mb_substr($text, 0, $limit) : substr($text, 0, $limit);
+    }
+
+    private static function contains_html_markup(string $text): bool
+    {
+        return $text !== wp_strip_all_tags($text);
     }
 
     private static function deepl_language_code(string $language): string
@@ -247,6 +295,9 @@ final class AiTranslationService
             'target_lang' => $deeplTargetLanguage,
             'preserve_formatting' => '1',
         ];
+        if (self::contains_html_markup($text)) {
+            $body['tag_handling'] = 'html';
+        }
         if ($deeplSourceLanguage !== '') {
             $body['source_lang'] = $deeplSourceLanguage;
         }

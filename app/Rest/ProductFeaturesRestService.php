@@ -30,11 +30,23 @@ final class ProductFeaturesRestService
         add_action('rest_api_init', [$this, 'routes']);
     }
 
-
-
     public static function validate_optional_language_code($value): bool
     {
         return $value === null || $value === '' || self::validate_language_code($value);
+    }
+
+    public static function validate_ai_translation_text($value): bool
+    {
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $text = trim(wp_kses_post(str_replace("\0", '', (string) $value)));
+        if ($text === '' || trim(wp_strip_all_tags($text)) === '') {
+            return false;
+        }
+
+        return function_exists('mb_strlen') ? mb_strlen($text) <= 5000 : strlen($text) <= 5000;
     }
 
     /** @return array<string, array<string, mixed>> */
@@ -57,7 +69,7 @@ final class ProductFeaturesRestService
     {
         register_rest_route($this->namespace, '/setup', [
             ['methods' => 'GET', 'callback' => [$this, 'setup'], 'permission_callback' => [$this, 'can_manage']],
-            ['methods' => 'PUT', 'callback' => [$this, 'save_setup'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->setup_args()],
+            ['methods' => ['PUT', 'POST'], 'callback' => [$this, 'save_setup'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->setup_args()],
         ]);
         register_rest_route($this->namespace, '/workflow/statuses', [
             'methods' => 'GET', 'callback' => [$this, 'workflow_statuses'], 'permission_callback' => [$this, 'can_translate'],
@@ -74,7 +86,7 @@ final class ProductFeaturesRestService
                     'type' => 'string',
                     'required' => true,
                     'sanitize_callback' => 'wp_kses_post',
-                    'validate_callback' => static fn($value): bool => is_scalar($value) && trim(wp_strip_all_tags((string) $value)) !== '' && (function_exists('mb_strlen') ? mb_strlen(wp_strip_all_tags((string) $value)) <= 5000 : strlen(wp_strip_all_tags((string) $value)) <= 5000),
+                    'validate_callback' => [self::class, 'validate_ai_translation_text'],
                 ],
                 'source_language' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_optional_language_code'], 'sanitize_callback' => 'sanitize_key'],
                 'target_language' => ['type' => 'string', 'required' => true, 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
@@ -92,10 +104,7 @@ final class ProductFeaturesRestService
 
     public function save_setup(WP_REST_Request $request): array
     {
-        $params = $request->get_json_params();
-        if (! is_array($params)) {
-            $params = [];
-        }
+        $params = $request->get_params();
 
         return ['state' => SetupWizard::save_state($params)];
     }
@@ -112,10 +121,7 @@ final class ProductFeaturesRestService
 
     public function ai_translate(WP_REST_Request $request)
     {
-        $params = $request->get_json_params();
-        if (! is_array($params)) {
-            $params = [];
-        }
+        $params = $request->get_params();
         return (new AiTranslationService())->translate(
             Input::scalar_string($params['text'] ?? ''),
             Input::key($params['source_language'] ?? ''),

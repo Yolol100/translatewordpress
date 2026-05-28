@@ -69,9 +69,10 @@ final class Privacy
         $preferences = get_user_meta($user->ID, 'wat_admin_preferences', true);
         $data = [];
         if (is_array($preferences) && $preferences !== []) {
+            $encodedPreferences = wp_json_encode($preferences);
             $data[] = [
                 'name' => __('Admin preferences', 'webactueel-translate-language-dropdowns'),
-                'value' => wp_json_encode($preferences),
+                'value' => is_string($encodedPreferences) ? $encodedPreferences : '{}',
             ];
         }
 

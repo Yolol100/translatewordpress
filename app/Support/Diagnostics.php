@@ -58,5 +58,4 @@ final class Diagnostics
             'delete_data_on_uninstall' => get_option('wat_delete_data_on_uninstall', '0') === '1',
         ];
     }
-
 }

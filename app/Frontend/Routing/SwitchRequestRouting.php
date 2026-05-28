@@ -106,5 +106,4 @@ trait SwitchRequestRouting
         setcookie('wat_language', $code, self::cookie_options(time() + MONTH_IN_SECONDS));
         $_COOKIE['wat_language'] = $code;
     }
-
 }

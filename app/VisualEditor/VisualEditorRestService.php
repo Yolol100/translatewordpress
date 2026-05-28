@@ -50,7 +50,6 @@ final class VisualEditorRestService
         ]);
     }
 
-
     public function can_save_segment(): bool
     {
         if (current_user_can('manage_options')) {
@@ -60,7 +59,6 @@ final class VisualEditorRestService
         $settings = Settings::all();
         return ! empty($settings['translator_review_required']) && $this->can_translate();
     }
-
 
     public function save_segment(WP_REST_Request $request): WP_REST_Response
     {

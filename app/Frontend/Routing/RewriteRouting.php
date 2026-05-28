@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Frontend\Routing;
 
-use Webactueel\Translate\Frontend\LanguageDetector;
-
 if (! defined('ABSPATH')) {
     exit;
 }
@@ -49,5 +47,4 @@ trait RewriteRouting
     {
         update_option('wat_flush_rewrite_rules', '1', false);
     }
-
 }

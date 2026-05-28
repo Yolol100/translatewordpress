@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Frontend\Routing;
 
 use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\Frontend\LanguageDomainMapper;
-use Webactueel\Translate\Frontend\UrlMapping;
-use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
 
 if (! defined('ABSPATH')) {

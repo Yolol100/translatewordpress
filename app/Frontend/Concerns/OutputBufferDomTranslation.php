@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Frontend\Concerns;
 
 use DOMDocument;
+use DOMElement;
 use DOMXPath;
 use Webactueel\Translate\Translation\StringNormalizer;
 
@@ -12,7 +13,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 trait OutputBufferDomTranslation
 {
@@ -45,8 +46,7 @@ trait OutputBufferDomTranslation
                     break;
                 }
                 $normalized = StringNormalizer::normalize($node->nodeValue ?? '');
-                if (isset($map[$normalized])) {
-                    $node->nodeValue = $map[$normalized];
+                if (isset($map[$normalized]) && $this->replace_text_node($dom, $node, $map[$normalized])) {
                     $count++;
                     $this->lastReplacementCount = $count;
                 }
@@ -67,6 +67,9 @@ trait OutputBufferDomTranslation
                 continue;
             }
             foreach ($attrNodes as $node) {
+                if (! $node instanceof DOMElement) {
+                    continue;
+                }
                 if ($count >= $maxReplacements) {
                     break 2;
                 }
@@ -87,11 +90,150 @@ trait OutputBufferDomTranslation
         return is_scalar($filtered) ? (string) $filtered : $output;
     }
 
+    private function replace_text_node(DOMDocument $dom, \DOMNode $node, string $translation): bool
+    {
+        $translation = trim((string) wp_kses_post($translation));
+        if ($translation === '') {
+            return false;
+        }
+
+        if (! $this->can_replace_with_inline_markup($node, $translation)) {
+            $node->nodeValue = wp_strip_all_tags($translation);
+            return true;
+        }
+
+        $parent = $node->parentNode;
+        $parentName = $parent ? strtolower($parent->nodeName) : '';
+        $fragmentNodes = $this->create_inline_translation_nodes($dom, $translation, $parentName);
+        if ($fragmentNodes === [] || ! $parent) {
+            $node->nodeValue = wp_strip_all_tags($translation);
+            return true;
+        }
+
+        foreach ($fragmentNodes as $fragmentNode) {
+            $parent->insertBefore($fragmentNode, $node);
+        }
+        $parent->removeChild($node);
+        return true;
+    }
+
+    private function can_replace_with_inline_markup(\DOMNode $node, string $translation): bool
+    {
+        if ($translation === wp_strip_all_tags($translation)) {
+            return false;
+        }
+
+        $parent = $node->parentNode;
+        if (! $parent) {
+            return false;
+        }
+
+        return in_array(strtolower($parent->nodeName), [
+            'blockquote',
+            'button',
+            'caption',
+            'dd',
+            'div',
+            'dt',
+            'figcaption',
+            'h1',
+            'h2',
+            'h3',
+            'h4',
+            'h5',
+            'h6',
+            'label',
+            'legend',
+            'li',
+            'p',
+            'span',
+            'td',
+            'th',
+        ], true);
+    }
+
+    /**
+     * @return list<\DOMNode>
+     */
+    private function create_inline_translation_nodes(DOMDocument $dom, string $translation, string $parentName): array
+    {
+        $translation = $this->sanitize_inline_translation_markup($translation, $parentName);
+        if ($translation === '' || $translation === wp_strip_all_tags($translation)) {
+            return [];
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $temporaryDom = new DOMDocument('1.0', 'UTF-8');
+        $flags = LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING;
+        if (defined('LIBXML_NONET')) {
+            $flags |= LIBXML_NONET;
+        }
+
+        $loaded = $temporaryDom->loadHTML('<?xml encoding="utf-8" ?><body>' . $translation . '</body>', $flags);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        if (! $loaded) {
+            return [];
+        }
+
+        $body = $temporaryDom->getElementsByTagName('body')->item(0);
+        if (! $body) {
+            return [];
+        }
+
+        $nodes = [];
+        foreach (iterator_to_array($body->childNodes) as $childNode) {
+            $nodes[] = $dom->importNode($childNode, true);
+        }
+        return $nodes;
+    }
+
+    private function sanitize_inline_translation_markup(string $translation, string $parentName): string
+    {
+        $allowed = apply_filters('wat_inline_translation_allowed_html', [
+            'a' => [
+                'href' => true,
+                'rel' => true,
+                'target' => true,
+                'title' => true,
+            ],
+            'abbr' => ['title' => true],
+            'b' => [],
+            'br' => [],
+            'cite' => [],
+            'code' => [],
+            'em' => [],
+            'i' => [],
+            'mark' => [],
+            'small' => [],
+            'span' => [
+                'class' => true,
+                'dir' => true,
+                'lang' => true,
+            ],
+            'strong' => [],
+            'sub' => [],
+            'sup' => [],
+        ]);
+
+        if (! is_array($allowed)) {
+            $allowed = [];
+        }
+        if (in_array($parentName, ['button', 'label'], true)) {
+            unset($allowed['a']);
+        }
+
+        return trim(wp_kses($translation, $allowed));
+    }
+
     private function set_html_language(DOMXPath $xpath): void
     {
         $nodes = $xpath->query('/html');
         if ($nodes && $nodes->length > 0) {
-            $nodes->item(0)->setAttribute('lang', $this->language);
+            $html = $nodes->item(0);
+            if ($html instanceof DOMElement) {
+                $html->setAttribute('lang', $this->language);
+            }
         }
     }
 }

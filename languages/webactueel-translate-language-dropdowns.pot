@@ -1,0 +1,2614 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Webactueel Translate 1.7.0\n"
+"Report-Msgid-Bugs-To: https://webactueel.nl/\n"
+"POT-Creation-Date: 2026-05-15 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: webactueel-translate-language-dropdowns\n"
+
+#: build/admin/index.js:1025
+msgid " fouten."
+msgstr ""
+
+#: build/admin/index.js:691
+msgid " Import is gestopt op de maximale rijlimiet."
+msgstr ""
+
+#: build/admin/index.js:690
+msgid " regels overgeslagen door taalselectie)"
+msgstr ""
+
+#: build/admin/index.js:657
+msgid " teksten gevonden."
+msgstr ""
+
+#: build/admin/index.js:1851
+msgid " woordenlijstterm(en) gevonden."
+msgstr ""
+
+#: build/admin/index.js:1844
+msgid "Aan betekent dat “Webshop” en “webshop” apart behandeld worden."
+msgstr ""
+
+
+#: build/admin/index.js:558
+msgid "Aanbevolen bij grote sites"
+msgstr ""
+
+#: build/admin/index.js:1944
+msgid "Aandacht"
+msgstr ""
+
+#: build/admin/index.js:460
+msgid "Aandacht nodig"
+msgstr ""
+
+#: build/admin/index.js:970 build/admin/index.js:1684 build/admin/index.js:1857
+msgid "Actie"
+msgstr ""
+
+#: build/admin/index.js:456
+msgid "Actie nodig"
+msgstr ""
+
+#: build/admin/index.js:558 build/admin/index.js:1613 build/admin/index.js:1662
+msgid "Actief"
+msgstr ""
+
+#: build/admin/index.js:559
+msgid "Admin data wordt via REST geladen"
+msgstr ""
+
+#: app/Support/Privacy.php:73
+msgid "Admin preferences"
+msgstr ""
+
+#: build/admin/index.js:2015
+msgid "AI klaar"
+msgstr ""
+
+#: build/admin/index.js:2036
+msgid "AI publiceert niet automatisch zonder review."
+msgstr ""
+
+#: build/admin/index.js:2018
+msgid "AI vertalen"
+msgstr ""
+
+#: build/admin/index.js:2014
+msgid "AI-instellingen openen"
+msgstr ""
+
+#: build/admin/index.js:1973
+msgid "AI-provider"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:129
+msgid "AI-provider gaf een lege vertaling terug."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:125
+msgid "AI-provider gaf geen geldige vertaling terug."
+msgstr ""
+
+#: build/admin/index.js:1971
+msgid "AI-vertaling"
+msgstr ""
+
+#: build/admin/index.js:1972
+msgid "AI-vertaling inschakelen"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:54
+msgid "AI-vertaling is beperkt tot 5000 tekens per verzoek."
+msgstr ""
+
+#: app/Automation/TranslationJobQueue.php:36
+msgid "AI-vertaling staat in de wachtrij. Configureer eerst een provider voordat workers taken uitvoeren."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:44
+msgid "AI-vertaling staat uit."
+msgstr ""
+
+#: build/admin/index.js:1976
+msgid "AI-vertalingen altijd laten reviewen"
+msgstr ""
+
+
+#: build/admin/index.js:831
+msgid "Alle bronnen"
+msgstr ""
+
+#: build/admin/index.js:1007
+msgid "Alle geldige talen uit de CSV worden geïmporteerd."
+msgstr ""
+
+#: build/admin/index.js:1906
+msgid "Alle logs wissen?"
+msgstr ""
+
+#: build/admin/index.js:956
+msgid "Alle statussen"
+msgstr ""
+
+#: build/admin/index.js:949 build/admin/index.js:1853
+msgid "Alle talen"
+msgstr ""
+
+#: build/admin/index.js:555
+msgid "Alle technische details staan hier, zodat klanten op normale tabs rustig kunnen werken."
+msgstr ""
+
+#: build/admin/index.js:993
+msgid "Alle teksten"
+msgstr ""
+
+#: build/admin/index.js:522
+msgid "Alleen beheerders"
+msgstr ""
+
+#: build/admin/index.js:994
+msgid "Alleen ontbrekende vertalingen"
+msgstr ""
+
+#: build/admin/index.js:1007
+msgid "Alleen regels voor de geselecteerde taal/talen worden geïmporteerd."
+msgstr ""
+
+#: build/admin/index.js:1713
+msgid "Alleen vlaggen"
+msgstr ""
+
+#: build/admin/index.js:1000
+msgid "Alles selecteren"
+msgstr ""
+
+#: build/admin/index.js:1001
+msgid "Alles wissen"
+msgstr ""
+
+#: build/admin/index.js:881
+msgid "Als exact dezelfde originele tekst ergens anders voorkomt, wordt deze vertaling automatisch overgenomen waar nog geen vertaling staat."
+msgstr ""
+
+#: build/admin/index.js:928 build/admin/index.js:1669
+msgid "Annuleren"
+msgstr ""
+
+#: build/admin/index.js:2022
+msgid "API-sleutel"
+msgstr ""
+
+#: build/admin/index.js:1977
+msgid "AI API-sleutels kunnen via serverconstanten of het wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:31
+msgid "API-sleutels worden niet in de database opgeslagen. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden."
+msgstr ""
+
+#: build/admin/index.js:880
+msgid "Automatisch toepassen actief"
+msgstr ""
+
+#: app/Scanner/ScanBatchRunner.php:123
+msgid "Batch verwerkt: %d items, %d strings."
+msgstr ""
+
+#: build/admin/index.js:451
+msgid "Begin met talen, scan je content en vertaal stap voor stap."
+msgstr ""
+
+#: build/admin/index.js:1677
+msgid "Beheer je talen en plaats de taalkiezer op je website."
+msgstr ""
+
+#: build/admin/index.js:555
+msgid "Beheerdersinformatie"
+msgstr ""
+
+#: build/admin/index.js:533
+msgid "Bekijk vertalingen"
+msgstr ""
+
+#: build/admin/index.js:544
+msgid "Beschikbaar"
+msgstr ""
+
+#: build/admin/index.js:892
+msgid "Bestaande vertaling laden…"
+msgstr ""
+
+#: build/admin/index.js:860
+msgid "Bewerken"
+msgstr ""
+
+#: build/admin/index.js:460
+msgid "Bijgewerkt"
+msgstr ""
+
+#: build/admin/index.js:1839
+msgid "Bijv. offerte"
+msgstr ""
+
+#: app/Admin/UrlMappingAdmin.php:101
+msgid "bijv. product-category/shoes"
+msgstr ""
+
+#: build/admin/index.js:1840
+msgid "Bijv. quote"
+msgstr ""
+
+#: app/Admin/UrlMappingAdmin.php:53
+msgid "bijv. services/web-design"
+msgstr ""
+
+#: build/admin/index.js:966
+msgid "Bron"
+msgstr ""
+
+#: app/Translation/GlossaryRepository.php:44
+msgid "Bronterm, vertaling en taal zijn verplicht."
+msgstr ""
+
+#: build/admin/index.js:1949
+msgid "Cache"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:43
+msgid "Cache en checkout controleren"
+msgstr ""
+
+#: build/admin/index.js:1899
+msgid "Cache geleegd."
+msgstr ""
+
+#: build/admin/index.js:1952
+msgid "Cache legen"
+msgstr ""
+
+#: build/admin/index.js:1901
+msgid "Cache legen mislukt."
+msgstr ""
+
+#: build/admin/index.js:568
+msgid "Cache per taal"
+msgstr ""
+
+#: build/admin/index.js:1986
+msgid "Cache TTL in seconden"
+msgstr ""
+
+#: build/admin/index.js:1938
+msgid "Canonicals per taal inschakelen"
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "Casual"
+msgstr ""
+
+#: build/admin/index.js:1684
+msgid "Code"
+msgstr ""
+
+#: build/admin/index.js:1694
+msgid "Code type"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:71 build/admin/index.js:1582
+msgid "Code, locale en native naam zijn verplicht."
+msgstr ""
+
+#: build/admin/index.js:1727
+msgid "Compact"
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:116
+msgid "Compatibel in veilige modus."
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:105
+msgid "Compatibel in veilige modus: cart, checkout, account, order-pay en wc-ajax worden overgeslagen."
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:111
+msgid "Compatibel in veilige modus: non-HTML responses worden overgeslagen en cache purge faalt nooit blokkerend."
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:108
+msgid "Compatibel: form submissions, hidden fields, nonces en AJAX responses worden niet vertaald."
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:114
+msgid "Compatibel: hreflang en meta output blijven conflict-aware."
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:19 build/admin/index.js:835 build/admin/index.js:899 build/admin/index.js:958
+msgid "Concept"
+msgstr ""
+
+#: build/admin/index.js:2015
+msgid "Configuratie nodig"
+msgstr ""
+
+#: build/admin/index.js:1987
+msgid "Conflictbescherming overslaan"
+msgstr ""
+
+#: build/admin/index.js:970
+msgid "Context"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "Controle nodig"
+msgstr ""
+
+#: build/admin/index.js:426
+msgid "Controleer je website in context"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "Controleer SEO voordat je live gaat"
+msgstr ""
+
+#: build/admin/index.js:514
+msgid "Controleer wat al gevonden en vertaald is."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadStorage.php:32
+msgid "CSV bestand is groter dan 10 MB."
+msgstr ""
+
+#: build/admin/index.js:1002
+msgid "CSV downloaden"
+msgstr ""
+
+#: app/ImportExport/Concerns/ImportsCsvFiles.php:47
+msgid "CSV header mist verplichte kolommen."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvPreviewReader.php:38
+msgid "CSV header mist: %s"
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvPreviewReader.php:28
+msgid "CSV header ontbreekt."
+msgstr ""
+
+#: app/ImportExport/Concerns/ImportsCsvFiles.php:65
+msgid "CSV import gestopt na %d regels. Verdeel grotere imports in kleinere bestanden."
+msgstr ""
+
+#: app/ImportExport/CsvImporter.php:29
+msgid "CSV import vereist een geldige preview token."
+msgstr ""
+
+#: app/Rest/Concerns/CsvEndpoints.php:47
+msgid "CSV import vereist eerst een geldige preview."
+msgstr ""
+
+#: build/admin/index.js:692
+msgid "CSV import voltooid."
+msgstr ""
+
+#: app/ImportExport/Concerns/ImportsCsvFiles.php:29
+msgid "CSV kon niet gelezen worden."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvPreviewReader.php:22 app/ImportExport/Concerns/ImportsCsvFiles.php:34
+msgid "CSV kon niet geopend worden."
+msgstr ""
+
+#: app/ImportExport/CsvPreviewer.php:45
+msgid "CSV kon niet veilig tijdelijk worden opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:676
+msgid "CSV preview gemaakt."
+msgstr ""
+
+#: app/ImportExport/CsvImporter.php:42
+msgid "CSV preview hoort bij een andere beheerderssessie. Maak opnieuw een preview."
+msgstr ""
+
+#: app/ImportExport/CsvImporter.php:33 app/ImportExport/CsvImporter.php:37
+msgid "CSV preview is verlopen. Maak opnieuw een preview."
+msgstr ""
+
+#: build/admin/index.js:679
+msgid "CSV preview mislukt."
+msgstr ""
+
+#: build/admin/index.js:1989
+msgid "Data verwijderen bij uninstall"
+msgstr ""
+
+#: build/admin/index.js:572
+msgid "Dataoverzicht"
+msgstr ""
+
+#: build/admin/index.js:528
+msgid "De belangrijkste pagina’s zijn gescand."
+msgstr ""
+
+#: build/admin/index.js:2027
+msgid "De plugin bewaart een lichte snapshot van de laatste frontend vertaalbewerking zodat je TTFB/DOM-impact kunt volgen zonder zware analytics."
+msgstr ""
+
+#: build/admin/index.js:545
+msgid "De plugin heeft een veilige basis voor per-taal SEO metadata. Controleer dit in staging met je SEO-plugin."
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:146
+msgid "De standaardtaal kan niet worden verwijderd."
+msgstr ""
+
+#: build/admin/index.js:560
+msgid "Debug logs"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:169
+msgid "DeepL gaf een lege vertaling terug."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:165
+msgid "DeepL gaf geen geldige vertaling terug."
+msgstr ""
+
+#: build/admin/index.js:1934
+msgid "Details bekijken"
+msgstr ""
+
+#: build/admin/index.js:1934
+msgid "Details verbergen"
+msgstr ""
+
+#: app/Translation/GlossaryRepository.php:52
+msgid "Deze bronterm bestaat al voor deze taal en hoofdlettergevoeligheid."
+msgstr ""
+
+#: build/admin/index.js:508
+msgid "Deze stap helpt je website duidelijk en veilig meertalig te maken."
+msgstr ""
+
+#: build/admin/index.js:1620
+msgid "Deze taal verwijderen?"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:82
+msgid "Deze taalcode bestaat al."
+msgstr ""
+
+#: app/VisualEditor/VisualEditorRestService.php:89
+msgid "Deze tekst kan niet worden opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:1813
+msgid "Deze woordenlijstterm verwijderen?"
+msgstr ""
+
+#: build/admin/index.js:557
+msgid "DOM/ext-xml"
+msgstr ""
+
+#: build/admin/index.js:1726
+msgid "Donker"
+msgstr ""
+
+#: build/admin/index.js:998
+msgid "Download CSV voor: "
+msgstr ""
+
+#: build/admin/index.js:998
+msgid "Download CSV zonder taalfilter."
+msgstr ""
+
+#: build/admin/index.js:1710
+msgid "Dropdown"
+msgstr ""
+
+#: build/admin/index.js:2030
+msgid "Duur"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:42 build/admin/index.js:492
+msgid "Eerste scan starten"
+msgstr ""
+
+#: build/admin/index.js:827
+msgid "English (en)"
+msgstr ""
+
+#: build/admin/index.js:162
+msgid "Er ging iets mis."
+msgstr ""
+
+#: build/admin/index.js:1933
+msgid "Er is een andere vertaalplugin actief. Conflictbescherming staat aan."
+msgstr ""
+
+#: build/admin/index.js:527
+msgid "Er zijn minimaal twee talen actief."
+msgstr ""
+
+#: build/admin/index.js:942
+msgid "Er zijn nog vertalingen open"
+msgstr ""
+
+#: build/admin/index.js:990
+msgid "Exporttype"
+msgstr ""
+
+#: build/admin/index.js:489
+msgid "Extra talen kiezen"
+msgstr ""
+
+#: build/admin/index.js:764
+msgid "extra tekst(en)."
+msgstr ""
+
+#: build/admin/index.js:1853
+msgid "Filter op taal"
+msgstr ""
+
+#: build/admin/index.js:1734
+msgid "Floating taalkiezer tonen"
+msgstr ""
+
+#: build/admin/index.js:1141 build/admin/index.js:1156
+msgid "Floating voorbeeld: "
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "Formeel"
+msgstr ""
+
+#: build/admin/index.js:466
+msgid "Ga verder"
+msgstr ""
+
+#: build/admin/index.js:2013
+msgid "Gebruik AI als assistent, niet als blinde publicatieknop. Nieuwe AI-vertalingen komen standaard als controlewerk binnen zodat je merktaal, SEO en nuance bewaakt blijven."
+msgstr ""
+
+#: build/admin/index.js:973
+msgid "Gebruik de scanfunctie om vertaalbare teksten op je website te vinden."
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:52
+msgid "Gebruik een geldige taalcode, bijvoorbeeld nl, en of de."
+msgstr ""
+
+#: build/admin/index.js:1836
+msgid "Gebruik korte termen zoals “offerte”, “vacature” of “maatwerk website”. De suggesties verschijnen automatisch in de vertaalmodal."
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:23
+msgid "Gecontroleerd"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:60
+msgid "Geen AI API-sleutel gevonden. Definieer WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY of gebruik het wat_ai_api_key filter."
+msgstr ""
+
+#: build/admin/index.js:1933
+msgid "Geen conflicten gevonden."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadStorage.php:24
+msgid "Geen geldig uploadbestand."
+msgstr ""
+
+#: build/admin/index.js:1551
+msgid "Geen land of taal gevonden"
+msgstr ""
+
+#: app/Plugin.php:113
+msgid "Geen toegang."
+msgstr ""
+
+#: build/admin/index.js:792
+msgid "Geheugen:"
+msgstr ""
+
+#: build/admin/index.js:839
+msgid "Genegeerd"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:24 build/admin/index.js:838 build/admin/index.js:902 build/admin/index.js:961
+msgid "Gepubliceerd"
+msgstr ""
+
+#: build/admin/index.js:2022
+msgid "Gevonden"
+msgstr ""
+
+#: build/admin/index.js:936
+msgid "Gevonden teksten"
+msgstr ""
+
+#: build/admin/index.js:2039
+msgid "Glossary-termen worden toegepast op de vertaalmap."
+msgstr ""
+
+#: build/admin/index.js:837 build/admin/index.js:901 build/admin/index.js:960
+msgid "Goedgekeurd"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:22
+msgid "Handmatig aangepast"
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:138
+msgid "Handmatig testen op staging aanbevolen."
+msgstr ""
+
+#: build/admin/index.js:1843 build/admin/index.js:1857
+msgid "Hoofdlettergevoelig"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "Houd hreflang, meta titles, descriptions en URL’s overzichtelijk per taal."
+msgstr ""
+
+#: build/admin/index.js:1988
+msgid "Hreflang forceren ondanks conflict"
+msgstr ""
+
+#: build/admin/index.js:544
+msgid "Hreflang helpt zoekmachines de juiste taalversie te kiezen."
+msgstr ""
+
+#: build/admin/index.js:1936
+msgid "Hreflang inschakelen"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "Hreflang klaar"
+msgstr ""
+
+#: build/admin/index.js:544
+msgid "Hreflang status"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:38
+msgid "Huidige modus: %s"
+msgstr ""
+
+#: build/admin/index.js:698
+msgid "Import mislukt."
+msgstr ""
+
+#: build/admin/index.js:479 build/admin/index.js:2068
+msgid "Import/export"
+msgstr ""
+
+#: build/admin/index.js:515
+msgid "Import/export openen"
+msgstr ""
+
+#: build/admin/index.js:1006 build/admin/index.js:1021
+msgid "Importeren"
+msgstr ""
+
+#: build/admin/index.js:2023
+msgid "Ingeschakeld"
+msgstr ""
+
+#: build/admin/index.js:459
+msgid "Ingesteld"
+msgstr ""
+
+#: app/Plugin.php:104 build/admin/index.js:480 build/admin/index.js:2069
+msgid "Instellingen"
+msgstr ""
+
+#: build/admin/index.js:453
+msgid "Instellingen openen"
+msgstr ""
+
+#: build/admin/index.js:1890
+msgid "Instellingen opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:573
+msgid "Instellingen, vertaaldata, CSV-previews, logs, cookies en adminvoorkeuren worden alleen hier technisch toegelicht."
+msgstr ""
+
+#: build/admin/index.js:1824
+msgid "Ja"
+msgstr ""
+
+#: build/admin/index.js:526
+msgid "Je bent ingelogd als beheerder."
+msgstr ""
+
+#: app/Admin/AdminMenu.php:116
+msgid "Je hebt geen toegang tot deze pagina."
+msgstr ""
+
+#: build/admin/index.js:1992
+msgid "Je hebt niet-opgeslagen wijzigingen."
+msgstr ""
+
+#: build/admin/index.js:1687
+msgid "Kies de talen voor je website."
+msgstr ""
+
+#: app/Rest/Concerns/TranslationEndpoints.php:56 app/VisualEditor/VisualEditorRestService.php:81
+msgid "Kies een actieve niet-standaardtaal om te vertalen."
+msgstr ""
+
+#: app/Rest/Concerns/GlossarySettingsEndpoints.php:45 app/Translation/GlossaryRepository.php:47
+msgid "Kies een actieve niet-standaardtaal voor woordenlijst-items."
+msgstr ""
+
+#: build/admin/index.js:1451
+msgid "Kies een taal..."
+msgstr ""
+
+#: build/admin/index.js:428
+msgid "Kies eerst de talen die je bezoekers moeten kunnen gebruiken."
+msgstr ""
+
+#: build/admin/index.js:670
+msgid "Kies eerst een CSV-bestand."
+msgstr ""
+
+#: build/admin/index.js:756
+msgid "Kies eerst een taal."
+msgstr ""
+
+#: build/admin/index.js:471
+msgid "Kies minimaal één extra taal."
+msgstr ""
+
+#: build/admin/index.js:1778
+msgid "Kies taal"
+msgstr ""
+
+#: build/admin/index.js:980
+msgid "Kies één taal of meerdere talen voor export en import."
+msgstr ""
+
+#: build/admin/index.js:445 build/admin/index.js:509
+msgid "Klaar"
+msgstr ""
+
+#: build/admin/index.js:456
+msgid "Klaar voor gebruik"
+msgstr ""
+
+#: build/admin/index.js:1711
+msgid "Knoppen"
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:133
+msgid "Laat compatibility override uit, tenzij je op staging hebt getest."
+msgstr ""
+
+#: build/admin/index.js:430
+msgid "Laat de plugin zichtbare teksten vinden voordat je gaat vertalen."
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:136
+msgid "Laat veilige modus aan voor checkout, cart en account."
+msgstr ""
+
+#: build/admin/index.js:575
+msgid "Laatste logs"
+msgstr ""
+
+#: build/admin/index.js:560
+msgid "Laatste meldingen"
+msgstr ""
+
+#: build/admin/index.js:2029
+msgid "Laatste meting"
+msgstr ""
+
+#: build/admin/index.js:1707
+msgid "Layout"
+msgstr ""
+
+#: build/admin/index.js:1833
+msgid "Leg vaste termen vast zodat dezelfde woorden overal consequent vertaald worden."
+msgstr ""
+
+#: build/admin/index.js:1725
+msgid "Licht"
+msgstr ""
+
+#: build/admin/index.js:1981
+msgid "Lichte frontend performance snapshot bewaren"
+msgstr ""
+
+#: build/admin/index.js:1129
+msgid "linksboven"
+msgstr ""
+
+#: build/admin/index.js:1745
+msgid "Linksboven"
+msgstr ""
+
+#: build/admin/index.js:1127
+msgid "linksonder"
+msgstr ""
+
+#: build/admin/index.js:1743
+msgid "Linksonder"
+msgstr ""
+
+#: build/admin/index.js:1657
+msgid "Locale"
+msgstr ""
+
+#: build/admin/index.js:1958
+msgid "Logs bekijken"
+msgstr ""
+
+#: build/admin/index.js:1910
+msgid "Logs gewist."
+msgstr ""
+
+#: build/admin/index.js:1958
+msgid "Logs verbergen"
+msgstr ""
+
+#: build/admin/index.js:576 build/admin/index.js:1964
+msgid "Logs verschijnen hier na scans, imports of waarschuwingen."
+msgstr ""
+
+#: build/admin/index.js:1959
+msgid "Logs wissen"
+msgstr ""
+
+#: build/admin/index.js:1913
+msgid "Logs wissen mislukt."
+msgstr ""
+
+#: build/admin/index.js:685
+msgid "Maak eerst een geldige CSV preview."
+msgstr ""
+
+#: build/admin/index.js:450
+msgid "Maak je website meertalig"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:21
+msgid "Machinevertaling"
+msgstr ""
+
+#: build/admin/index.js:1985
+msgid "Maximaal aantal vervangingen per pagina"
+msgstr ""
+
+#: build/admin/index.js:1984
+msgid "Maximale HTML-grootte"
+msgstr ""
+
+#: app/Media/MediaTranslationManager.php:50
+msgid "Mediavertaling: %s"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "Meertalige SEO"
+msgstr ""
+
+#: build/admin/index.js:1939
+msgid "Meertalige XML-sitemap inschakelen"
+msgstr ""
+
+#: build/admin/index.js:545
+msgid "Meta titles & descriptions"
+msgstr ""
+
+#: build/admin/index.js:1729
+msgid "Minimal"
+msgstr ""
+
+#: build/admin/index.js:1974
+msgid "Model"
+msgstr ""
+
+#: build/admin/index.js:2012
+msgid "Moderne vertaalworkflow met reviewcontrole"
+msgstr ""
+
+#: app/Compatibility/Concerns/DetectsCompatibilityPlugins.php:102
+msgid "Mogelijk conflict: frontend replacement en hreflang blijven beperkt zonder override."
+msgstr ""
+
+#: build/admin/index.js:1658
+msgid "Naam"
+msgstr ""
+
+#: build/admin/index.js:1716
+msgid "Naam + code"
+msgstr ""
+
+#: build/admin/index.js:1659
+msgid "Native naam"
+msgstr ""
+
+#: build/admin/index.js:1824
+msgid "Nee"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:25 build/admin/index.js:903 build/admin/index.js:962
+msgid "Negeren"
+msgstr ""
+
+#: build/admin/index.js:558
+msgid "Niet actief"
+msgstr ""
+
+#: build/admin/index.js:557
+msgid "Niet beschikbaar"
+msgstr ""
+
+#: build/admin/index.js:2022
+msgid "Niet gevonden"
+msgstr ""
+
+#: build/admin/index.js:1968
+msgid "Niet tonen op URL patronen"
+msgstr ""
+
+#: build/admin/index.js:1969
+msgid "Niet vertalen CSS selectors"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:17
+msgid "Nieuw"
+msgstr ""
+
+#: build/admin/index.js:557
+msgid "Nodig voor HTML-vertaling"
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Nog bezig"
+msgstr ""
+
+#: build/admin/index.js:445 build/admin/index.js:509
+msgid "Nog doen"
+msgstr ""
+
+#: build/admin/index.js:576 build/admin/index.js:1964
+msgid "Nog geen logs"
+msgstr ""
+
+#: build/admin/index.js:2032
+msgid "Nog geen meting"
+msgstr ""
+
+#: build/admin/index.js:972
+msgid "Nog geen teksten gevonden"
+msgstr ""
+
+#: build/admin/index.js:1851
+msgid "Nog geen termen voor deze selectie."
+msgstr ""
+
+#: build/admin/index.js:1856 build/admin/index.js:1857
+msgid "Nog geen woordenlijsttermen"
+msgstr ""
+
+#: build/admin/index.js:459
+msgid "Nog instellen"
+msgstr ""
+
+#: build/admin/index.js:460
+msgid "Nog niet gestart"
+msgstr ""
+
+#: build/admin/index.js:95 build/admin/index.js:99 build/admin/index.js:105 build/admin/index.js:110 build/admin/index.js:135
+msgid "Nog niet uitgevoerd"
+msgstr ""
+
+#: build/admin/index.js:850
+msgid "Nog niet vertaald"
+msgstr ""
+
+#: build/admin/index.js:316
+msgid "Nog niets gevonden"
+msgstr ""
+
+#: build/admin/index.js:558
+msgid "Object cache"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:105 app/Rest/Concerns/LanguageEndpoints.php:111 app/Rest/Concerns/LanguageEndpoints.php:118 app/Rest/Concerns/LanguageEndpoints.php:123 app/Rest/Concerns/LanguageEndpoints.php:151
+msgid "onbekende databasefout"
+msgstr ""
+
+#: build/admin/index.js:2019
+msgid "Ondersteunt OpenAI en DeepL via veilige constants/filter. API-sleutels worden niet in de database opgeslagen."
+msgstr ""
+
+#: app/Rest/Concerns/TranslationEndpoints.php:61
+msgid "Ongeldige vertaalstatus."
+msgstr ""
+
+#: build/admin/index.js:834 build/admin/index.js:957
+msgid "Ontbreekt"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:18
+msgid "Onvertaald"
+msgstr ""
+
+#: build/admin/index.js:432
+msgid "Open de vertalingen en werk de belangrijkste teksten bij."
+msgstr ""
+
+#: build/admin/index.js:433
+msgid "Open de visual editor om je vertalingen op de pagina te controleren."
+msgstr ""
+
+#: build/admin/index.js:2032
+msgid "Open een vertaalde frontend pagina als beheerder om een snapshot te maken."
+msgstr ""
+
+#: build/admin/index.js:477
+msgid "Open vertalingen en start een scan."
+msgstr ""
+
+#: build/admin/index.js:1851
+msgid "Opgeslagen termen"
+msgstr ""
+
+#: build/admin/index.js:792
+msgid "Opgeslagen. Volgende tekst geopend."
+msgstr ""
+
+#: build/admin/index.js:1993
+msgid "Opslaan"
+msgstr ""
+
+#: build/admin/index.js:929
+msgid "Opslaan en volgende"
+msgstr ""
+
+#: build/admin/index.js:770 build/admin/index.js:797 build/admin/index.js:1569 build/admin/index.js:1893
+msgid "Opslaan mislukt."
+msgstr ""
+
+#: build/admin/index.js:929 build/admin/index.js:930 build/admin/index.js:1847
+msgid "Opslaan…"
+msgstr ""
+
+#: app/Admin/UrlMappingAdmin.php:89
+msgid "Optioneel: alternatieve slug/URL-pad per taal voor deze categorie/taxonomie."
+msgstr ""
+
+#: app/Admin/UrlMappingAdmin.php:41
+msgid "Optioneel: vul per taal een alternatieve slug/URL-pad in. Leeg laten = standaard dezelfde slug met taalprefix."
+msgstr ""
+
+#: build/admin/index.js:970 build/admin/index.js:1857
+msgid "Origineel"
+msgstr ""
+
+#: build/admin/index.js:877
+msgid "Originele tekst"
+msgstr ""
+
+#: app/VisualEditor/VisualEditorRestService.php:75
+msgid "Originele tekst, vertaling en taal zijn verplicht."
+msgstr ""
+
+#: build/admin/index.js:1839
+msgid "Originele term"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:123
+msgid "Oude standaardtaal opschonen mislukt:"
+msgstr ""
+
+#: build/admin/index.js:1728
+msgid "Outline"
+msgstr ""
+
+#: build/admin/index.js:569
+msgid "Output-buffer TTFB vergelijking"
+msgstr ""
+
+#: build/admin/index.js:2064
+msgid "Overzicht"
+msgstr ""
+
+#: build/admin/index.js:480
+msgid "Pas talen en gedrag aan."
+msgstr ""
+
+#: build/admin/index.js:919
+msgid "Past exact dezelfde originele tekst automatisch toe op andere plekken waar nog geen vertaling staat."
+msgstr ""
+
+#: build/admin/index.js:546
+msgid "Per-taal URL-slugs, canonicals en de meertalige sitemap zijn beschikbaar. Sitemap: /?wat_language_sitemap=1."
+msgstr ""
+
+#: build/admin/index.js:566
+msgid "PHPCS/WPCS"
+msgstr ""
+
+#: build/admin/index.js:565
+msgid "Plugin Check"
+msgstr ""
+
+#: build/admin/index.js:1739
+msgid "Positie"
+msgstr ""
+
+#: build/admin/index.js:2026
+msgid "Prestatiemonitor"
+msgstr ""
+
+#: build/admin/index.js:1980
+msgid "Prestatiemonitoring"
+msgstr ""
+
+#: build/admin/index.js:1024
+msgid "Preview klaar"
+msgstr ""
+
+#: build/admin/index.js:1020
+msgid "Preview maken"
+msgstr ""
+
+#: build/admin/index.js:1978
+msgid "Privacy: ingeschakelde AI-verzoeken sturen brontekst en vertaalinstellingen naar de gekozen externe provider. Schakel dit alleen in wanneer je privacybeleid, klantafspraken en eventuele verwerkersafspraken dit toestaan."
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "Professioneel"
+msgstr ""
+
+#: build/admin/index.js:2021
+msgid "Provider"
+msgstr ""
+
+#: app/Automation/TranslationJobQueue.php:50
+msgid "Queue-basis is aanwezig; provider-connectors moeten expliciet worden geconfigureerd voordat automatische vertaling draait."
+msgstr ""
+
+#: build/admin/index.js:1128
+msgid "rechtsboven"
+msgstr ""
+
+#: build/admin/index.js:1744
+msgid "Rechtsboven"
+msgstr ""
+
+#: build/admin/index.js:1126 build/admin/index.js:1141 build/admin/index.js:1156
+msgid "rechtsonder"
+msgstr ""
+
+#: build/admin/index.js:1742
+msgid "Rechtsonder"
+msgstr ""
+
+#: app/ImportExport/Concerns/ImportsCsvFiles.php:90
+msgid "Regel %d: hash of language_code ontbreekt of is ongeldig."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvPreviewValidation.php:28
+msgid "Regel %d: hash ontbreekt of is ongeldig."
+msgstr ""
+
+#: app/ImportExport/Concerns/ImportsCsvFiles.php:69 app/ImportExport/Concerns/ImportsCsvFiles.php:75
+msgid "Regel %d: ongeldig aantal kolommen."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvPreviewValidation.php:43 app/ImportExport/Concerns/ImportsCsvFiles.php:119
+msgid "Regel %d: status is ongeldig."
+msgstr ""
+
+#: build/admin/index.js:563
+msgid "Release checklist"
+msgstr ""
+
+#: build/admin/index.js:559
+msgid "REST API"
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:20 build/admin/index.js:836 build/admin/index.js:900 build/admin/index.js:959
+msgid "Review nodig"
+msgstr ""
+
+#: build/admin/index.js:2023
+msgid "Reviewworkflow"
+msgstr ""
+
+#: build/admin/index.js:567
+msgid "Role/capability tests"
+msgstr ""
+
+#: build/admin/index.js:425
+msgid "Rond open vertalingen af"
+msgstr ""
+
+#: build/admin/index.js:1664
+msgid "RTL taal"
+msgstr ""
+
+#: app/Rest/Concerns/ScanEndpoints.php:76
+msgid "Scan batch mislukt. Controleer de logs of probeer opnieuw."
+msgstr ""
+
+#: build/admin/index.js:639
+msgid "Scan gestart. Elementor, ACF en postmeta worden meegenomen."
+msgstr ""
+
+#: build/admin/index.js:423
+msgid "Scan je website"
+msgstr ""
+
+#: app/Scanner/ScanBatchRunner.php:54
+msgid "Scan job niet gevonden."
+msgstr ""
+
+#: build/admin/index.js:661
+msgid "Scan mislukt."
+msgstr ""
+
+#: app/Rest/Concerns/ScanEndpoints.php:50
+msgid "Scan starten mislukt. Controleer de logs of probeer opnieuw."
+msgstr ""
+
+#: build/admin/index.js:934
+msgid "Scan verwerkt. Je kunt nu vertalingen controleren."
+msgstr ""
+
+#: app/Scanner/ScanBatchRunner.php:91 app/Scanner/ScanBatchRunner.php:123
+msgid "Scan voltooid."
+msgstr ""
+
+#: build/admin/index.js:493
+msgid "SEO en cache controleren"
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "SEO-gericht"
+msgstr ""
+
+#: build/admin/index.js:542
+msgid "SEO-instellingen bekijken"
+msgstr ""
+
+#: build/admin/index.js:2038
+msgid "SEO-integratie is filter-based voor Yoast en Rank Math."
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Setup"
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Setup als voltooid markeren"
+msgstr ""
+
+#: build/admin/index.js:499
+msgid "Setup opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:500
+msgid "Setup opslaan mislukt."
+msgstr ""
+
+#: build/admin/index.js:1604 build/admin/index.js:1695
+msgid "Shortcode"
+msgstr ""
+
+#: build/admin/index.js:1700
+msgid "Shortcode kopiëren"
+msgstr ""
+
+#: build/admin/index.js:1940
+msgid "Sitemap URL: /?wat_language_sitemap=1. Test deze op staging voordat je hem in Search Console indient."
+msgstr ""
+
+#: build/admin/index.js:225 build/admin/index.js:872 build/admin/index.js:1643
+msgid "Sluiten"
+msgstr ""
+
+#: build/admin/index.js:1648
+msgid "Snelle taalkeuze"
+msgstr ""
+
+#: build/admin/index.js:1950
+msgid "Snelle vertaalcache gebruiken"
+msgstr ""
+
+#: build/admin/index.js:1613
+msgid "Standaard"
+msgstr ""
+
+#: build/admin/index.js:1663
+msgid "Standaard taal"
+msgstr ""
+
+#: build/admin/index.js:488
+msgid "Standaardtaal controleren"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:118
+msgid "Standaardtaal instellen mislukt:"
+msgstr ""
+
+#: build/admin/index.js:453
+msgid "Start setup"
+msgstr ""
+
+#: build/admin/index.js:515
+msgid "Start snel met een CSV-workflow."
+msgstr ""
+
+#: build/admin/index.js:555 build/admin/index.js:896 build/admin/index.js:953 build/admin/index.js:970 build/admin/index.js:1684
+msgid "Status"
+msgstr ""
+
+#: build/admin/index.js:1722
+msgid "Stijl"
+msgstr ""
+
+#: app/Rest/Concerns/TranslationEndpoints.php:53
+msgid "String ID en taal zijn verplicht."
+msgstr ""
+
+#: build/admin/index.js:947 build/admin/index.js:970 build/admin/index.js:1684 build/admin/index.js:1841 build/admin/index.js:1857
+msgid "Taal"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:154
+msgid "Taal is niet verwijderd."
+msgstr ""
+
+#: app/Frontend/Concerns/RendersLanguageSwitcher.php:33 app/Frontend/Concerns/RendersLanguageSwitcher.php:48
+msgid "Taal kiezen"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:90 app/Rest/Concerns/LanguageEndpoints.php:143
+msgid "Taal niet gevonden."
+msgstr ""
+
+#: build/admin/index.js:1670
+msgid "Taal opslaan"
+msgstr ""
+
+#: build/admin/index.js:1588 build/admin/index.js:1596
+msgid "Taal opslaan mislukt."
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:105
+msgid "Taal opslaan mislukt:"
+msgstr ""
+
+#: build/admin/index.js:1590
+msgid "Taal toegevoegd en opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:1642 build/admin/index.js:1690
+msgid "Taal toevoegen"
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:111
+msgid "Taal toevoegen mislukt:"
+msgstr ""
+
+#: app/Admin/UrlMappingAdmin.php:29 app/Admin/UrlMappingAdmin.php:88
+msgid "Taal URL mappings"
+msgstr ""
+
+#: build/admin/index.js:1623
+msgid "Taal verwijderd."
+msgstr ""
+
+#: build/admin/index.js:1627
+msgid "Taal verwijderen mislukt."
+msgstr ""
+
+#: app/Rest/Concerns/LanguageEndpoints.php:151
+msgid "Taal verwijderen mislukt:"
+msgstr ""
+
+#: build/admin/index.js:1656
+msgid "Taalcode"
+msgstr ""
+
+#: build/admin/index.js:1714
+msgid "Taalcodes"
+msgstr ""
+
+#: build/admin/index.js:1566
+msgid "Taalkiezer opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:1756
+msgid "Taalkiezer opslaan"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:41 build/admin/index.js:1693
+msgid "Taalkiezer plaatsen"
+msgstr ""
+
+#: build/admin/index.js:1705
+msgid "Taalkiezer uiterlijk"
+msgstr ""
+
+#: build/admin/index.js:491
+msgid "Taalwisselaar kiezen"
+msgstr ""
+
+#: build/admin/index.js:459 build/admin/index.js:1682
+msgid "Talen"
+msgstr ""
+
+#: build/admin/index.js:1676
+msgid "Talen & taalkiezer"
+msgstr ""
+
+#: build/admin/index.js:513
+msgid "Talen beheren"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:35 build/admin/index.js:471
+msgid "Talen kiezen"
+msgstr ""
+
+#: build/admin/index.js:979
+msgid "Talen kiezen en exporteren"
+msgstr ""
+
+#: build/admin/index.js:1983
+msgid "Technische instellingen"
+msgstr ""
+
+#: build/admin/index.js:1956
+msgid "Technische logs bewaren"
+msgstr ""
+
+#: build/admin/index.js:555
+msgid "Technische status en releasechecks"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:51
+msgid "Tekst en doeltaal zijn verplicht."
+msgstr ""
+
+#: build/admin/index.js:129
+msgid "teksten gevonden"
+msgstr ""
+
+#: build/admin/index.js:941
+msgid "Teksten gevonden"
+msgstr ""
+
+#: build/admin/index.js:1847
+msgid "Term opslaan"
+msgstr ""
+
+#: build/admin/index.js:1696
+msgid "Thema/PHP"
+msgstr ""
+
+#: build/admin/index.js:1604
+msgid "Themacode"
+msgstr ""
+
+#: build/admin/index.js:1700
+msgid "Themacode kopiëren"
+msgstr ""
+
+#: build/admin/index.js:1835
+msgid "Tip"
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "Toon"
+msgstr ""
+
+#: build/admin/index.js:2140
+msgid "Translate admin kon niet laden: "
+msgstr ""
+
+#: build/admin/index.js:18
+msgid "Translate admin kon niet laden: WordPress admin JavaScript dependencies ontbreken. Controleer of wp-element, wp-components en wp-api-fetch niet door Asset CleanUp/cache/optimalisatie zijn uitgeschakeld."
+msgstr ""
+
+#: app/Admin/AdminMenu.php:104
+msgid "Translate heeft de PHP DOM/ext-xml extensie nodig voor frontend vertaling. Schakel deze extensie in op de server."
+msgstr ""
+
+#: build/admin/index.js:461
+msgid "Uitgevoerd"
+msgstr ""
+
+#: build/admin/index.js:1967
+msgid "Uitsluitingen"
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadStorage.php:28
+msgid "Upload een .csv bestand."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadStorage.php:35
+msgid "Upload een geldig CSV- of tekstbestand."
+msgstr ""
+
+#: build/admin/index.js:546
+msgid "URL slugs en sitemaps"
+msgstr ""
+
+#: build/admin/index.js:490
+msgid "URL-structuur bevestigen"
+msgstr ""
+
+#: app/Setup/SetupWizard.php:36
+msgid "URL-structuur controleren"
+msgstr ""
+
+#: app/Media/MediaTranslationManager.php:58
+msgid "Gebruik een vertaald bijlage-ID voor taalspecifieke afbeeldingen en optioneel vertaalde alt-/titeltekst."
+msgstr ""
+
+#: build/admin/index.js:1944
+msgid "Veilig"
+msgstr ""
+
+#: build/admin/index.js:1929
+msgid "Veilige compatibiliteitsmodus"
+msgstr ""
+
+#: build/admin/index.js:1930
+msgid "Veilige modus voorkomt vertaling op gevoelige flows zoals checkout, formulieren, REST en AJAX."
+msgstr ""
+
+#: app/Workflow/WorkflowStatus.php:26
+msgid "Verouderd"
+msgstr ""
+
+#: build/admin/index.js:478
+msgid "Vertaal direct op de pagina."
+msgstr ""
+
+#: app/Media/MediaTranslationManager.php:211
+msgid "Vertaald alt-tekst"
+msgstr ""
+
+#: app/Media/MediaTranslationManager.php:208
+msgid "Vertaald bijlage-ID"
+msgstr ""
+
+#: app/Media/MediaTranslationManager.php:213
+msgid "Vertaalde titel"
+msgstr ""
+
+#: build/admin/index.js:918
+msgid "Vertaalgeheugen gebruiken"
+msgstr ""
+
+#: build/admin/index.js:764
+msgid "Vertaalgeheugen toegepast op"
+msgstr ""
+
+#: app/VisualEditor/VisualEditor.php:42 build/admin/index.js:522
+msgid "Vertaalmodus"
+msgstr ""
+
+#: app/Admin/AdminMenu.php:30 app/Admin/AdminMenu.php:47
+msgid "Vertalen"
+msgstr ""
+
+#: build/admin/index.js:473
+msgid "Vertalen controleren"
+msgstr ""
+
+#: build/admin/index.js:532
+msgid "Vertalen in context voorkomt fouten bij korte labels, knoppen, formulieren en builder-content."
+msgstr ""
+
+#: build/admin/index.js:887
+msgid "Vertalen naar"
+msgstr ""
+
+#: build/admin/index.js:970 build/admin/index.js:1857
+msgid "Vertaling"
+msgstr ""
+
+#: build/admin/index.js:871
+msgid "Vertaling bewerken"
+msgstr ""
+
+#: app/VisualEditor/VisualEditorRestService.php:109
+msgid "Vertaling opgeslagen ter review."
+msgstr ""
+
+#: app/VisualEditor/VisualEditorRestService.php:109 build/admin/index.js:764
+msgid "Vertaling opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:930
+msgid "Vertaling opslaan"
+msgstr ""
+
+#: app/VisualEditor/VisualEditorRestService.php:99
+msgid "Vertaling opslaan is mislukt."
+msgstr ""
+
+#: app/Rest/Concerns/TranslationEndpoints.php:71
+msgid "Vertaling opslaan mislukt."
+msgstr ""
+
+#: build/admin/index.js:910
+msgid "Vertaling voor "
+msgstr ""
+
+#: build/admin/index.js:460 build/admin/index.js:2065
+msgid "Vertalingen"
+msgstr ""
+
+#: build/admin/index.js:514
+msgid "Vertalingen bekijken"
+msgstr ""
+
+#: build/admin/index.js:730
+msgid "Vertalingen laden mislukt."
+msgstr ""
+
+#: build/admin/index.js:2031
+msgid "Vervangingen"
+msgstr ""
+
+#: build/admin/index.js:1631 build/admin/index.js:1825
+msgid "Verwijderen"
+msgstr ""
+
+#: build/admin/index.js:1816
+msgid "Verwijderen mislukt."
+msgstr ""
+
+#: build/admin/index.js:472
+msgid "Verzamel zichtbare teksten om te vertalen."
+msgstr ""
+
+#: build/admin/index.js:478 build/admin/index.js:2066
+msgid "Visuele editor"
+msgstr ""
+
+#: build/admin/index.js:454 build/admin/index.js:522 build/admin/index.js:938
+msgid "Visuele editor openen"
+msgstr ""
+
+#: build/admin/index.js:1715
+msgid "Vlag + code"
+msgstr ""
+
+#: build/admin/index.js:1717
+msgid "Vlag + naam + code"
+msgstr ""
+
+#: build/admin/index.js:1660
+msgid "Vlag/code"
+msgstr ""
+
+#: build/admin/index.js:1712
+msgid "Vlaggen + naam"
+msgstr ""
+
+#: build/admin/index.js:421
+msgid "Voeg een taal toe"
+msgstr ""
+
+#: build/admin/index.js:1686
+msgid "Voeg je eerste taal toe"
+msgstr ""
+
+#: build/admin/index.js:1856
+msgid "Voeg links je eerste term toe om vertalingen consistenter te maken."
+msgstr ""
+
+#: build/admin/index.js:513
+msgid "Voeg talen toe of pas de taalkiezer aan."
+msgstr ""
+
+#: build/admin/index.js:1857
+msgid "Voeg vaste termen toe die consequent vertaald moeten worden."
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Volg deze korte checklist. Elke stap heeft één duidelijk doel en houdt technische details uit beeld."
+msgstr ""
+
+#: build/admin/index.js:463
+msgid "Volgende stap"
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Voltooid"
+msgstr ""
+
+#: build/admin/index.js:1840
+msgid "Voorkeursvertaling"
+msgstr ""
+
+#: build/admin/index.js:1975
+msgid "Vriendelijk"
+msgstr ""
+
+#: build/admin/index.js:1798
+msgid "Vul bronterm, vertaling en taal in."
+msgstr ""
+
+#: build/admin/index.js:2034
+msgid "Wat is bewust nog gecontroleerd?"
+msgstr ""
+
+#: blocks/language-switcher/editor.js:21
+msgid "Webactueel taalkiezer wordt op de frontend weergegeven."
+msgstr ""
+
+#: app/Admin/AdminMenu.php:29 app/Support/Privacy.php:42 app/Support/Privacy.php:52 app/Support/Privacy.php:81
+msgid "Webactueel Translate"
+msgstr ""
+
+#: app/Admin/AdminMenu.php:109
+msgid "Webactueel Translate AI-vertaling is ingeschakeld. Tekst die je laat vertalen wordt naar de gekozen externe AI-provider verzonden. Controleer of dit past binnen je privacybeleid en klantafspraken."
+msgstr ""
+
+#: app/Admin/AdminMenu.php:50
+msgid "Webactueel Translate openen"
+msgstr ""
+
+#: app/Support/Privacy.php:30
+msgid "Webactueel Translate bewaart vertaalstrings, vertaalde tekst, taalinstellingen, scantaken, optionele technische logs en beheerdersvoorkeuren voor de interface. Vertaalstrings kunnen persoonsgegevens bevatten wanneer die persoonsgegevens in paginacontent voorkomen. Geëxporteerde CSV-bestanden kunnen dezelfde vertaalde content bevatten. Technische logs zijn bedoeld voor beheerders en gevoelige contextwaarden worden vóór opslag geredigeerd."
+msgstr ""
+
+#: app/Workflow/TranslatorRoles.php:46
+msgid "Webactueel Translator"
+msgstr ""
+
+#: build/admin/index.js:472 build/admin/index.js:477
+msgid "Website scannen"
+msgstr ""
+
+#: build/admin/index.js:461
+msgid "Websitescan"
+msgstr ""
+
+#: build/admin/index.js:1927
+msgid "Websitevertaling"
+msgstr ""
+
+#: build/admin/index.js:1928
+msgid "Websitevertaling inschakelen"
+msgstr ""
+
+#: build/admin/index.js:479
+msgid "Werk met CSV-bestanden."
+msgstr ""
+
+#: build/admin/index.js:473
+msgid "Werk open teksten af en controleer ze op de pagina."
+msgstr ""
+
+#: build/admin/index.js:1652
+msgid "Werkt als fallback als de zoekvelden niet direct selecteren."
+msgstr ""
+
+#: build/admin/index.js:1536
+msgid "wissen"
+msgstr ""
+
+#: build/admin/index.js:1537
+msgid "Wissen"
+msgstr ""
+
+#: build/admin/index.js:2037
+msgid "WooCommerce checkout/cart/account blijven beschermd door safe mode."
+msgstr ""
+
+#: app/Rest/Concerns/GlossarySettingsEndpoints.php:49 app/Translation/GlossaryRepository.php:72 build/admin/index.js:1808
+msgid "Woordenlijst opslaan mislukt."
+msgstr ""
+
+#: build/admin/index.js:1804
+msgid "Woordenlijstterm opgeslagen."
+msgstr ""
+
+#: build/admin/index.js:1833
+msgid "Woordenlijstterm toevoegen"
+msgstr ""
+
+#: build/admin/index.js:1815
+msgid "Woordenlijstterm verwijderd."
+msgstr ""
+
+#: build/admin/index.js:1937
+msgid "x-default inschakelen"
+msgstr ""
+
+#: app/Automation/AiTranslationService.php:95
+msgid "You are a professional WordPress website translator. Translate from %1$s to %2$s. Preserve allowed HTML tags and attributes, HTML entities, brand names, shortcodes, variables, placeholders and URLs. Do not add markdown fences. Return only the translation."
+msgstr ""
+
+#: build/admin/index.js:503
+msgid "Zet je vertaalbasis goed neer"
+msgstr ""
+
+#: build/admin/index.js:1656
+msgid "Zoek bijvoorbeeld Nederland, Duitsland of en..."
+msgstr ""
+
+#: build/admin/index.js:1657
+msgid "Zoek land, taal of locale..."
+msgstr ""
+
+#: build/admin/index.js:1660
+msgid "Zoek land, taal of vlagcode..."
+msgstr ""
+
+#: build/admin/index.js:1517
+msgid "Zoek land, taal, code of locale..."
+msgstr ""
+
+#: build/admin/index.js:945
+msgid "Zoek tekst, context of bron…"
+msgstr ""
+
+#: build/admin/index.js:945
+msgid "Zoeken"
+msgstr ""
+
+msgid "Versleep"
+msgstr ""
+
+msgid "Probleemoplossing"
+msgstr ""
+#: build/admin/index.js:386
+msgid "Vertaal Control Center"
+msgstr ""
+
+#: build/admin/index.js:387
+msgid "Premium workflow voor talen, content en kwaliteitscontrole."
+msgstr ""
+
+#: build/admin/index.js:477
+msgid "Vertaalvoortgang"
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "CSV bestand is groter dan de toegestane uploadlimiet."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "CSV upload is afgebroken. Probeer het bestand opnieuw te uploaden."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "Geen CSV bestand ontvangen."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "CSV upload kon niet veilig worden verwerkt door de server."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "CSV upload is mislukt."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "Regel %d: dubbele hash/language combinatie in import overgeslagen."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "Regel %d: translated_text ontbreekt."
+msgstr ""
+
+#: app/ImportExport/Concerns/CsvUploadValidation.php app/ImportExport/Concerns/ImportsCsvFiles.php
+msgid "Regel %1$d: taal %2$s is geen actieve vertaaltaal."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Vertaalmodus kon niet laden: WordPress React dependencies ontbreken."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Webactueel Translate vertaalmodus"
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "vertaalbare tekstsegmenten gevonden."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Klik op zichtbare tekst om in context te vertalen."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Opslaan is niet beschikbaar."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Kies een taal en vul een vertaling in."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Tekst vertalen"
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Klik op tekst in de pagina en werk de vertaling direct in context bij."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Doeltaal"
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Formulieren, checkout en technische elementen blijven beschermd."
+msgstr ""
+
+#: build/frontend/visual-editor.js
+msgid "Opslaan..."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Aanbevolen workflow"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Actieve talen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Bekijk mobiele weergave voor afgebroken tekst of overlappende elementen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Beschikbaar voor visuele controle"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Builder-content"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Check formulieren: labels, placeholders, foutmeldingen en succesmeldingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer Elementor/Divi-blokken zoals bezoekers ze echt zien."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer of knoppen en menu’s niet te lang worden in de doeltaal."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer standaardtaal, extra talen en URL-structuur."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Editor openen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebaseerd op gevonden en ingevulde vertalingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik CSV of de tabel voor grote hoeveelheden tekst."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik deze modus voor korte labels, knoppen, menu’s, formulieren en builder-blokken waarbij je de vertaling op de echte pagina wilt beoordelen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Geen open items gevonden"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Klik zichtbare tekst aan, pas vertaling aan en controleer direct de context."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Knoppen, badges, menu-items en formulierlabels waarbij context belangrijk is."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Korte UI-teksten"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Kwaliteitscheck voor publicatie"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Laatste kwaliteitsronde"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Loop pagina’s na op lengte, toon, merktermen en afgebroken tekst."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Meertalige basis staat aan"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Niet voor bulkwerk"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Nog te vertalen of te controleren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Open belangrijke SEO-pagina’s en controleer titel, intro en call-to-action."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Open editor"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Open vertalingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan belangrijke pagina’s"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scannen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Start eerst een scan"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Talen instellen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertaal op de pagina"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertaal teksten in context, zonder te zoeken in tabellen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertalingstabel openen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Verzamel zichtbare teksten uit pagina’s, menu’s, builder-content en producten."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Voeg minimaal één extra taal toe"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Voorbereiding nodig"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Voortgang"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Wanneer gebruik je deze tab?"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Zet talen klaar"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Productie klaar"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Setup controleren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Installatie"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Installatie als voltooid markeren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan starten"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik dit alleen voor teksten waarbij context belangrijk is: knoppen, menu’s, formulieren, headings en builder-content. Bulkwerk blijft sneller via Vertalingen of CSV."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertalingstabel"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Eerst voorbereiden"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Voeg minimaal 1 extra taal toe"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Goed ingesteld"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Teksten gescand"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan eerst je belangrijkste pagina’s"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Beschikbaar in de editor"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Nog te doen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Open vertalingen controleren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Geen open vertalingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Op basis van gevonden teksten"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Nodig voordat je begint"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Talen staan goed"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Standaardtaal en doeltaal zijn actief."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Pagina’s zijn gescand"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan alleen pagina’s die je echt wilt vertalen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan openen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Editor is klaar"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Klik een zichtbare tekst op de pagina aan en vertaal direct in context."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Alleen relevante instellingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Doeltaal en URL-structuur: beheer dit bij Instellingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scanbron: beheer dit bij Vertalingen, zodat je niet onnodig alles scant."
+msgstr ""
+
+#: build/admin/index.js
+#: build/admin/index.js
+msgid "Cache legen na publiceren: controleer dit bij Status wanneer wijzigingen niet zichtbaar zijn."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Cache/status instellingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik de visuele editor voor"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Korte zichtbare teksten: knoppen, menu’s, labels en meldingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Pagina’s met builder-content waar tekstlengte en context belangrijk zijn."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Laatste controle op mobiel, CTA’s, formulieren en afgebroken tekst."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Niet hier doen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Bulkvertalingen: gebruik de Vertalingen-tab of CSV-import/export."
+msgstr ""
+
+#: build/admin/index.js
+msgid "SEO-titels, meta descriptions en slugs: gebruik de SEO/instellingen-flow."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Technische diagnose: gebruik Status in plaats van deze werkmodus."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Omlijnd"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Minimaal"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Browser automatisch naar voorkeurstaal sturen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Taalkeuze onthouden met cookie"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Media-altteksten en titels vertalen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "WooCommerce productvelden diep vertalen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Websitevertaling staat uit; afhankelijke frontend-opties zijn tijdelijk uitgeschakeld."
+msgstr ""
+
+#: build/admin/index.js
+msgid "SEO & compatibiliteit"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Taal-domeinen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Een per regel, formaat: en|https://example.com"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Formaliteit"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Formeler"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Informeler"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Liever formeler"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Liever informeler"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Visuele editor wijzigingen van vertalers eerst laten reviewen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan batchgrootte"
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV previewregels"
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV import maximum regels"
+msgstr ""
+
+
+#: build/admin/index.js
+msgid "CSV & back-up"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Exporteer, importeer of herstel vertalingen."
+msgstr ""
+
+
+#: build/admin/index.js
+msgid "Talen zijn ingesteld."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Stel minimaal één extra taal in."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Website is gescand."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Scan je belangrijkste pagina’s voordat je publiceert."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Geen open vertalingen gevonden."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer open vertalingen vóór livegang."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Hreflang staat aan voor meertalige SEO."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer hreflang bij Instellingen > SEO."
+msgstr ""
+
+#: build/admin/index.js
+msgid "SEO-instellingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertaal zichtbaar op de pagina"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik deze modus alleen wanneer context belangrijk is: knoppen, menu’s, formulieren, CTA’s en builder-content. Gebruik Vertalingen of CSV voor bulkwerk."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Naar vertalingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Klaar voor contextcontrole"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Beschikbaar in editor"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Werk open punten af"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Geen open punten"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Review"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Aan"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Uit"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Wijzigingen eerst controleren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Wijzigingen direct opslaan"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Wat moet je nu doen?"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Talen actief maken"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Kies de standaardtaal en minimaal één doeltaal."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Teksten scannen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Laat de plugin eerst de zichtbare teksten verzamelen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Context controleren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Open de pagina en controleer alleen teksten die visueel afhangen van plaats, lengte of context."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik deze tab alleen voor"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Knoppen, menu-items, formulieren en korte meldingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Builder-secties waar tekstlengte het ontwerp beïnvloedt."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Laatste controle vóór publicatie op desktop en mobiel."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Bulkvertalingen, SEO-teksten en technische instellingen horen in Vertalingen, CSV & back-up of Instellingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Bulkwerk en herstel"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Gebruik deze tab voor export, import, controlebestanden en woordenlijstbeheer. Dagelijks vertalen doe je in Vertalingen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Beheerderstools"
+msgstr ""
+
+#: build/admin/index.js
+msgid "AI-assistent"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Provider"
+msgstr ""
+
+#: build/admin/index.js app/Automation/AiTranslationService.php
+msgid "OpenAI-compatible API"
+msgstr ""
+
+#: build/admin/index.js
+msgid "OpenAI-compatible endpoint"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Voor providers met een /v1/chat/completions compatible API. Gebruik HTTPS. API-sleutel via WAT_OPENAI_COMPATIBLE_API_KEY."
+msgstr ""
+
+#: build/admin/index.js
+msgid "AI-verbinding testen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Test met een korte zin voordat je AI op echte klantcontent gebruikt. Sla gewijzigde instellingen eerst op."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Testtekst"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Doeltaalcode"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Test AI-verbinding"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Bezig met testen..."
+msgstr ""
+
+#: build/admin/index.js
+msgid "AI-test gelukt."
+msgstr ""
+
+#: build/admin/index.js
+msgid "AI-test mislukt."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Sla je AI-instellingen eerst op voordat je test."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Geen vertaling ontvangen."
+msgstr ""
+
+#: build/admin/index.js app/Automation/AiTranslationService.php
+msgid "AI API-sleutels kunnen via WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY, WAT_OPENAI_COMPATIBLE_API_KEY of het wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php
+msgid "Geen AI API-sleutel gevonden. Definieer WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY, WAT_OPENAI_COMPATIBLE_API_KEY of gebruik het wat_ai_api_key filter."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php
+msgid "Geen OpenAI-compatible endpoint ingesteld. Vul een HTTPS API basis-URL in of definieer WAT_OPENAI_COMPATIBLE_API_BASE."
+msgstr ""
+
+msgid "Preview is beperkt tot %d regels."
+msgstr ""
+
+msgid "Regel %d: kolommen komen niet overeen met header."
+msgstr ""
+
+msgid "Regel %d: language_code ontbreekt."
+msgstr ""
+
+msgid "Regel %d: original_text ontbreekt."
+msgstr ""
+
+msgid "Regel %d: dubbele hash/language combinatie."
+msgstr ""
+#: app/Automation/AiTranslationService.php:36
+msgid "AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen tenzij WAT_DISABLE_DB_AI_CREDENTIALS actief is. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden."
+msgstr ""
+
+
+#: build/admin/index.js
+msgid "Open de visuele editor om vertalingen direct op de pagina te controleren."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Rond eerst de taalinstellingen en scan af voordat je de visuele editor opent."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Instellingen opslaan"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Schakel AI-vertaling eerst in en sla de instellingen op."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php
+msgid "Het OpenAI-compatible endpoint is niet toegestaan."
+msgstr ""
+
+#: app/Automation/AiTranslationService.php
+msgid "AI-verzoek voorbereiden mislukt."
+msgstr ""

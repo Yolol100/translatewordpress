@@ -4,21 +4,12 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Rest\Concerns;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
-use Webactueel\Translate\Compatibility\CompatibilityRegistry;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Frontend\LanguageDetector;
 use Webactueel\Translate\ImportExport\CsvExporter;
 use Webactueel\Translate\ImportExport\CsvImporter;
 use Webactueel\Translate\ImportExport\CsvPreviewer;
-use Webactueel\Translate\Scanner\ScanBatchRunner;
-use Webactueel\Translate\Scanner\ScanJobManager;
-use Webactueel\Translate\Seo\HreflangManager;
 use Webactueel\Translate\Support\Logger;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
-use Webactueel\Translate\Translation\TranslationRepository;
-use Webactueel\Translate\Translation\GlossaryRepository;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -27,21 +18,29 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 trait CsvEndpoints
 {
     public function csv_preview(WP_REST_Request $request): array
     {
         $files = $request->get_file_params();
-        $result = (new CsvPreviewer())->preview_uploaded($files['file'] ?? [], absint(Settings::all()['csv_preview_rows']));
+        $settings = Settings::all();
+        $previewLimit = absint($settings['csv_preview_rows'] ?? 250);
+        if ($previewLimit < 1) {
+            $previewLimit = 250;
+        }
+        if ($previewLimit > 1000) {
+            $previewLimit = 1000;
+        }
+        $result = (new CsvPreviewer())->preview_uploaded($files['file'] ?? [], $previewLimit);
         do_action('wat_after_csv_preview', $result);
         return $result;
     }
 
     public function csv_import(WP_REST_Request $request)
     {
-        $params = $request->get_json_params() ?: $request->get_params();
+        $params = $request->get_params();
         $token = preg_replace('/[^a-zA-Z0-9]/', '', Input::scalar_string($params['preview_token'] ?? ''));
         if ($token === '') {
             return new WP_Error('wat_csv_preview_required', __('CSV import vereist eerst een geldige preview.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);

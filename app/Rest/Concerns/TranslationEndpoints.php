@@ -4,30 +4,17 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Rest\Concerns;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
-use Webactueel\Translate\Compatibility\CompatibilityRegistry;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\ImportExport\CsvExporter;
-use Webactueel\Translate\ImportExport\CsvImporter;
-use Webactueel\Translate\ImportExport\CsvPreviewer;
-use Webactueel\Translate\Scanner\ScanBatchRunner;
-use Webactueel\Translate\Scanner\ScanJobManager;
-use Webactueel\Translate\Seo\HreflangManager;
-use Webactueel\Translate\Support\Logger;
-use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
 use Webactueel\Translate\Translation\TranslationRepository;
-use Webactueel\Translate\Translation\GlossaryRepository;
 use WP_Error;
 use WP_REST_Request;
-use WP_REST_Response;
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 trait TranslationEndpoints
 {
@@ -42,11 +29,10 @@ trait TranslationEndpoints
         return (new TranslationRepository())->get_translations_for_string(absint($request['id']));
     }
 
-
     public function update_string(WP_REST_Request $request)
     {
         $id = absint($request['id']);
-        $params = $request->get_json_params() ?: [];
+        $params = $request->get_params();
         $language = Input::key($params['language_code'] ?? '');
         $translated = trim(wp_kses_post(Input::scalar_string($params['translated_text'] ?? '')));
         if (! $id || $language === '') {

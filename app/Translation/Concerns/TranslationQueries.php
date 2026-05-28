@@ -11,7 +11,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin uses its own custom translation tables; queries are scoped and cache invalidation is handled by the plugin.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait TranslationQueries
 {
@@ -29,7 +29,7 @@ trait TranslationQueries
         $effectiveStatusSql = 's.status AS effective_status';
 
         if ($language !== '') {
-            $translationsFilterTable = Tables::sql_identifier(Tables::translations());
+            $translationsFilterTable = esc_sql(Tables::translations());
             $joinFilter = " LEFT JOIN `{$translationsFilterTable}` tf ON s.id = tf.string_id AND tf.language_code = %s";
             $effectiveStatusSql = 'CASE WHEN tf.id IS NULL OR TRIM(COALESCE(tf.translated_text, "")) = "" THEN "new" ELSE COALESCE(tf.status, "new") END AS effective_status';
             $params[] = $language;
@@ -52,7 +52,7 @@ trait TranslationQueries
                     $params[] = $status;
                 }
             } elseif (in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
-                $where[] = 'EXISTS (SELECT 1 FROM `' . Tables::sql_identifier(Tables::translations()) . '` tx WHERE tx.string_id = s.id AND tx.status = %s)';
+                $where[] = 'EXISTS (SELECT 1 FROM `' . esc_sql(Tables::translations()) . '` tx WHERE tx.string_id = s.id AND tx.status = %s)';
                 $params[] = $status;
             } else {
                 $where[] = 's.status = %s';
@@ -66,8 +66,8 @@ trait TranslationQueries
         }
 
         $whereSql = implode(' AND ', $where);
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $stringsTable = esc_sql(Tables::strings());
+        $translationsTable = esc_sql(Tables::translations());
         $countSql = "SELECT COUNT(DISTINCT s.id) FROM `{$stringsTable}` s{$joinFilter} WHERE {$whereSql}";
         $total = $params ? (int) $wpdb->get_var($wpdb->prepare($countSql, $params)) : (int) $wpdb->get_var($countSql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names and a whitelist-built WHERE clause.
 
@@ -76,7 +76,6 @@ trait TranslationQueries
         $items = $wpdb->get_results($wpdb->prepare($sql, $queryParams), ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names and a whitelist-built WHERE clause.
         return ['items' => $items, 'total' => $total, 'page' => $page, 'per_page' => $perPage];
     }
-
 
     public function translate_text(string $text, string $languageCode): string
     {
@@ -97,9 +96,14 @@ trait TranslationQueries
     public function get_translations_for_string(int $stringId): array
     {
         global $wpdb;
-        $translationsTable = Tables::sql_identifier(Tables::translations());
-        $sql = "SELECT language_code, translated_text, status, origin, updated_at FROM `{$translationsTable}` WHERE string_id = %d ORDER BY language_code ASC";
-        $rows = $wpdb->get_results($wpdb->prepare($sql, absint($stringId)), ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is generated from the plugin-owned translations table helper.
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT language_code, translated_text, status, origin, updated_at FROM %i WHERE string_id = %d ORDER BY language_code ASC',
+                Tables::translations(),
+                absint($stringId)
+            ),
+            ARRAY_A
+        ) ?: [];
         $items = [];
         foreach ($rows as $row) {
             $code = Input::key($row['language_code'] ?? '');

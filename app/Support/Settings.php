@@ -11,7 +11,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Temporary error handlers are used to safely inspect malformed serialized data.
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Reviewed: public wat_* hooks are intentional.
 
@@ -86,7 +86,11 @@ final class Settings
 
     public static function has_ai_api_key(string $provider): bool
     {
-        return self::ai_api_key($provider) !== '';
+        $provider = self::allowed_key($provider, ['openai', 'deepl', 'openai_compatible'], 'openai');
+        $constant = $provider === 'deepl' ? 'WAT_DEEPL_API_KEY' : ($provider === 'openai_compatible' ? 'WAT_OPENAI_COMPATIBLE_API_KEY' : 'WAT_OPENAI_API_KEY');
+        $key = defined($constant) ? (string) constant($constant) : self::ai_api_key($provider);
+        $filtered = apply_filters('wat_ai_api_key', $key, $provider);
+        return is_scalar($filtered) && trim((string) $filtered) !== '';
     }
 
     private static function update_ai_api_key(string $provider, string $apiKey): void
@@ -95,7 +99,8 @@ final class Settings
         $credentials = get_option('wat_ai_credentials', []);
         $credentials = is_array($credentials) ? $credentials : [];
         $apiKey = trim(sanitize_text_field($apiKey));
-        if ($apiKey === '') {
+        $dbStorageDisabled = defined('WAT_DISABLE_DB_AI_CREDENTIALS') && (bool) WAT_DISABLE_DB_AI_CREDENTIALS;
+        if ($apiKey === '' || $dbStorageDisabled) {
             unset($credentials[$provider]);
         } else {
             $credentials[$provider] = $apiKey;
@@ -172,7 +177,6 @@ final class Settings
         return self::all();
     }
 
-
     public static function sanitize_ai_endpoint($value): string
     {
         $endpoint = esc_url_raw(Input::scalar_string($value));
@@ -227,7 +231,14 @@ final class Settings
         }
 
         if (function_exists('dns_get_record')) {
-            $records = @dns_get_record($host, DNS_A + DNS_AAAA);
+            set_error_handler(static function (): bool {
+                return true;
+            });
+            try {
+                $records = dns_get_record($host, DNS_A + DNS_AAAA);
+            } finally {
+                restore_error_handler();
+            }
             if (is_array($records)) {
                 foreach ($records as $record) {
                     if (! empty($record['ip']) && is_string($record['ip'])) {
@@ -296,5 +307,4 @@ final class Settings
 
         return in_array($model, $allowed, true) ? $model : $default;
     }
-
 }

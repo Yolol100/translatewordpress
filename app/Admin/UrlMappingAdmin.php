@@ -67,7 +67,7 @@ final class UrlMappingAdmin
             return;
         }
         $raw_paths = Input::post_array_text('wat_language_paths');
-        if (! is_array($raw_paths)) {
+        if ($raw_paths === []) {
             delete_post_meta($postId, UrlMapping::META_KEY);
             return;
         }
@@ -117,7 +117,7 @@ final class UrlMappingAdmin
             return;
         }
         $raw_paths = Input::post_array_text('wat_language_paths');
-        if (! is_array($raw_paths)) {
+        if ($raw_paths === []) {
             delete_term_meta($termId, UrlMapping::META_KEY);
             return;
         }

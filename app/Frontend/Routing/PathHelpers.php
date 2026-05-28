@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Frontend\Routing;
 
 use Webactueel\Translate\Frontend\LanguageDetector;
-use Webactueel\Translate\Frontend\LanguageDomainMapper;
-use Webactueel\Translate\Frontend\UrlMapping;
-use Webactueel\Translate\Support\Settings;
-use Webactueel\Translate\Support\Input;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -91,9 +87,8 @@ trait PathHelpers
      * the generic home query and can show the posts/archive index instead of the
      * actual homepage.
      *
-     * @return array<string, mixed>
+     * @return string
      */
-
     private static function path_without_site_base(string $path): string
     {
         $pathOnly = wp_parse_url($path, PHP_URL_PATH);

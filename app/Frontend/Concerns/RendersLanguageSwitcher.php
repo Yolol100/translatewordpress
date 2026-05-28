@@ -12,7 +12,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Hooks intentionally use the plugin prefix wat_ for the public extension API.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 trait RendersLanguageSwitcher
 {
@@ -30,9 +30,13 @@ trait RendersLanguageSwitcher
         $activeFlag = Input::scalar_string($active['flag'] ?? '');
 
         $menuId = 'wat-switcher-menu-' . wp_generate_uuid4();
+        $buttonId = $menuId . '-button';
+        $helpId = $menuId . '-help';
         $out = '<nav class="' . esc_attr(implode(' ', $classes)) . '" aria-label="' . esc_attr__('Taal kiezen', 'webactueel-translate-language-dropdowns') . '">';
-        $out .= '<button type="button" class="wat-switcher-toggle" aria-haspopup="true" aria-controls="' . esc_attr($menuId) . '" aria-expanded="false">' . self::label('flags_name', $activeCode, $activeNative, $activeFlag) . '<span class="wat-switcher-chevron" aria-hidden="true">▾</span></button>';
-        $out .= '<ul id="' . esc_attr($menuId) . '" class="wat-switcher-menu" hidden>';
+        $out .= '<span id="' . esc_attr($helpId) . '" class="wat-switcher-sr-only">' . esc_html__('Gebruik Enter, spatie of de pijltjestoetsen om een taal te kiezen. Vlaggen zijn visuele taalindicaties; de taalnaam is leidend.', 'webactueel-translate-language-dropdowns') . '</span>';
+        // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+        $out .= '<button id="' . esc_attr($buttonId) . '" type="button" class="wat-switcher-toggle" aria-label="' . esc_attr(sprintf(__('Huidige taal: %s. Taalmenu openen', 'webactueel-translate-language-dropdowns'), $activeNative)) . '" aria-controls="' . esc_attr($menuId) . '" aria-describedby="' . esc_attr($helpId) . '" aria-expanded="false">' . self::label('flags_name', $activeCode, $activeNative, $activeFlag) . '<span class="wat-switcher-chevron" aria-hidden="true">▾</span></button>';
+        $out .= '<ul id="' . esc_attr($menuId) . '" class="wat-switcher-menu" aria-labelledby="' . esc_attr($buttonId) . '" hidden>';
         foreach ($languages as $language) {
             $out .= self::item($language, $current, 'flags_name');
         }
@@ -74,8 +78,11 @@ trait RendersLanguageSwitcher
             return '';
         }
         $active = $code === $current ? ' aria-current="page" class="is-active"' : '';
-        $ariaLabel = $layout === 'flags' ? ' aria-label="' . esc_attr($native) . '"' : '';
-        return '<li><a href="' . esc_url($url) . '" hreflang="' . esc_attr($code) . '" lang="' . esc_attr($code) . '"' . $active . $ariaLabel . ' data-wat-language="' . esc_attr($code) . '">' . $label . '</a></li>';
+        // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+        $ariaLabel = $layout === 'flags' ? ' aria-label="' . esc_attr(sprintf(__('Taal wijzigen naar %s', 'webactueel-translate-language-dropdowns'), $native)) . '"' : '';
+        // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
+        $title = ' title="' . esc_attr(sprintf(__('Taal wijzigen naar %s', 'webactueel-translate-language-dropdowns'), $native)) . '"';
+        return '<li><a href="' . esc_url($url) . '" hreflang="' . esc_attr($code) . '" lang="' . esc_attr($code) . '"' . $active . $ariaLabel . $title . ' data-wat-language="' . esc_attr($code) . '">' . $label . '</a></li>';
     }
 
     /**

@@ -92,8 +92,8 @@ final class ReplacementManager
             return;
         }
 
-        // AI-PATCH: Never deactivate or delete another plugin during activation.
-        // Store detected candidates for an explicit, human-reviewed cleanup instead.
+        // Never deactivate or delete another plugin during activation.
+        // Store detected candidates for explicit, human-reviewed cleanup instead.
         update_option('wat_replacement_cleanup_targets', $targets, false);
         delete_option('wat_replacement_cleanup_error');
         delete_option('wat_replaced_plugins');
@@ -140,8 +140,8 @@ final class ReplacementManager
             return true;
         }
 
-        // Last-resort functional match: only delete if the plugin is explicitly a
-        // Webactueel/WAT build and also describes the same translation/dropdown role.
+        // Last-resort functional match: only flag plugins that are explicitly a
+        // Webactueel/WAT build and also describe the same translation/dropdown role.
         if ((str_contains($slug, 'webactueel') || str_contains($slug, 'wat-') || str_contains($headerText, 'webactueel'))
             && self::functional_match_score($headerText) >= 2) {
             return true;

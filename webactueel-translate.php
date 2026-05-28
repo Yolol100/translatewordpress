@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Webactueel Translate
  * Description: Universal frontend translation plugin with manual translations, setup workflow, clean language URLs, CSV import/export, SEO foundations and compatibility-safe output translation.
- * Version: 1.6.46
+ * Version: 1.7.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Webactueel
@@ -18,7 +18,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('WAT_VERSION', '1.6.46');
+define('WAT_VERSION', '1.7.0');
 define('WAT_PLUGIN_FILE', __FILE__);
 define('WAT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WAT_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -52,11 +52,5 @@ add_action('before_woocommerce_init', static function (): void {
 });
 
 add_action('plugins_loaded', static function (): void {
-    load_plugin_textdomain(
-        WAT_TEXT_DOMAIN,
-        false,
-        dirname(plugin_basename(WAT_PLUGIN_FILE)) . '/languages'
-    );
-
     Webactueel\Translate\Plugin::instance()->boot();
 });

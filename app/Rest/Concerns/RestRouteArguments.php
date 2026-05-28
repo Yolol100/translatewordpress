@@ -37,8 +37,6 @@ trait RestRouteArguments
         return true;
     }
 
-
-
     public static function validate_ai_model($value): bool
     {
         if (! is_scalar($value)) {
@@ -50,9 +48,14 @@ trait RestRouteArguments
             return true;
         }
 
-        return in_array($model, Settings::allowed_ai_models('openai'), true)
-            || in_array($model, Settings::allowed_ai_models('deepl'), true)
-            || in_array($model, Settings::allowed_ai_models('openai_compatible'), true);
+        // Allow custom OpenAI-compatible model identifiers while keeping the value
+        // shape safe; Settings::update() still normalizes non-compatible providers
+        // back to their allow-listed models.
+        if (function_exists('mb_strlen') ? mb_strlen($model) > 120 : strlen($model) > 120) {
+            return false;
+        }
+
+        return preg_match('/^[A-Za-z0-9._:\/\-]+$/', $model) === 1;
     }
 
     private function id_arg(): array
@@ -71,7 +74,11 @@ trait RestRouteArguments
     private function language_args(): array
     {
         return [
-            'code' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
+            'code' => [
+                'type' => 'string',
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'locale' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
             'name' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
             'native_name' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
@@ -86,8 +93,16 @@ trait RestRouteArguments
     {
         return [
             'search' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
-            'language' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
-            'status' => ['type' => 'string', 'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored', 'new'], 'sanitize_callback' => 'sanitize_key'],
+            'language' => [
+                'type' => 'string',
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'status' => [
+                'type' => 'string',
+                'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored', 'new'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'source_type' => ['type' => 'string', 'sanitize_callback' => 'sanitize_key'],
             'page' => ['type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
             'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 200, 'sanitize_callback' => 'absint'],
@@ -97,7 +112,12 @@ trait RestRouteArguments
     private function translation_args(): array
     {
         return [
-            'language_code' => ['type' => 'string', 'required' => true, 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
+            'language_code' => [
+                'type' => 'string',
+                'required' => true,
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'translated_text' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'wp_kses_post'],
             'status' => ['type' => 'string', 'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored'], 'sanitize_callback' => 'sanitize_key'],
             'apply_memory' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
@@ -143,7 +163,12 @@ trait RestRouteArguments
             'id' => ['type' => 'integer', 'minimum' => 1, 'sanitize_callback' => 'absint'],
             'source_term' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
             'target_term' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-            'language_code' => ['type' => 'string', 'required' => true, 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
+            'language_code' => [
+                'type' => 'string',
+                'required' => true,
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'case_sensitive' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
         ];
     }
@@ -174,17 +199,36 @@ trait RestRouteArguments
             'ai_enabled' => $boolean,
             'ai_review_required' => $boolean,
             'performance_monitoring' => $boolean,
-            'ai_provider' => ['type' => 'string', 'enum' => ['openai', 'deepl', 'openai_compatible'], 'sanitize_callback' => 'sanitize_key'],
-            'ai_model' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_ai_model'], 'sanitize_callback' => 'sanitize_text_field'],
+            'ai_provider' => [
+                'type' => 'string',
+                'enum' => ['openai', 'deepl', 'openai_compatible'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'ai_model' => [
+                'type' => 'string',
+                'validate_callback' => [self::class, 'validate_ai_model'],
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
             'ai_custom_endpoint' => [
                 'type' => 'string',
-                'sanitize_callback' => ['\Webactueel\Translate\Support\Settings', 'sanitize_ai_endpoint'],
-                'validate_callback' => static fn($value): bool => ! is_scalar($value) ? false : ((string) $value === '' || \Webactueel\Translate\Support\Settings::sanitize_ai_endpoint($value) !== ''),
+                'sanitize_callback' => [Settings::class, 'sanitize_ai_endpoint'],
+                'validate_callback' => static function ($value): bool {
+                    return is_scalar($value)
+                        && ((string) $value === '' || Settings::sanitize_ai_endpoint($value) !== '');
+                },
             ],
             'ai_api_key' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
             'ai_api_key_clear' => $boolean,
-            'ai_tone' => ['type' => 'string', 'enum' => ['professional', 'friendly', 'formal', 'casual', 'seo'], 'sanitize_callback' => 'sanitize_key'],
-            'ai_formality' => ['type' => 'string', 'enum' => ['default', 'more', 'less', 'prefer_more', 'prefer_less'], 'sanitize_callback' => 'sanitize_key'],
+            'ai_tone' => [
+                'type' => 'string',
+                'enum' => ['professional', 'friendly', 'formal', 'casual', 'seo'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'ai_formality' => [
+                'type' => 'string',
+                'enum' => ['default', 'more', 'less', 'prefer_more', 'prefer_less'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'max_buffer_size' => ['type' => 'integer', 'minimum' => 100000, 'maximum' => 5000000, 'sanitize_callback' => 'absint'],
             'max_replacements' => ['type' => 'integer', 'minimum' => 10, 'maximum' => 5000, 'sanitize_callback' => 'absint'],
             'scan_batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint'],
@@ -192,9 +236,17 @@ trait RestRouteArguments
             'csv_preview_rows' => ['type' => 'integer', 'minimum' => 20, 'maximum' => 1000, 'sanitize_callback' => 'absint'],
             'csv_import_max_rows' => ['type' => 'integer', 'minimum' => 100, 'maximum' => 50000, 'sanitize_callback' => 'absint'],
             'language_domains' => $textarea,
-            'switcher_layout' => ['type' => 'string', 'enum' => ['dropdown', 'inline', 'flags_name', 'flags', 'code', 'flag_code', 'name_code', 'flags_name_code'], 'sanitize_callback' => 'sanitize_key'],
+            'switcher_layout' => [
+                'type' => 'string',
+                'enum' => ['dropdown', 'inline', 'flags_name', 'flags', 'code', 'flag_code', 'name_code', 'flags_name_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'switcher_style' => ['type' => 'string', 'enum' => ['light', 'dark', 'compact', 'outline', 'minimal'], 'sanitize_callback' => 'sanitize_key'],
-            'switcher_position' => ['type' => 'string', 'enum' => ['bottom-right', 'bottom-left', 'top-right', 'top-left'], 'sanitize_callback' => 'sanitize_key'],
+            'switcher_position' => [
+                'type' => 'string',
+                'enum' => ['bottom-right', 'bottom-left', 'top-right', 'top-left'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
             'exclude_selectors' => $textarea,
             'exclude_paths' => $textarea,
         ];

@@ -75,7 +75,6 @@ final class SeoMetaManager
         return $translated !== '' ? $translated : $description;
     }
 
-
     public function canonical(string $canonical): string
     {
         $translated = self::current_canonical_url();

@@ -67,15 +67,15 @@ final class AdminMenu
         $asset = is_readable($assetFile) ? require $assetFile : ['dependencies' => ['wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n', 'wp-notices'], 'version' => WAT_VERSION];
         $dependencies = isset($asset['dependencies']) && is_array($asset['dependencies']) ? array_values(array_filter($asset['dependencies'], 'is_string')) : ['wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n', 'wp-notices'];
         $version = isset($asset['version']) && is_scalar($asset['version']) ? (string) $asset['version'] : WAT_VERSION;
-        $pluginUrl = defined('WAT_PLUGIN_URL') && is_string(WAT_PLUGIN_URL) ? WAT_PLUGIN_URL : plugin_dir_url(WAT_PLUGIN_FILE);
-        $pluginDir = defined('WAT_PLUGIN_DIR') && is_string(WAT_PLUGIN_DIR) ? WAT_PLUGIN_DIR : plugin_dir_path(WAT_PLUGIN_FILE);
+        $pluginUrl = WAT_PLUGIN_URL;
+        $pluginDir = WAT_PLUGIN_DIR;
 
         wp_enqueue_style('wp-components');
         wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', $pluginUrl . 'build/shared/design-system.css', ['wp-components'], $version);
         wp_enqueue_style('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
         wp_enqueue_script('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.js', $dependencies, $version, true);
         wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
-        wp_add_inline_script('webactueel-translate-language-dropdowns-admin', 'window.WebactueelTranslate = ' . wp_json_encode([
+        $configJson = wp_json_encode([
             'restUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin UI tab selection; no state change is performed.
@@ -91,7 +91,11 @@ final class AdminMenu
             ),
             'siteUrl' => esc_url_raw(home_url('/')),
             'visualEditorUrl' => esc_url_raw(add_query_arg('wat_visual_editor', '1', home_url('/'))),
-        ]) . ';', 'before');
+        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if (! is_string($configJson)) {
+            $configJson = '{}';
+        }
+        wp_add_inline_script('webactueel-translate-language-dropdowns-admin', 'window.WebactueelTranslate = ' . $configJson . ';', 'before');
     }
 
     public function admin_notices(): void
@@ -140,7 +144,13 @@ final class AdminMenu
         }
 
         echo '<div class="wrap wat-admin-wrap">';
-        echo '<div id="webactueel-translate-admin-root" class="webactueel-translate-admin wat-admin webactueel-translate-language-dropdowns-admin"></div>';
+        echo '<div id="webactueel-translate-admin-root" class="webactueel-translate-admin wat-admin webactueel-translate-language-dropdowns-admin">';
+        echo '<div id="wat-admin-fallback" class="wat-admin-fallback">';
+        echo '<h1>' . esc_html__('Webactueel Translate', 'webactueel-translate-language-dropdowns') . '</h1>';
+        echo '<p>' . esc_html__('De beheerinterface wordt geladen. Blijft dit scherm staan, controleer dan of WordPress admin-scripts en de REST API niet worden geblokkeerd.', 'webactueel-translate-language-dropdowns') . '</p>';
+        echo '<noscript><p>' . esc_html__('JavaScript is nodig om Webactueel Translate te beheren.', 'webactueel-translate-language-dropdowns') . '</p></noscript>';
+        echo '</div>';
+        echo '</div>';
         echo '</div>';
     }
 }

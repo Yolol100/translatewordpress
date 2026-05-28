@@ -72,9 +72,13 @@ final class VisualEditor
             'protectedSelectors' => BuilderCompatibility::protected_selectors(),
             'builders' => BuilderCompatibility::detect_active_builders(),
         ];
+        $configJson = wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if (! is_string($configJson)) {
+            $configJson = '{}';
+        }
         wp_add_inline_script(
             'wat-visual-editor',
-            'window.watVisualEditor = ' . wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';',
+            'window.watVisualEditor = ' . $configJson . ';',
             'before'
         );
     }
@@ -119,5 +123,4 @@ final class VisualEditor
 
         return $this->editable_languages()[0]['code'] ?? '';
     }
-
 }

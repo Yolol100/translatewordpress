@@ -2,13 +2,13 @@
 Contributors: webactueel
 Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.46
+Stable tag: 1.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Frontend-only translation plugin with manual translations, CSV import/export, scanning, a React admin interface and a React-powered visual translation editor.
+Frontend translation plugin with manual translations, CSV import/export, scanning and a visual translation editor.
 
 == Description ==
 
@@ -59,7 +59,7 @@ This plugin uses plugin-owned custom database tables for translations, languages
 
 This plugin stores its own settings, languages, translation strings, translation values, scan jobs and logs in WordPress options and custom database tables. Translation strings may contain personal data when personal data exists in the original site content.
 
-When AI translation is enabled, the text submitted for translation is sent to the configured external provider (OpenAI, DeepL or an OpenAI-compatible provider) for processing. The provider, model, source text, target language and tone/formality options may be part of that request. API keys can be read from server constants, supplied through the wat_ai_api_key filter or saved through the plugin settings; keys saved through the admin UI are stored in the WordPress database with autoload disabled. Site owners should only enable AI translation after confirming that the selected provider, processing location, retention terms, data processing agreement and privacy policy fit their legal and client requirements. AI translation is disabled by default and generated translations can remain review-first before publication.
+When AI translation is enabled, the text submitted for translation is sent to the configured external provider (OpenAI, DeepL or an OpenAI-compatible provider) for processing. The provider, model, source text, target language and tone/formality options may be part of that request. API keys can be read from server constants, supplied through the wat_ai_api_key filter or saved through the plugin settings; keys saved through the admin UI are stored in the WordPress database with autoload disabled unless `WAT_DISABLE_DB_AI_CREDENTIALS` is enabled. Site owners should only enable AI translation after confirming that the selected provider, processing location, retention terms, data processing agreement and privacy policy fit their legal and client requirements. AI translation is disabled by default and generated translations can remain review-first before publication.
 
 External AI services used only when enabled/configured:
 
@@ -70,6 +70,16 @@ External AI services used only when enabled/configured:
 When frontend language detection is enabled, the plugin can store the selected language in the `wat_language` cookie. CSV previews are temporarily copied to a protected temporary directory, tied to the administrator who created them and removed after import or expiry. The admin interface may store dashboard preferences in user meta and local browser storage. The plugin registers WordPress privacy policy helper text plus exporter and eraser callbacks for administrator preferences.
 
 == Changelog ==
+
+= 1.7.0 =
+* Preserved WordPress-safe HTML in AI translation input and provider output instead of stripping all markup.
+* Added DeepL HTML tag handling when translated text contains markup.
+* Made AI API-key status include server constants and the wat_ai_api_key filter.
+* Added optional WAT_DISABLE_DB_AI_CREDENTIALS support to prevent storing AI keys in the database.
+* Completed uninstall cleanup for AI credentials, plugin options, transients, translator capabilities and temporary CSV preview files.
+* Relaxed REST AI model validation for safe OpenAI-compatible custom model identifiers while preserving provider-side normalization.
+* Hardened scanner decoding for serialized arrays by disabling class instantiation.
+* Completed CSV preview localization and preserved WordPress-safe HTML in preview rows.
 
 = 1.6.46 =
 * Release-candidate hardening for WordPress.org readiness.
