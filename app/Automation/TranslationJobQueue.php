@@ -23,6 +23,7 @@ final class TranslationJobQueue
 
     public const TYPE_AI_TRANSLATION = 'ai_translation';
     private const MAX_BATCH_SIZE = 20;
+    private const MAX_AI_TEXT_LENGTH = 5000;
 
     /** @param array<string, mixed> $options */
     public static function enqueue(array $options): int
@@ -63,6 +64,7 @@ final class TranslationJobQueue
             'queue_table' => Tables::jobs(),
             'worker_available' => true,
             'max_batch_size' => self::MAX_BATCH_SIZE,
+            'max_text_length' => self::MAX_AI_TEXT_LENGTH,
             'review_first' => true,
             'status' => __('AI-batchvertaling is beschikbaar voor beheerders. Batches blijven klein, respecteren providerlimieten en slaan output standaard als review-vertaling op.', 'webactueel-translate-language-dropdowns'),
         ];
@@ -97,7 +99,6 @@ final class TranslationJobQueue
     /** @return array<string, mixed>|WP_Error */
     public static function run_batch(int $jobId, int $batchSize = 5)
     {
-        global $wpdb;
         $job = self::get_job($jobId);
         if (is_wp_error($job)) {
             return $job;
@@ -143,7 +144,7 @@ final class TranslationJobQueue
         foreach ($items as $item) {
             $stringId = absint($item['id'] ?? 0);
             $original = Input::scalar_string($item['original_text'] ?? '');
-            if ($stringId <= 0 || $original === '') {
+            if ($stringId <= 0 || $original === '' || self::string_length($original) > self::MAX_AI_TEXT_LENGTH) {
                 $skipped++;
                 $lastCursor = max($lastCursor, $stringId);
                 continue;
@@ -256,8 +257,8 @@ final class TranslationJobQueue
         $translationsTable = Tables::sql_identifier(Tables::translations());
         $targetLanguage = Input::key($options['target_language'] ?? '');
         $status = Input::key($options['status'] ?? 'new');
-        $params = [$targetLanguage, max(0, $cursor)];
-        $where = ['s.id > %d', 'TRIM(s.original_text) <> ""'];
+        $params = [$targetLanguage, max(0, $cursor), self::MAX_AI_TEXT_LENGTH];
+        $where = ['s.id > %d', 'TRIM(s.original_text) <> ""', 'CHAR_LENGTH(s.original_text) <= %d'];
         $joinSql = "LEFT JOIN `{$translationsTable}` t ON t.string_id = s.id AND t.language_code = %s";
 
         if (in_array($status, ['new', 'missing'], true)) {
@@ -299,5 +300,10 @@ final class TranslationJobQueue
     {
         $decoded = json_decode($json, true);
         return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function string_length(string $text): int
+    {
+        return function_exists('mb_strlen') ? mb_strlen($text) : strlen($text);
     }
 }
