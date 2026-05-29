@@ -4,7 +4,7 @@ Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Frontend translation plugin with manual translations, CSV import/export, scannin
 
 == Description ==
 
-Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. Version 1.6 adds a stronger product layer: visual editing, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
+Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. Version 1.7 adds a stronger workflow layer: visual editing, managed AI batches, quality reporting, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
 
 == Features ==
 
@@ -20,6 +20,8 @@ Webactueel Translate scans frontend-visible WordPress content and lets administr
 * Language management.
 * Visual translation editor for editing page text in context.
 * Dedicated translator role/capability for review-first translation workflows.
+* Managed AI batch translation foundations for small, review-first administrator-controlled batches.
+* Translation quality report data for missing translations, review work, identical source/target text and possible broken markup.
 * Media translation fields for per-language image replacements, alt text and titles.
 * WooCommerce-aware product, variation, attribute, order-item and product-term translation filters.
 * Browser-language redirect support with locale/q-value matching and safe request guards.
@@ -44,7 +46,7 @@ Webactueel Translate scans frontend-visible WordPress content and lets administr
 1. Upload webactueel-translate-language-dropdowns.zip in WordPress > Plugins > Nieuwe plugin.
 2. Activate Webactueel Translate.
 3. Open Webactueel Translate in the admin sidebar.
-4. Add languages, run a scan and add translations manually or via CSV.
+4. Add languages, run a scan and add translations manually, visually, with managed AI batches or via CSV.
 
 
 == Performance and compatibility notes ==
@@ -54,6 +56,8 @@ Meertalige SEO bevat hreflang, per-taal canonicals, Yoast/Rank Math metadata fil
 Frontend output translation is guarded for normal HTML GET responses only. It skips admin, REST, AJAX, cron, feeds, sitemaps, XML-RPC and POST requests, respects a configurable maximum buffer size and is disabled for WooCommerce cart, checkout and account flows when safe mode is enabled. Translation maps use WordPress object cache and transients with plugin-owned invalidation.
 
 This plugin uses plugin-owned custom database tables for translations, languages, glossary, scan jobs and logs. Direct database queries are intentional for those tables and should be reviewed together with their table-name escaping, placeholders, capability checks and cache invalidation behavior.
+
+Managed AI batches are administrator-only, deliberately small and review-first. Long strings above the provider request limit are skipped rather than blocking the full batch. Generated translations should be reviewed before publication.
 
 == Privacy ==
 
@@ -70,6 +74,12 @@ External AI services used only when enabled/configured:
 When frontend language detection is enabled, the plugin can store the selected language in the `wat_language` cookie. CSV previews are temporarily copied to a protected temporary directory, tied to the administrator who created them and removed after import or expiry. The admin interface may store dashboard preferences in user meta and local browser storage. The plugin registers WordPress privacy policy helper text plus exporter and eraser callbacks for administrator preferences.
 
 == Changelog ==
+
+= 1.7.1 =
+* Added managed AI translation jobs with administrator-only REST endpoints for enqueueing, reading and running small batches.
+* Added review-first AI batch worker support with provider failure pausing, progress counters, cursor tracking and overlong-string skipping.
+* Added translation quality report data for missing translations, review work, identical source/target text and possible broken markup.
+* Exposed workflow quality data through REST for future admin dashboard/publication checks.
 
 = 1.7.0 =
 * Preserved WordPress-safe HTML in AI translation input and provider output instead of stripping all markup.
@@ -126,7 +136,7 @@ When frontend language detection is enabled, the plugin can store the selected l
 * Added stricter CSV export response headers for browser download hardening.
 * Added explicit upload error handling before CSV preview processing.
 * Made remaining CSV import validation messages translatable.
-* Re-ran static PHP, JavaScript, ZIP and WordPress quality checks before packaging.
+* Re-ran static PHP, JavaScript, JSON and ZIP integrity.
 
 = 1.6.17 =
 * Added visible controls for browser redirect, remember-language cookies, media translation, WooCommerce deep translation, and visual-editor review workflow.
