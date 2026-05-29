@@ -180,20 +180,23 @@ final class ProductFeaturesRestService
         );
     }
 
-    public function ai_job_enqueue(WP_REST_Request $request): array
+    public function ai_job_enqueue(WP_REST_Request $request)
     {
         $jobId = TranslationJobQueue::enqueue($request->get_params());
-        return ['job' => TranslationJobQueue::get_job($jobId)];
+        $job = TranslationJobQueue::get_job($jobId);
+        return is_wp_error($job) ? $job : ['job' => $job];
     }
 
     public function ai_job(WP_REST_Request $request)
     {
-        return ['job' => TranslationJobQueue::get_job(absint($request['id']))];
+        $job = TranslationJobQueue::get_job(absint($request['id']));
+        return is_wp_error($job) ? $job : ['job' => $job];
     }
 
     public function ai_job_run_batch(WP_REST_Request $request)
     {
-        return ['job' => TranslationJobQueue::run_batch(absint($request['id']), absint($request->get_param('batch_size') ?: 5))];
+        $job = TranslationJobQueue::run_batch(absint($request['id']), absint($request->get_param('batch_size') ?: 5));
+        return is_wp_error($job) ? $job : ['job' => $job];
     }
 
     public function performance_snapshot(): array
