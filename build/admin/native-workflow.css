@@ -3,6 +3,11 @@
   margin: 0 0 20px;
 }
 
+.webactueel-translate-admin.wat-native-workflow-shell[hidden],
+.webactueel-translate-admin.is-workflow-tab-active .wat-tab-content {
+  display: none !important;
+}
+
 .webactueel-translate-admin .wat-native-workflow-root {
   max-width: 1280px;
 }
