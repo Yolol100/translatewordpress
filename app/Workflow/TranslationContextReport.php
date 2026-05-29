@@ -71,7 +71,7 @@ final class TranslationContextReport
                     MIN(LEFT(s.original_text, 240)) AS source_preview,
                     COUNT(DISTINCT s.id) AS string_count,
                     COUNT(DISTINCT CONCAT(COALESCE(s.source_type, ''), '|', COALESCE(s.context, ''), '|', COALESCE(s.source_key, ''))) AS context_count,
-                    COUNT(DISTINCT TRIM(COALESCE(t.translated_text, ''))) AS translation_variants,
+                    COUNT(DISTINCT NULLIF(TRIM(COALESCE(t.translated_text, '')), '')) AS translation_variants,
                     GROUP_CONCAT(DISTINCT t.status ORDER BY t.status SEPARATOR ',') AS statuses,
                     MAX(s.last_seen_at) AS last_seen_at
                 FROM `{$stringsTable}` s
@@ -104,7 +104,7 @@ final class TranslationContextReport
                     MIN(LEFT(s.original_text, 240)) AS source_preview,
                     COUNT(DISTINCT s.id) AS string_count,
                     COUNT(DISTINCT CONCAT(COALESCE(s.source_type, ''), '|', COALESCE(s.context, ''), '|', COALESCE(s.source_key, ''))) AS context_count,
-                    COUNT(DISTINCT TRIM(COALESCE(t.translated_text, ''))) AS translation_variants,
+                    COUNT(DISTINCT NULLIF(TRIM(COALESCE(t.translated_text, '')), '')) AS translation_variants,
                     GROUP_CONCAT(DISTINCT s.source_type ORDER BY s.source_type SEPARATOR ',') AS source_types,
                     MAX(s.last_seen_at) AS last_seen_at
                 FROM `{$stringsTable}` s
