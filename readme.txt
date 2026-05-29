@@ -4,7 +4,7 @@ Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Frontend translation plugin with manual translations, CSV import/export, scannin
 
 == Description ==
 
-Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. Version 1.7 adds a stronger workflow layer: visual editing, managed AI batches, quality reporting, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
+Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. Version 1.7 adds a stronger workflow layer: visual editing, managed AI batches, quality and context reporting, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
 
 == Features ==
 
@@ -22,6 +22,7 @@ Webactueel Translate scans frontend-visible WordPress content and lets administr
 * Dedicated translator role/capability for review-first translation workflows.
 * Managed AI batch translation foundations for small, review-first administrator-controlled batches.
 * Translation quality report data for missing translations, review work, identical source/target text and possible broken markup.
+* Translation context warnings for reused source text, conflicting translation variants and multi-context strings.
 * Media translation fields for per-language image replacements, alt text and titles.
 * WooCommerce-aware product, variation, attribute, order-item and product-term translation filters.
 * Browser-language redirect support with locale/q-value matching and safe request guards.
@@ -59,6 +60,8 @@ This plugin uses plugin-owned custom database tables for translations, languages
 
 Managed AI batches are administrator-only, deliberately small and review-first. Long strings above the provider request limit are skipped rather than blocking the full batch. Generated translations should be reviewed before publication.
 
+Context warnings are read-only workflow diagnostics. They do not change translations automatically; they help translators find reused source text, repeated contexts and conflicting translation variants before publication.
+
 == Privacy ==
 
 This plugin stores its own settings, languages, translation strings, translation values, scan jobs and logs in WordPress options and custom database tables. Translation strings may contain personal data when personal data exists in the original site content.
@@ -74,6 +77,11 @@ External AI services used only when enabled/configured:
 When frontend language detection is enabled, the plugin can store the selected language in the `wat_language` cookie. CSV previews are temporarily copied to a protected temporary directory, tied to the administrator who created them and removed after import or expiry. The admin interface may store dashboard preferences in user meta and local browser storage. The plugin registers WordPress privacy policy helper text plus exporter and eraser callbacks for administrator preferences.
 
 == Changelog ==
+
+= 1.7.2 =
+* Added read-only translation context warnings for reused source text, conflicting translation variants and multi-context strings.
+* Exposed context warnings through the workflow REST API for future dashboard review cards.
+* Documented context warnings as diagnostics that do not automatically change translations.
 
 = 1.7.1 =
 * Added managed AI translation jobs with administrator-only REST endpoints for enqueueing, reading and running small batches.
