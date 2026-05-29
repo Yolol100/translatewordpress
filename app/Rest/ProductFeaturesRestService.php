@@ -65,6 +65,38 @@ final class ProductFeaturesRestService
         ];
     }
 
+    /** @return array<string, array<string, mixed>> */
+    private function ai_job_args(): array
+    {
+        return [
+            'target_language' => [
+                'type' => 'string',
+                'required' => true,
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'source_language' => [
+                'type' => 'string',
+                'validate_callback' => [self::class, 'validate_optional_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'status' => [
+                'type' => 'string',
+                'enum' => ['new', 'missing', 'draft', 'needs_review', 'reviewed', 'published'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'sanitize_callback' => 'absint'],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function ai_job_batch_args(): array
+    {
+        return array_merge($this->id_arg(), [
+            'batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'sanitize_callback' => 'absint'],
+        ]);
+    }
+
     public function routes(): void
     {
         register_rest_route($this->namespace, '/setup', [
@@ -91,6 +123,24 @@ final class ProductFeaturesRestService
                 'source_language' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_optional_language_code'], 'sanitize_callback' => 'sanitize_key'],
                 'target_language' => ['type' => 'string', 'required' => true, 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
             ],
+        ]);
+        register_rest_route($this->namespace, '/automation/jobs', [
+            'methods' => 'POST',
+            'callback' => [$this, 'ai_job_enqueue'],
+            'permission_callback' => [$this, 'can_manage'],
+            'args' => $this->ai_job_args(),
+        ]);
+        register_rest_route($this->namespace, '/automation/jobs/(?P<id>\d+)', [
+            'methods' => 'GET',
+            'callback' => [$this, 'ai_job'],
+            'permission_callback' => [$this, 'can_manage'],
+            'args' => $this->id_arg(),
+        ]);
+        register_rest_route($this->namespace, '/automation/jobs/(?P<id>\d+)/run-batch', [
+            'methods' => 'POST',
+            'callback' => [$this, 'ai_job_run_batch'],
+            'permission_callback' => [$this, 'can_manage'],
+            'args' => $this->ai_job_batch_args(),
         ]);
         register_rest_route($this->namespace, '/performance/snapshot', [
             'methods' => 'GET', 'callback' => [$this, 'performance_snapshot'], 'permission_callback' => [$this, 'can_manage'],
@@ -128,6 +178,22 @@ final class ProductFeaturesRestService
             Input::key($params['target_language'] ?? ''),
             $params
         );
+    }
+
+    public function ai_job_enqueue(WP_REST_Request $request): array
+    {
+        $jobId = TranslationJobQueue::enqueue($request->get_params());
+        return ['job' => TranslationJobQueue::get_job($jobId)];
+    }
+
+    public function ai_job(WP_REST_Request $request)
+    {
+        return ['job' => TranslationJobQueue::get_job(absint($request['id']))];
+    }
+
+    public function ai_job_run_batch(WP_REST_Request $request)
+    {
+        return ['job' => TranslationJobQueue::run_batch(absint($request['id']), absint($request->get_param('batch_size') ?: 5))];
     }
 
     public function performance_snapshot(): array
