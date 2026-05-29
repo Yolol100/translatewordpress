@@ -65,6 +65,7 @@ final class TranslationQualityReport
                     SUM(CASE WHEN t.id IS NULL OR TRIM(COALESCE(t.translated_text, '')) = '' THEN 1 ELSE 0 END) AS missing,
                     SUM(CASE WHEN t.status = 'draft' THEN 1 ELSE 0 END) AS draft,
                     SUM(CASE WHEN t.status = 'needs_review' THEN 1 ELSE 0 END) AS needs_review,
+                    SUM(CASE WHEN t.status = 'outdated' THEN 1 ELSE 0 END) AS outdated,
                     SUM(CASE WHEN t.status = 'reviewed' THEN 1 ELSE 0 END) AS reviewed,
                     SUM(CASE WHEN t.status = 'published' THEN 1 ELSE 0 END) AS published,
                     SUM(CASE WHEN t.origin = 'ai' THEN 1 ELSE 0 END) AS ai_origin,
@@ -87,6 +88,7 @@ final class TranslationQualityReport
             'missing' => 0,
             'draft' => 0,
             'needs_review' => 0,
+            'outdated' => 0,
             'reviewed' => 0,
             'published' => 0,
             'ai_origin' => 0,
@@ -102,7 +104,7 @@ final class TranslationQualityReport
             return __('Er zijn nog geen strings gevonden. Start eerst een scan.', 'webactueel-translate-language-dropdowns');
         }
 
-        if ($score >= 95 && ($counts['needs_review'] ?? 0) === 0 && ($counts['missing'] ?? 0) === 0) {
+        if ($score >= 95 && ($counts['needs_review'] ?? 0) === 0 && ($counts['outdated'] ?? 0) === 0 && ($counts['missing'] ?? 0) === 0) {
             return __('Deze taal is vrijwel publicatieklaar.', 'webactueel-translate-language-dropdowns');
         }
 
@@ -116,6 +118,7 @@ final class TranslationQualityReport
         foreach ([
             'missing' => __('Er ontbreken nog vertalingen.', 'webactueel-translate-language-dropdowns'),
             'needs_review' => __('Er staan vertalingen klaar voor review.', 'webactueel-translate-language-dropdowns'),
+            'outdated' => __('Er zijn vertalingen verouderd door gewijzigde content.', 'webactueel-translate-language-dropdowns'),
             'identical_to_source' => __('Sommige vertalingen zijn gelijk aan de brontekst; controleer of dat bewust is.', 'webactueel-translate-language-dropdowns'),
             'possible_broken_markup' => __('Mogelijk bevat een vertaling gebroken HTML-markup.', 'webactueel-translate-language-dropdowns'),
         ] as $key => $message) {

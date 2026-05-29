@@ -4,20 +4,20 @@ Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.2
+Stable tag: 2.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Frontend translation plugin with manual translations, CSV import/export, scanning and a visual translation editor.
+Klantvriendelijke WordPress-vertaalplugin met scanflow, review-first vertalingen, visuele controle, beschermde woorden, Translation Memory, XLIFF/CSV en meertalige SEO-basis.
 
 == Description ==
 
-Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. Version 1.7 adds a stronger workflow layer: visual editing, managed AI batches, quality and context reporting, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
+Webactueel Translate begeleidt site-eigenaren door een eenvoudige vertaalflow: setup, website scannen, vertalen, controleren en publiceren. Beheerders kunnen talen, SEO, AI, import/export en technische instellingen beheren; vertalers zien vooral de vertaal-, controle- en visuele reviewstappen. Geavanceerde CSV/XLIFF-, log- en systeemfuncties blijven beschikbaar voor beheer en support, maar staan niet centraal in de dagelijkse klantflow.
 
 == Features ==
 
-* One WordPress admin page with tabs.
-* Language management.
+* Klantvriendelijke hoofdflow: Start, Setup, Scan & vertaal, Controle & publicatie, Visuele controle en Geavanceerd.
+* Taalbeheer met snelle taalkeuze en handmatige velden achter geavanceerd.
 * Visual translation editor for editing page text in context.
 * Dedicated translator role/capability for review-first translation workflows.
 * Managed AI batch translation foundations for small, review-first administrator-controlled batches.
@@ -77,6 +77,62 @@ External AI services used only when enabled/configured:
 When frontend language detection is enabled, the plugin can store the selected language in the `wat_language` cookie. CSV previews are temporarily copied to a protected temporary directory, tied to the administrator who created them and removed after import or expiry. The admin interface may store dashboard preferences in user meta and local browser storage. The plugin registers WordPress privacy policy helper text plus exporter and eraser callbacks for administrator preferences.
 
 == Changelog ==
+
+= 2.4.0 =
+* Privacy: workflowjobs geven e-mailadressen van toegewezen vertalers alleen nog terug aan beheerders.
+* Healthcheck controleert nu ook de AI-verbruiktabel.
+* Visual editor slaat inline markup niet meer lokaal plat bij live preview.
+* Setup API-stappen zijn gelijkgetrokken met de actuele adminflow.
+* Oude premium-header CSS-restanten verwijderd.
+
+* Workflow-controles laden pas nadat er een taal gekozen is.
+* Assignee-lijst is admin-only gemaakt om vertalergegevens beter af te schermen.
+* Systeemcontrole toont de juiste databaseversie.
+* Dashboard blokkeert de visuele editor tot setup en scan klaar zijn.
+* Scan verwerkt grote sites rustiger in veilige stappen.
+* Kleine cleanup van oude workflow-CSS en een dubbele visual-editor-tekstconditie.
+
+= 2.3.3 =
+* Cleanup: oude no-op workflow-scripts verwijderd zodat de admin geen lege compatibiliteitshandles meer laadt.
+* Cleanup: overgebleven workflow-root CSS en dubbele CSS-declaratie verwijderd.
+* Release: block.json, asset fallback en POT metadata gelijkgetrokken met 2.3.3.
+
+= 2.3.2 =
+* UX/release: assetversie gelijkgetrokken met pluginversie zodat adminbundles niet op oude cache blijven hangen.
+* UX/a11y: workflowpaneel binnen de React TabPanel-flow geplaatst in plaats van in een losse externe root.
+* Rollen: vertalers krijgen toegang tot de vertaalpagina, terwijl Setup en Geavanceerd admin-only blijven.
+* Setup: taal toevoegen versimpeld met snelle taalkeuze en handmatige velden achter Geavanceerd.
+* Docs: readme bijgewerkt naar de actuele klantflow en v2.3.2 release.
+
+= 2.3.1 =
+* UX: vereenvoudigde hoofdflow naar Start, Setup, Scan & vertaal, Controle & publicatie, Visuele controle en Geavanceerd.
+* UX: technische import/export-, XLIFF-, log- en systeemcontrolefuncties samengebracht achter Geavanceerd.
+* UX: klantvriendelijkere labels toegevoegd voor beschermde woorden, eerder vertaalde teksten, AI-verbruik en publicatiecontrole.
+* Release: Stable tag gelijkgetrokken met de pluginversie.
+
+= 2.1.1 =
+* Enhanced the visual editor with keyboard-accessible click-to-edit segments, live status feedback and Translation Memory suggestions.
+* Added a visual editor preview endpoint for existing translations and memory matches before saving.
+
+= 2.0.0 =
+* Added first-class XLIFF 1.2 export for professional translation workflows.
+* Added secure XLIFF import with target-language validation, XML NONET parsing and existing string matching by hash.
+* Added REST endpoints for /xliff/export and /xliff/import alongside CSV/XLIFF import/export.
+
+= 1.9.0 =
+* Added workflow job assignment support with assignee and due date metadata for AI translation jobs.
+* Added REST endpoints for assignment dashboards and translator job visibility.
+
+
+= 1.8.0 =
+- Added AI usage ledger, exact translation-memory reuse, AI glossary enforcement, content-change outdated status and workflow metric for outdated translations.
+
+= 1.7.4 =
+* Security/workflow: REST translation saves now respect the review-first workflow for non-admin translators, preventing direct publish/review status when review is required.
+* Security/workflow: translation, scan and CSV REST routes now use the `can_translate` capability so editors and the dedicated `wat_translator` role can use the review-first workflow, not only administrators.
+* Reliability: AI batch `run_batch()` now performs an atomic per-cursor claim so concurrent run-batch requests can no longer double-translate strings or corrupt job counters.
+* Reliability: AI rate limiter replaced the non-atomic transient counter with an atomic options-table UPSERT counter that is safe under concurrency on shared hosting; matching uninstall cleanup added.
+* Reliability: scan batch runner now enforces a server-side wall-clock budget and resumes from the cursor instead of risking a fatal mid-batch timeout.
 
 = 1.7.2 =
 * Added read-only translation context warnings for reused source text, conflicting translation variants and multi-context strings.

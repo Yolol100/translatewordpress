@@ -6,6 +6,7 @@ namespace Webactueel\Translate;
 
 use Webactueel\Translate\Admin\AdminMenu;
 use Webactueel\Translate\Admin\UrlMappingAdmin;
+use Webactueel\Translate\Automation\ContentChangeWatcher;
 use Webactueel\Translate\Cache\CacheInvalidator;
 use Webactueel\Translate\Database\Schema;
 use Webactueel\Translate\Frontend\FrontendBootstrap;
@@ -13,6 +14,7 @@ use Webactueel\Translate\Frontend\LanguageRouter;
 use Webactueel\Translate\ImportExport\CsvExporter;
 use Webactueel\Translate\Installer\ReplacementManager;
 use Webactueel\Translate\Rest\RestServiceProvider;
+use Webactueel\Translate\Seo\SeoTranslationSync;
 use Webactueel\Translate\Support\Logger;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Privacy;
@@ -86,6 +88,8 @@ final class Plugin
         (new FrontendBootstrap())->register();
         (new ProductFeatures())->register();
         (new TranslatorRoles())->register();
+        (new ContentChangeWatcher())->register();
+        (new SeoTranslationSync())->register();
 
         add_action('admin_init', [Schema::class, 'maybe_install'], 1);
         add_action('rest_api_init', [Schema::class, 'maybe_install'], 1);
@@ -95,6 +99,7 @@ final class Plugin
 
         add_action('wat_log', [Logger::class, 'write'], 10, 3);
         add_action('admin_post_wat_csv_export', [self::class, 'admin_csv_export']);
+        add_action('admin_post_wat_ai_usage_export', [self::class, 'admin_ai_usage_export']);
         add_action('wat_settings_updated', [CacheInvalidator::class, 'bump']);
         add_action('wat_language_routes_changed', [LanguageRouter::class, 'schedule_rewrite_flush']);
         add_filter('plugin_action_links_' . plugin_basename(WAT_PLUGIN_FILE), [self::class, 'plugin_action_links']);
@@ -137,6 +142,29 @@ final class Plugin
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="webactueel-translate-language-dropdowns-export.csv"');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        echo $csv; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        exit;
+    }
+
+    public static function admin_ai_usage_export(): void
+    {
+        if (! current_user_can('manage_options')) {
+            wp_die(esc_html__('Geen toegang.', 'webactueel-translate-language-dropdowns'));
+        }
+        check_admin_referer('wat_ai_usage_export');
+        $days = Input::absint(Input::get_text('days'));
+        if ($days < 1) {
+            $days = 30;
+        }
+        $targetLanguage = Input::get_key('target_language');
+        $csv = \Webactueel\Translate\Automation\AiUsageLedger::export_csv($days, $targetLanguage);
+        $filename = 'webactueel-translate-ai-usage-' . gmdate('Ymd') . '.csv';
+        nocache_headers();
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');

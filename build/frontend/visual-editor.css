@@ -58,7 +58,7 @@ body.wat-visual-editor-active {
 }
 
 .wat-visual-editor-segment:hover, .wat-visual-editor-selected {
-  outline: 2px solid var(--wat-color-primary);
+  outline: 2px solid var(--wp-admin-theme-color, var(--wat-color-primary));
   outline-offset: 4px;
   box-shadow: 0 0 0 8px rgba(var(--wat-color-primary-rgb),.12);
   background-color: rgba(var(--wat-color-primary-rgb),.04);
@@ -134,6 +134,44 @@ body.wat-visual-editor-active {
   line-height: 1.55;
 }
 
+
+.wat-visual-editor-status {
+  margin: 12px 0 0;
+  color: var(--wat-color-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wat-visual-editor-memory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  border: 1px solid var(--wat-color-border);
+  border-radius: var(--wat-radius-md);
+  background: var(--wat-color-primary-soft);
+  color: var(--wat-color-heading);
+}
+
+.wat-visual-editor-memory button {
+  appearance: none;
+  margin-left: auto;
+  border: 1px solid var(--wp-admin-theme-color, var(--wat-color-primary));
+  border-radius: var(--wat-radius-sm);
+  background: var(--wat-color-surface);
+  color: var(--wp-admin-theme-color, var(--wat-color-primary));
+  cursor: pointer;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.wat-visual-editor-memory button:focus-visible {
+  outline: 2px solid var(--wp-admin-theme-color, var(--wat-color-primary));
+  outline-offset: 2px;
+}
+
 .wat-visual-editor-body {
   flex: 1 1 auto;
   overflow: auto;
@@ -186,7 +224,7 @@ body.wat-visual-editor-active {
 .wat-visual-editor-sidebar textarea:focus, .wat-visual-editor-sidebar select:focus, .wat-visual-editor-close:focus, .wat-visual-save:focus {
   border-color: var(--wat-color-primary);
   box-shadow: var(--wat-focus-ring);
-  outline: 2px solid var(--wat-color-primary);
+  outline: 2px solid var(--wp-admin-theme-color, var(--wat-color-primary));
   outline-offset: 2px;
 }
 
@@ -302,7 +340,7 @@ body.wat-visual-editor-active {
 }
 
 .wat-visual-editor-bar button:focus-visible, .wat-visual-editor-segment:focus-visible {
-  outline: 3px solid var(--wat-color-primary);
+  outline: 3px solid var(--wp-admin-theme-color, var(--wat-color-primary));
   outline-offset: 3px;
 }
 

@@ -28,7 +28,10 @@
     if (!nav) return;
     nav.classList.remove('is-open');
     var menu = menuFor(nav);
-    if (menu) menu.setAttribute('hidden', 'hidden');
+    if (menu) {
+      menu.setAttribute('hidden', 'hidden');
+      eachNode(menu.querySelectorAll('a'), function(link){ link.setAttribute('tabindex', '-1'); });
+    }
     var btn = nav.querySelector('.wat-switcher-toggle');
     if (btn) {
       btn.setAttribute('aria-expanded', 'false');
@@ -40,7 +43,10 @@
     if (!nav) return;
     nav.classList.add('is-open');
     var menu = menuFor(nav);
-    if (menu) menu.removeAttribute('hidden');
+    if (menu) {
+      menu.removeAttribute('hidden');
+      eachNode(menu.querySelectorAll('a'), function(link, index){ link.setAttribute('tabindex', index === 0 ? '0' : '-1'); });
+    }
     var btn = nav.querySelector('.wat-switcher-toggle');
     if (btn) btn.setAttribute('aria-expanded', 'true');
   }
@@ -88,6 +94,7 @@
     event.preventDefault();
     if (!nav.classList.contains('is-open')) {
       openDropdown(nav);
+      links[0].setAttribute('tabindex', '0');
       links[0].focus();
       return;
     }
@@ -96,6 +103,7 @@
     var next = key === 'ArrowUp' || key === 38 ? current - 1 : current + 1;
     if (next < 0) next = links.length - 1;
     if (next >= links.length) next = 0;
+    eachNode(links, function(link, index){ link.setAttribute('tabindex', index === next ? '0' : '-1'); });
     links[next].focus();
   });
 })();

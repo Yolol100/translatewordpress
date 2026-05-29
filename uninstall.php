@@ -74,6 +74,16 @@ foreach (['wat_csv_preview_', 'wat_ai_rate_'] as $wat_transient_prefix) {
     ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier placeholder is prepared and prefix is controlled by this plugin.
 }
 
+// The AI rate limiter stores its per-minute counters as plain (non-transient) option
+// rows for atomic, shared-hosting-safe increments, so remove those bare keys too.
+$wpdb->query(
+    $wpdb->prepare(
+        'DELETE FROM %i WHERE option_name LIKE %s',
+        $wat_option_table,
+        $wpdb->esc_like('wat_ai_rate_') . '%'
+    )
+); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier placeholder is prepared and prefix is controlled by this plugin.
+
 $wat_temp_dir = trailingslashit(get_temp_dir()) . 'webactueel-translate-language-dropdowns';
 if (is_dir($wat_temp_dir)) {
     $wat_files = array_merge(

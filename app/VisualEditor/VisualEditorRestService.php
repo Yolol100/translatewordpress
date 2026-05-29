@@ -12,6 +12,7 @@ use WP_REST_Request;
 use Webactueel\Translate\Rest\Concerns\ChecksRestPermissions;
 use WP_REST_Response;
 use WP_REST_Server;
+use Webactueel\Translate\Translation\StringNormalizer;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -31,6 +32,21 @@ final class VisualEditorRestService
 
     public function routes(): void
     {
+        register_rest_route($this->namespace, '/visual-editor/segment', [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => [$this, 'preview_segment'],
+            'permission_callback' => [$this, 'can_save_segment'],
+            'args' => [
+                'original' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
+                'language' => [
+                    'type' => 'string',
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_key',
+                    'validate_callback' => static fn($value): bool => is_scalar($value) && preg_match('/^[a-z]{2,3}(?:[-_][a-z0-9]{2,8})?$/i', (string) $value) === 1,
+                ],
+            ],
+        ]);
+
         register_rest_route($this->namespace, '/visual-editor/segment', [
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => [$this, 'save_segment'],
@@ -52,12 +68,68 @@ final class VisualEditorRestService
 
     public function can_save_segment(): bool
     {
-        if (current_user_can('manage_options')) {
-            return true;
+        return current_user_can('manage_options') || $this->can_translate();
+    }
+
+
+    public function preview_segment(WP_REST_Request $request): WP_REST_Response
+    {
+        $original = Input::text($request->get_param('original'));
+        $language = Input::key($request->get_param('language'));
+
+        if ($original === '' || $language === '') {
+            return new WP_REST_Response([
+                'message' => __('Originele tekst en taal zijn verplicht.', 'webactueel-translate-language-dropdowns'),
+            ], 400);
         }
 
-        $settings = Settings::all();
-        return ! empty($settings['translator_review_required']) && $this->can_translate();
+        if (! $this->is_translatable_language($language)) {
+            return new WP_REST_Response([
+                'message' => __('Kies een actieve niet-standaardtaal om te vertalen.', 'webactueel-translate-language-dropdowns'),
+            ], 400);
+        }
+
+        $repository = new TranslationRepository();
+        $memory = $repository->find_translation_memory_match($original, $language);
+        $normalized = StringNormalizer::normalize($original);
+        $existing = $this->find_existing_translation($normalized, $language);
+
+        return new WP_REST_Response([
+            'original' => $original,
+            'language' => $language,
+            'translation' => $existing['translated_text'] ?? ($memory['translated_text'] ?? ''),
+            'status' => $existing['status'] ?? '',
+            'origin' => $existing['origin'] ?? (! empty($memory) ? 'memory' : ''),
+            'memory' => ! empty($memory) ? [
+                'translation' => $memory['translated_text'] ?? '',
+                'score' => $memory['score'] ?? 0,
+                'source_string_id' => $memory['source_string_id'] ?? 0,
+            ] : null,
+        ], 200);
+    }
+
+    /** @return array<string, string> */
+    private function find_existing_translation(string $normalized, string $language): array
+    {
+        global $wpdb;
+
+        if ($normalized === '' || $language === '') {
+            return [];
+        }
+
+        $stringsTable = esc_sql(\Webactueel\Translate\Database\Tables::strings());
+        $translationsTable = esc_sql(\Webactueel\Translate\Database\Tables::translations());
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT t.translated_text, t.status, t.origin FROM `{$stringsTable}` s INNER JOIN `{$translationsTable}` t ON t.string_id = s.id WHERE s.normalized_text = %s AND t.language_code = %s AND TRIM(t.translated_text) <> '' ORDER BY t.updated_at DESC, t.id DESC LIMIT 1",
+            $normalized,
+            $language
+        ), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Plugin-owned table names are escaped above.
+
+        return is_array($row) ? [
+            'translated_text' => (string) ($row['translated_text'] ?? ''),
+            'status' => sanitize_key($row['status'] ?? ''),
+            'origin' => sanitize_key($row['origin'] ?? ''),
+        ] : [];
     }
 
     public function save_segment(WP_REST_Request $request): WP_REST_Response

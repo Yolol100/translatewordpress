@@ -99,13 +99,20 @@
       node.classList.remove('wat-visual-editor-segment', 'wat-visual-editor-selected');
       var handler = segmentHandlers.get(node);
       if (handler) {
-        node.removeEventListener('click', handler);
+        node.removeEventListener('click', handler.click);
+        node.removeEventListener('keydown', handler.keydown);
         segmentHandlers.delete(node);
       }
       if (node.dataset) {
         delete node.dataset.watVisualSegment;
         delete node.dataset.watOriginal;
       }
+      if (node.getAttribute('tabindex') === '0' && node.dataset.watHadTabindex !== '1') {
+        node.removeAttribute('tabindex');
+      }
+      node.removeAttribute('role');
+      node.removeAttribute('aria-label');
+      delete node.dataset.watHadTabindex;
     });
   }
 
@@ -127,8 +134,14 @@
       }
       node.dataset.watVisualSegment = '1';
       node.dataset.watOriginal = text;
+      node.dataset.watHadTabindex = node.hasAttribute('tabindex') ? '1' : '0';
       node.classList.add('wat-visual-editor-segment');
-      var handler = function (event) {
+      node.setAttribute('role', 'button');
+      node.setAttribute('aria-label', __('Vertaal dit tekstsegment') + ': ' + text.slice(0, 90));
+      if (!node.hasAttribute('tabindex')) {
+        node.setAttribute('tabindex', '0');
+      }
+      var activate = function (event) {
         event.preventDefault();
         event.stopPropagation();
         document.querySelectorAll('.wat-visual-editor-selected').forEach(function (selected) {
@@ -137,8 +150,15 @@
         node.classList.add('wat-visual-editor-selected');
         onSelect(node);
       };
-      segmentHandlers.set(node, handler);
-      node.addEventListener('click', handler);
+      var keydown = function (event) {
+        var key = event.key || event.keyCode;
+        if (key === 'Enter' || key === ' ' || key === 13 || key === 32) {
+          activate(event);
+        }
+      };
+      segmentHandlers.set(node, { click: activate, keydown: keydown });
+      node.addEventListener('click', activate);
+      node.addEventListener('keydown', keydown);
       count += 1;
       return false;
     });
@@ -158,15 +178,15 @@
     }
     return el('div', {
       className: 'wat-visual-editor-notice',
-      role: 'status',
-      'aria-live': 'polite',
+      role: props.type === 'error' ? 'alert' : 'status',
+      'aria-live': props.type === 'error' ? 'assertive' : 'polite',
       'aria-atomic': 'true',
       'data-type': props.type || 'info'
     }, props.message);
   }
 
   function EditorBar(props) {
-    return el('div', { className: 'wat-visual-editor-bar' },
+    return el('div', { className: 'wat-visual-editor-bar', role: 'region', 'aria-label': __('Vertaalmodus') },
       el('strong', null, __('Webactueel Translate vertaalmodus')),
       el('span', null, props.count > 0 ? props.count + ' ' + __('vertaalbare tekstsegmenten gevonden.') : __('Klik op zichtbare tekst om in context te vertalen.')),
       el('button', { type: 'button', onClick: leaveEditor }, __('Sluiten'))
@@ -182,11 +202,47 @@
     var [language, setLanguage] = useState(initialLanguage);
     var [translation, setTranslation] = useState(props.target ? cleanText(props.target.textContent) : '');
     var [saving, setSaving] = useState(false);
+    var [loading, setLoading] = useState(false);
+    var [meta, setMeta] = useState({ status: '', origin: '', memory: null });
 
     useEffect(function () {
       setTranslation(props.target ? cleanText(props.target.textContent) : '');
       setLanguage(initialLanguage);
+      setMeta({ status: '', origin: '', memory: null });
     }, [props.target]);
+
+    useEffect(function () {
+      if (!props.target || !cfg.restUrl || !language) {
+        return;
+      }
+      var cancelled = false;
+      setLoading(true);
+      apiFetch({
+        url: cfg.restUrl + '?original=' + encodeURIComponent(original) + '&language=' + encodeURIComponent(language),
+        method: 'GET'
+      }).then(function (response) {
+        if (cancelled) {
+          return;
+        }
+        setMeta({
+          status: response && response.status ? response.status : '',
+          origin: response && response.origin ? response.origin : '',
+          memory: response && response.memory ? response.memory : null
+        });
+        if (response && response.translation) {
+          setTranslation(response.translation);
+        }
+      }).catch(function () {
+        if (!cancelled) {
+          setMeta({ status: '', origin: '', memory: null });
+        }
+      }).finally(function () {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+      return function () { cancelled = true; };
+    }, [props.target, language]);
 
     useEffect(function () {
       if (translationRef.current) {
@@ -200,6 +256,11 @@
         if (key === 'Escape' || key === 'Esc' || key === 27) {
           event.preventDefault();
           props.onClose();
+          return;
+        }
+        if ((event.ctrlKey || event.metaKey) && (key === 'Enter' || key === 13)) {
+          event.preventDefault();
+          save();
           return;
         }
         if (key !== 'Tab' && key !== 9) {
@@ -222,7 +283,7 @@
 
       document.addEventListener('keydown', onKeyDown);
       return function () { document.removeEventListener('keydown', onKeyDown); };
-    }, [props.target]);
+    }, [props.target, translation, language, saving]);
 
     function save() {
       if (!props.target || !cfg.restUrl || !cfg.nonce || saving) {
@@ -244,9 +305,14 @@
           selector: selectorFor(props.target),
           url: window.location.href
         }
-      }).then(function () {
-        props.target.textContent = translation;
-        props.onNotice(__('Vertaling opgeslagen.'), 'success');
+      }).then(function (response) {
+        // Keep the live preview conservative: only replace text for simple elements.
+        // Complex elements may contain spans/icons/emphasis and should not be flattened in the editor DOM.
+        if (props.target && props.target.children && props.target.children.length === 0) {
+          props.target.textContent = translation;
+        }
+        setMeta({ status: response && response.status ? response.status : '', origin: 'manual', memory: null });
+        props.onNotice(response && response.message ? response.message : __('Vertaling opgeslagen.'), 'success');
         props.onClose();
       }).catch(function (error) {
         props.onNotice(error && error.message ? error.message : __('Opslaan mislukt.'), 'error');
@@ -264,15 +330,22 @@
       className: 'wat-visual-editor-sidebar is-open',
       role: 'dialog',
       'aria-modal': 'true',
-      'aria-labelledby': 'wat-visual-editor-title'
+      'aria-labelledby': 'wat-visual-editor-title',
+      'aria-describedby': 'wat-visual-editor-help'
     },
       el('button', { type: 'button', className: 'wat-visual-editor-close', 'aria-label': __('Sluiten'), onClick: props.onClose }, '×'),
       el('div', { className: 'wat-visual-editor-header' },
         el('span', { className: 'wat-visual-editor-kicker' }, __('Vertaalmodus')),
         el('h2', { id: 'wat-visual-editor-title' }, __('Tekst vertalen')),
-        el('p', { className: 'wat-visual-editor-help' }, __('Klik op tekst in de pagina en werk de vertaling direct in context bij.'))
+        el('p', { id: 'wat-visual-editor-help', className: 'wat-visual-editor-help' }, __('Klik op tekst in de pagina en werk de vertaling direct in context bij.')),
+        el('p', { className: 'wat-visual-editor-status', role: 'status', 'aria-live': 'polite' }, loading ? __('Bestaande vertaling zoeken...') : (meta.status ? __('Status') + ': ' + meta.status + (meta.origin ? ' · ' + __('Bron') + ': ' + meta.origin : '') : __('Nieuwe visuele vertaling')))
       ),
       el('div', { className: 'wat-visual-editor-body' },
+        meta.memory ? el('div', { className: 'wat-visual-editor-memory', role: 'note' },
+          el('strong', null, __('Translation Memory-match gevonden')),
+          el('span', null, ' ' + String(meta.memory.score || 100) + '%'),
+          el('button', { type: 'button', onClick: function () { setTranslation(meta.memory.translation || ''); } }, __('Gebruik voorstel'))
+        ) : null,
         el('div', { className: 'wat-visual-field wat-visual-field--compact' },
           el('label', { htmlFor: 'wat-visual-language' }, __('Doeltaal')),
           el('select', {
@@ -299,10 +372,10 @@
             onChange: function (event) { setTranslation(event.target.value); }
           })
         ),
-        el('p', { className: 'wat-visual-editor-small' }, __('Formulieren, checkout en technische elementen blijven beschermd.'))
+        el('p', { className: 'wat-visual-editor-small' }, __('Sneltoets: Ctrl/Cmd + Enter slaat op. Formulieren, checkout en technische elementen blijven beschermd.'))
       ),
       el('div', { className: 'wat-visual-editor-footer' },
-        el('button', { type: 'button', className: 'wat-visual-save', disabled: saving, onClick: save }, saving ? __('Opslaan...') : __('Vertaling opslaan'))
+        el('button', { type: 'button', className: 'wat-visual-save', disabled: saving || loading, onClick: save }, saving ? __('Opslaan...') : __('Vertaling opslaan'))
       )
     );
   }

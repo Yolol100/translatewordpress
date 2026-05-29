@@ -8,12 +8,15 @@ use Webactueel\Translate\Rest\Concerns\ChecksRestPermissions;
 use Webactueel\Translate\Rest\Concerns\RestRouteArguments;
 use Webactueel\Translate\Automation\TranslationJobQueue;
 use Webactueel\Translate\Automation\AiTranslationService;
+use Webactueel\Translate\Automation\AiUsageLedger;
 use Webactueel\Translate\Performance\PerformanceMonitor;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Setup\SetupWizard;
 use Webactueel\Translate\Workflow\TranslationContextReport;
 use Webactueel\Translate\Workflow\TranslationQualityReport;
 use Webactueel\Translate\Workflow\WorkflowStatus;
+use Webactueel\Translate\Workflow\AssignmentManager;
+use Webactueel\Translate\Workflow\ContentReadinessReport;
 use WP_REST_Request;
 
 if (! defined('ABSPATH')) {
@@ -56,7 +59,7 @@ final class ProductFeaturesRestService
     {
         return [
             'completed' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
-            'current_step' => ['type' => 'string', 'enum' => ['languages', 'routing', 'switcher', 'scan', 'safety', 'done'], 'sanitize_callback' => 'sanitize_key'],
+            'current_step' => ['type' => 'string', 'enum' => ['start', 'settings', 'translate', 'workflow', 'visual', 'advanced', 'done'], 'sanitize_callback' => 'sanitize_key'],
             'completed_steps' => [
                 'validate_callback' => [self::class, 'validate_key_list'],
                 'sanitize_callback' => static function ($value): array {
@@ -98,10 +101,12 @@ final class ProductFeaturesRestService
             ],
             'status' => [
                 'type' => 'string',
-                'enum' => ['new', 'missing', 'draft', 'needs_review', 'reviewed', 'published'],
+                'enum' => ['new', 'missing', 'draft', 'needs_review', 'reviewed', 'published', 'outdated'],
                 'sanitize_callback' => 'sanitize_key',
             ],
             'batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'sanitize_callback' => 'absint'],
+            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint'],
+            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
         ];
     }
 
@@ -110,6 +115,16 @@ final class ProductFeaturesRestService
     {
         return array_merge($this->id_arg(), [
             'batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'sanitize_callback' => 'absint'],
+        ]);
+    }
+
+
+    /** @return array<string, array<string, mixed>> */
+    private function assignment_args(): array
+    {
+        return array_merge($this->id_arg(), [
+            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint'],
+            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
         ]);
     }
 
@@ -134,6 +149,29 @@ final class ProductFeaturesRestService
             'permission_callback' => [$this, 'can_translate'],
             'args' => $this->language_report_args(),
         ]);
+        register_rest_route($this->namespace, '/workflow/assignees', [
+            'methods' => 'GET',
+            'callback' => [$this, 'workflow_assignees'],
+            'permission_callback' => [$this, 'can_manage'],
+        ]);
+        register_rest_route($this->namespace, '/workflow/content', [
+            'methods' => 'GET',
+            'callback' => [$this, 'workflow_content'],
+            'permission_callback' => [$this, 'can_translate'],
+            'args' => $this->language_report_args(),
+        ]);
+        register_rest_route($this->namespace, '/workflow/jobs', [
+            'methods' => 'GET',
+            'callback' => [$this, 'workflow_jobs'],
+            'permission_callback' => [$this, 'can_translate'],
+            'args' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint']],
+        ]);
+        register_rest_route($this->namespace, '/workflow/jobs/(?P<id>\d+)/assignment', [
+            'methods' => ['PUT', 'POST'],
+            'callback' => [$this, 'workflow_assign_job'],
+            'permission_callback' => [$this, 'can_manage'],
+            'args' => $this->assignment_args(),
+        ]);
         register_rest_route($this->namespace, '/automation/capabilities', [
             'methods' => 'GET', 'callback' => [$this, 'automation_capabilities'], 'permission_callback' => [$this, 'can_manage'],
         ]);
@@ -151,6 +189,12 @@ final class ProductFeaturesRestService
                 'source_language' => ['type' => 'string', 'validate_callback' => [self::class, 'validate_optional_language_code'], 'sanitize_callback' => 'sanitize_key'],
                 'target_language' => ['type' => 'string', 'required' => true, 'validate_callback' => [self::class, 'validate_language_code'], 'sanitize_callback' => 'sanitize_key'],
             ],
+        ]);
+        register_rest_route($this->namespace, '/automation/usage', [
+            'methods' => 'GET',
+            'callback' => [$this, 'ai_usage'],
+            'permission_callback' => [$this, 'can_manage'],
+            'args' => ['days' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 365, 'sanitize_callback' => 'absint']],
         ]);
         register_rest_route($this->namespace, '/automation/jobs', [
             'methods' => 'POST',
@@ -207,6 +251,36 @@ final class ProductFeaturesRestService
         ];
     }
 
+
+    public function workflow_content(WP_REST_Request $request): array
+    {
+        return [
+            'content' => ContentReadinessReport::for_language(
+                Input::key($request->get_param('language')),
+                absint($request->get_param('limit') ?: 8)
+            ),
+        ];
+    }
+
+    public function workflow_assignees(): array
+    {
+        return ['assignees' => AssignmentManager::assignees()];
+    }
+
+    public function workflow_jobs(WP_REST_Request $request): array
+    {
+        return ['jobs' => AssignmentManager::list_jobs(absint($request->get_param('limit') ?: 20))];
+    }
+
+    public function workflow_assign_job(WP_REST_Request $request)
+    {
+        return AssignmentManager::assign(
+            absint($request['id']),
+            absint($request->get_param('assigned_user_id') ?: 0),
+            Input::scalar_string($request->get_param('due_at') ?: '')
+        );
+    }
+
     public function automation_capabilities(): array
     {
         return array_merge(TranslationJobQueue::capabilities(), ['ai' => AiTranslationService::capabilities()]);
@@ -221,6 +295,11 @@ final class ProductFeaturesRestService
             Input::key($params['target_language'] ?? ''),
             $params
         );
+    }
+
+    public function ai_usage(WP_REST_Request $request): array
+    {
+        return ['usage' => AiUsageLedger::summary(absint($request->get_param('days') ?: 30))];
     }
 
     public function ai_job_enqueue(WP_REST_Request $request)

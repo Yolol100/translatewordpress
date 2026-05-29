@@ -44,6 +44,8 @@ final class TranslationJobQueue
             'found_strings' => $totalItems,
             'skipped_items' => 0,
             'errors_count' => 0,
+            'assigned_user_id' => absint($options['assigned_user_id'] ?? 0),
+            'due_at' => self::normalize_due_at(Input::scalar_string($options['due_at'] ?? '')),
             'options_json' => self::encode_options($options),
             'message' => sprintf(
                 /* translators: %d: number of strings queued for translation. */
@@ -90,6 +92,8 @@ final class TranslationJobQueue
         $job['found_strings'] = absint($job['found_strings'] ?? 0);
         $job['skipped_items'] = absint($job['skipped_items'] ?? 0);
         $job['errors_count'] = absint($job['errors_count'] ?? 0);
+        $job['assigned_user_id'] = absint($job['assigned_user_id'] ?? 0);
+        $job['due_at'] = Input::scalar_string($job['due_at'] ?? '');
         $job['options'] = self::decode_options(Input::scalar_string($job['options_json'] ?? '{}'));
         unset($job['options_json']);
 
@@ -122,20 +126,37 @@ final class TranslationJobQueue
 
         $batchSize = max(1, min(self::MAX_BATCH_SIZE, absint($batchSize ?: ($options['batch_size'] ?? 5))));
         $cursor = absint($job['cursor_value'] ?? 0);
+
+        global $wpdb;
+        $now = current_time('mysql');
+        // Atomic claim: only one concurrent request may advance this job at this cursor.
+        // A second parallel run-batch sees 0 affected rows and bails, preventing
+        // duplicate translations, double provider billing and corrupted counters.
+        $claimed = $wpdb->query($wpdb->prepare(
+            'UPDATE ' . Tables::sql_identifier(Tables::jobs()) . ' SET status = %s, started_at = COALESCE(started_at, %s), updated_at = %s WHERE id = %d AND type = %s AND status IN (%s, %s) AND cursor_value = %d',
+            'running',
+            $now,
+            $now,
+            absint($jobId),
+            self::TYPE_AI_TRANSLATION,
+            'queued',
+            'running',
+            $cursor
+        ));
+        if ($claimed === 0) {
+            return self::get_job($jobId);
+        }
+
         $items = self::candidate_strings($options, $cursor, $batchSize);
         if ($items === []) {
             self::complete_job($jobId, __('AI-batch afgerond. Er zijn geen openstaande strings meer voor deze selectie.', 'webactueel-translate-language-dropdowns'));
             return self::get_job($jobId);
         }
 
-        $now = current_time('mysql');
-        if ($status === 'queued') {
-            self::update_job($jobId, ['status' => 'running', 'started_at' => $now, 'updated_at' => $now]);
-        }
-
         $repository = new TranslationRepository();
         $ai = new AiTranslationService();
         $processed = 0;
+        $memoryReused = 0;
         $skipped = 0;
         $errors = 0;
         $lastCursor = $cursor;
@@ -150,22 +171,44 @@ final class TranslationJobQueue
                 continue;
             }
 
-            $result = $ai->translate(
-                $original,
-                Input::key($options['source_language'] ?? ''),
-                Input::key($options['target_language'] ?? ''),
-                ['job_id' => $jobId, 'string_id' => $stringId, 'batch' => true]
-            );
+            $targetLanguage = Input::key($options['target_language'] ?? '');
+            $memoryMatch = $repository->find_translation_memory_match($original, $targetLanguage);
+            if ($memoryMatch !== []) {
+                $translated = Input::scalar_string($memoryMatch['translated_text'] ?? '');
+                $reviewStatus = 'reviewed';
+                $origin = 'memory';
+                $result = ['translated_text' => $translated, 'review_status' => $reviewStatus, 'origin' => $origin, 'memory_score' => absint($memoryMatch['score'] ?? 100)];
+                $memoryReused++;
+                AiUsageLedger::record([
+                    'job_id' => $jobId,
+                    'string_id' => $stringId,
+                    'provider' => 'memory',
+                    'model' => 'exact-normalized-match',
+                    'source_language' => Input::key($options['source_language'] ?? ''),
+                    'target_language' => $targetLanguage,
+                    'source_text' => $original,
+                    'translated_text' => $translated,
+                    'memory_reused' => true,
+                    'glossary_terms' => 0,
+                ]);
+            } else {
+                $result = $ai->translate(
+                    $original,
+                    Input::key($options['source_language'] ?? ''),
+                    $targetLanguage,
+                    ['job_id' => $jobId, 'string_id' => $stringId, 'batch' => true]
+                );
 
-            if (is_wp_error($result)) {
-                $errors++;
-                $stopMessage = $result->get_error_message();
-                break;
+                if (is_wp_error($result)) {
+                    $errors++;
+                    $stopMessage = $result->get_error_message();
+                    break;
+                }
+
+                $translated = Input::scalar_string($result['translated_text'] ?? '');
+                $reviewStatus = Input::key($result['review_status'] ?? 'needs_review') ?: 'needs_review';
+                $origin = Input::key($result['origin'] ?? 'ai') ?: 'ai';
             }
-
-            $translated = Input::scalar_string($result['translated_text'] ?? '');
-            $reviewStatus = Input::key($result['review_status'] ?? 'needs_review') ?: 'needs_review';
-            $origin = Input::key($result['origin'] ?? 'ai') ?: 'ai';
             if ($translated === '' || ! $repository->save_translation($stringId, Input::key($options['target_language'] ?? ''), $translated, $reviewStatus, $origin)) {
                 $errors++;
                 $lastCursor = max($lastCursor, $stringId);
@@ -188,10 +231,11 @@ final class TranslationJobQueue
             )
             : sprintf(
                 /* translators: 1: processed translations, 2: skipped items, 3: errors. */
-                __('Laatste batch verwerkt: %1$d vertaald, %2$d overgeslagen, %3$d fouten.', 'webactueel-translate-language-dropdowns'),
+                __('Laatste batch verwerkt: %1$d vertaald, %2$d overgeslagen, %3$d fouten, %4$d uit vertaalgeheugen.', 'webactueel-translate-language-dropdowns'),
                 $processed,
                 $skipped,
-                $errors
+                $errors,
+                $memoryReused
             );
 
         if ($stopMessage === '' && count($items) < $batchSize) {
@@ -217,7 +261,7 @@ final class TranslationJobQueue
     private static function normalize_options(array $options): array
     {
         $status = Input::key($options['status'] ?? 'new');
-        if (! in_array($status, ['new', 'missing', 'draft', 'needs_review', 'reviewed', 'published'], true)) {
+        if (! in_array($status, ['new', 'missing', 'draft', 'needs_review', 'reviewed', 'published', 'outdated'], true)) {
             $status = 'new';
         }
 
@@ -226,6 +270,8 @@ final class TranslationJobQueue
             'source_language' => Input::key($options['source_language'] ?? ''),
             'status' => $status,
             'batch_size' => max(1, min(self::MAX_BATCH_SIZE, absint($options['batch_size'] ?? 5))),
+            'assigned_user_id' => absint($options['assigned_user_id'] ?? 0),
+            'due_at' => self::normalize_due_at(Input::scalar_string($options['due_at'] ?? '')),
         ];
     }
 
@@ -286,6 +332,19 @@ final class TranslationJobQueue
             'updated_at' => current_time('mysql'),
             'completed_at' => current_time('mysql'),
         ]);
+    }
+
+    private static function normalize_due_at(string $dueAt): ?string
+    {
+        $dueAt = trim(sanitize_text_field($dueAt));
+        if ($dueAt === '') {
+            return null;
+        }
+        $timestamp = strtotime($dueAt);
+        if ($timestamp === false) {
+            return null;
+        }
+        return gmdate('Y-m-d H:i:s', $timestamp + ((int) (get_option('gmt_offset', 0) * HOUR_IN_SECONDS)));
     }
 
     /** @param array<string, mixed> $options */

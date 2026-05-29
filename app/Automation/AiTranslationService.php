@@ -6,6 +6,7 @@ namespace Webactueel\Translate\Automation;
 
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Translation\GlossaryRepository;
 use WP_Error;
 
 if (! defined('ABSPATH')) {
@@ -144,11 +145,47 @@ final class AiTranslationService
             return true;
         }
 
+        global $wpdb;
         $userId = function_exists('get_current_user_id') ? (int) get_current_user_id() : 0;
         $bucket = $userId > 0 ? 'user_' . $userId : 'anonymous';
-        $transientKey = 'wat_ai_rate_' . md5($bucket . '|' . (string) floor(time() / MINUTE_IN_SECONDS));
-        $count = (int) get_transient($transientKey);
-        if ($count >= $limit) {
+        $window = (string) floor(time() / MINUTE_IN_SECONDS);
+        $optionName = 'wat_ai_rate_' . md5($bucket . '|' . $window);
+
+        // Shared-hosting-safe atomic counter. A single InnoDB UPSERT on the options row
+        // is atomic, so concurrent translate/batch calls cannot all read the same
+        // pre-increment value and blow past the per-minute provider cap.
+        //
+        // ON DUPLICATE KEY UPDATE affected-rows convention: 1 = fresh INSERT (first hit
+        // this window, count = 1); 2 = existing row updated, where LAST_INSERT_ID() was
+        // set to the incremented count and is exposed via $wpdb->insert_id.
+        $affected = $wpdb->query($wpdb->prepare(
+            "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_value = LAST_INSERT_ID(CAST(option_value AS UNSIGNED) + 1)",
+            $optionName,
+            '1',
+            'no'
+        )); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+        if ($affected === false) {
+            // Counter write failed; fail open so a transient DB hiccup cannot block translation.
+            return true;
+        }
+
+        if ((int) $affected === 1) {
+            $count = 1;
+        } else {
+            $count = (int) $wpdb->insert_id;
+            if ($count < 1) {
+                // Fallback: re-read the stored value if LAST_INSERT_ID was unavailable.
+                $count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT CAST(option_value AS UNSIGNED) FROM {$wpdb->options} WHERE option_name = %s",
+                    $optionName
+                ));
+                $count = max(1, $count);
+            }
+        }
+        wp_cache_delete($optionName, 'options');
+
+        if ($count > $limit) {
             return new WP_Error(
                 'wat_ai_rate_limited',
                 __('AI-vertaling is tijdelijk beperkt. Probeer het over een minuut opnieuw.', 'webactueel-translate-language-dropdowns'),
@@ -156,7 +193,15 @@ final class AiTranslationService
             );
         }
 
-        set_transient($transientKey, $count + 1, MINUTE_IN_SECONDS + 10);
+        // Best-effort cleanup of expired windows so the options table does not grow unbounded.
+        if ($count === 1) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name <> %s",
+                $wpdb->esc_like('wat_ai_rate_') . '%',
+                $optionName
+            )); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        }
+
         return true;
     }
 
@@ -183,15 +228,16 @@ final class AiTranslationService
     private function translate_chat_completion(string $provider, string $endpoint, string $apiKey, string $text, string $sourceLanguage, string $targetLanguage, array $settings, array $context)
     {
         $model = self::model($settings, $provider);
+        $glossaryTerms = self::glossary_terms($text, $targetLanguage);
         $system = sprintf(
             /* translators: 1: source language code, 2: target language code. */
-            __('You are a professional WordPress website translator. Translate from %1$s to %2$s. Preserve allowed HTML tags and attributes, HTML entities, brand names, shortcodes, variables, placeholders and URLs. Do not add markdown fences. Return only the translation.', 'webactueel-translate-language-dropdowns'),
+            __('You are a professional WordPress website translator. Translate from %1$s to %2$s. Preserve allowed HTML tags and attributes, HTML entities, brand names, shortcodes, variables, placeholders and URLs. Apply glossary terms exactly when supplied. Do not translate protected brand terms or product codes. Do not add markdown fences. Return only the translation.', 'webactueel-translate-language-dropdowns'),
             $sourceLanguage ?: 'auto',
             $targetLanguage
         );
         $tone = sanitize_text_field(Input::scalar_string($settings['ai_tone'] ?? 'professional'));
         $formality = sanitize_text_field(Input::scalar_string($settings['ai_formality'] ?? 'default'));
-        $prompt = trim($text . "\n\n" . 'Tone: ' . $tone . "\n" . 'Formality: ' . $formality);
+        $prompt = trim($text . "\n\n" . 'Tone: ' . $tone . "\n" . 'Formality: ' . $formality . self::glossary_prompt($glossaryTerms));
 
         $payload = wp_json_encode([
             'model' => $model,
@@ -229,7 +275,9 @@ final class AiTranslationService
         if ($translation === '') {
             return new WP_Error('wat_ai_empty_translation', __('AI-provider gaf een lege vertaling terug.', 'webactueel-translate-language-dropdowns'), ['status' => 502]);
         }
-        return ['translated_text' => $translation, 'origin' => 'ai', 'provider' => $provider, 'model' => $model, 'review_status' => 'needs_review'];
+        $translation = self::enforce_glossary_terms($translation, $glossaryTerms);
+        self::record_usage($context, $provider, $model, $sourceLanguage, $targetLanguage, $text, $translation, false, count($glossaryTerms));
+        return ['translated_text' => $translation, 'origin' => 'ai', 'provider' => $provider, 'model' => $model, 'review_status' => 'needs_review', 'glossary_terms' => count($glossaryTerms)];
     }
 
     /**
@@ -284,14 +332,73 @@ final class AiTranslationService
         return strtoupper(str_replace('_', '-', sanitize_key($language)));
     }
 
+    /** @param array<int, array<string, mixed>> $terms */
+    private static function glossary_prompt(array $terms): string
+    {
+        if ($terms === []) {
+            return '';
+        }
+        $lines = ["", "Glossary rules, apply exactly:"];
+        foreach ($terms as $term) {
+            $source = sanitize_text_field(Input::scalar_string($term['source_term'] ?? ''));
+            $target = sanitize_text_field(Input::scalar_string($term['target_term'] ?? ''));
+            if ($source !== '' && $target !== '') {
+                $lines[] = '- ' . $source . ' => ' . $target;
+            }
+        }
+        return "\n" . implode("\n", $lines);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function glossary_terms(string $text, string $targetLanguage): array
+    {
+        $terms = (new GlossaryRepository())->matches($text, $targetLanguage);
+        return array_slice($terms, 0, 25);
+    }
+
+    /** @param array<int, array<string, mixed>> $terms */
+    private static function enforce_glossary_terms(string $translation, array $terms): string
+    {
+        foreach ($terms as $term) {
+            $source = Input::scalar_string($term['source_term'] ?? '');
+            $target = Input::scalar_string($term['target_term'] ?? '');
+            if ($source === '' || $target === '') {
+                continue;
+            }
+            $containsSource = ! empty($term['case_sensitive']) ? strpos($translation, $source) !== false : stripos($translation, $source) !== false;
+            $containsTarget = ! empty($term['case_sensitive']) ? strpos($translation, $target) !== false : stripos($translation, $target) !== false;
+            if ($containsSource && ! $containsTarget) {
+                $translation = ! empty($term['case_sensitive']) ? str_replace($source, $target, $translation) : str_ireplace($source, $target, $translation);
+            }
+        }
+        return trim($translation);
+    }
+
+    private static function record_usage(array $context, string $provider, string $model, string $sourceLanguage, string $targetLanguage, string $text, string $translation, bool $memoryReused, int $glossaryTerms): void
+    {
+        AiUsageLedger::record([
+            'job_id' => absint($context['job_id'] ?? 0),
+            'string_id' => absint($context['string_id'] ?? 0),
+            'provider' => $provider,
+            'model' => $model,
+            'source_language' => $sourceLanguage,
+            'target_language' => $targetLanguage,
+            'source_text' => $text,
+            'translated_text' => $translation,
+            'memory_reused' => $memoryReused,
+            'glossary_terms' => $glossaryTerms,
+        ]);
+    }
+
     /** @return array<string, mixed>|WP_Error */
     private function translate_deepl(string $apiKey, string $text, string $sourceLanguage, string $targetLanguage, array $settings)
     {
         $endpoint = (bool) apply_filters('wat_deepl_free_api', true) ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
         $deeplTargetLanguage = self::deepl_language_code($targetLanguage);
         $deeplSourceLanguage = self::deepl_language_code($sourceLanguage);
+        $glossaryTerms = self::glossary_terms($text, $targetLanguage);
         $body = [
-            'text' => $text,
+            'text' => self::enforce_glossary_terms($text, $glossaryTerms),
             'target_lang' => $deeplTargetLanguage,
             'preserve_formatting' => '1',
         ];
@@ -321,6 +428,8 @@ final class AiTranslationService
         if ($translation === '') {
             return new WP_Error('wat_ai_empty_translation', __('DeepL gaf een lege vertaling terug.', 'webactueel-translate-language-dropdowns'), ['status' => 502]);
         }
-        return ['translated_text' => $translation, 'origin' => 'ai', 'provider' => 'deepl', 'model' => 'deepl-api', 'review_status' => 'needs_review'];
+        $translation = self::enforce_glossary_terms($translation, $glossaryTerms);
+        self::record_usage([], 'deepl', 'deepl-api', $sourceLanguage, $targetLanguage, $text, $translation, false, count($glossaryTerms));
+        return ['translated_text' => $translation, 'origin' => 'ai', 'provider' => 'deepl', 'model' => 'deepl-api', 'review_status' => 'needs_review', 'glossary_terms' => count($glossaryTerms)];
     }
 }

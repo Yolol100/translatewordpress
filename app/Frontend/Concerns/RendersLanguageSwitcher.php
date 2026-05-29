@@ -36,9 +36,9 @@ trait RendersLanguageSwitcher
         $out .= '<span id="' . esc_attr($helpId) . '" class="wat-switcher-sr-only">' . esc_html__('Gebruik Enter, spatie of de pijltjestoetsen om een taal te kiezen. Vlaggen zijn visuele taalindicaties; de taalnaam is leidend.', 'webactueel-translate-language-dropdowns') . '</span>';
         // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
         $out .= '<button id="' . esc_attr($buttonId) . '" type="button" class="wat-switcher-toggle" aria-label="' . esc_attr(sprintf(__('Huidige taal: %s. Taalmenu openen', 'webactueel-translate-language-dropdowns'), $activeNative)) . '" aria-controls="' . esc_attr($menuId) . '" aria-describedby="' . esc_attr($helpId) . '" aria-expanded="false">' . self::label('flags_name', $activeCode, $activeNative, $activeFlag) . '<span class="wat-switcher-chevron" aria-hidden="true">▾</span></button>';
-        $out .= '<ul id="' . esc_attr($menuId) . '" class="wat-switcher-menu" aria-labelledby="' . esc_attr($buttonId) . '" hidden>';
+        $out .= '<ul id="' . esc_attr($menuId) . '" class="wat-switcher-menu" role="menu" aria-labelledby="' . esc_attr($buttonId) . '" hidden>';
         foreach ($languages as $language) {
-            $out .= self::item($language, $current, 'flags_name');
+            $out .= self::item($language, $current, 'flags_name', true);
         }
         $out .= '</ul></nav>';
         return $out;
@@ -51,7 +51,7 @@ trait RendersLanguageSwitcher
     {
         $out = '<nav class="' . esc_attr(implode(' ', $classes)) . '" aria-label="' . esc_attr__('Taal kiezen', 'webactueel-translate-language-dropdowns') . '"><ul>';
         foreach ($languages as $language) {
-            $out .= self::item($language, $current, $layout);
+            $out .= self::item($language, $current, $layout, false);
         }
         $out .= '</ul></nav>';
         return $out;
@@ -60,7 +60,7 @@ trait RendersLanguageSwitcher
     /**
      * @param array<string, mixed> $language
      */
-    private static function item(array $language, string $current, string $layout): string
+    private static function item(array $language, string $current, string $layout, bool $isDropdown = false): string
     {
         $code = Input::key($language['code'] ?? '');
         if ($code === '') {
@@ -82,7 +82,9 @@ trait RendersLanguageSwitcher
         $ariaLabel = $layout === 'flags' ? ' aria-label="' . esc_attr(sprintf(__('Taal wijzigen naar %s', 'webactueel-translate-language-dropdowns'), $native)) . '"' : '';
         // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
         $title = ' title="' . esc_attr(sprintf(__('Taal wijzigen naar %s', 'webactueel-translate-language-dropdowns'), $native)) . '"';
-        return '<li><a href="' . esc_url($url) . '" hreflang="' . esc_attr($code) . '" lang="' . esc_attr($code) . '"' . $active . $ariaLabel . $title . ' data-wat-language="' . esc_attr($code) . '">' . $label . '</a></li>';
+        $liAttrs = $isDropdown ? ' role="none"' : '';
+        $linkAttrs = $isDropdown ? ' role="menuitem" tabindex="-1"' : '';
+        return '<li' . $liAttrs . '><a' . $linkAttrs . ' href="' . esc_url($url) . '" hreflang="' . esc_attr($code) . '" lang="' . esc_attr($code) . '"' . $active . $ariaLabel . $title . ' data-wat-language="' . esc_attr($code) . '">' . $label . '</a></li>';
     }
 
     /**

@@ -100,7 +100,7 @@ trait RestRouteArguments
             ],
             'status' => [
                 'type' => 'string',
-                'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored', 'new'],
+                'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored', 'outdated', 'new'],
                 'sanitize_callback' => 'sanitize_key',
             ],
             'source_type' => ['type' => 'string', 'sanitize_callback' => 'sanitize_key'],
@@ -119,7 +119,7 @@ trait RestRouteArguments
                 'sanitize_callback' => 'sanitize_key',
             ],
             'translated_text' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'wp_kses_post'],
-            'status' => ['type' => 'string', 'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored'], 'sanitize_callback' => 'sanitize_key'],
+            'status' => ['type' => 'string', 'enum' => ['draft', 'needs_review', 'reviewed', 'published', 'ignored', 'outdated'], 'sanitize_callback' => 'sanitize_key'],
             'apply_memory' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
         ];
     }

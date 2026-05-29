@@ -19,6 +19,7 @@ final class Tables
     public static function jobs(): string { global $wpdb; return $wpdb->prefix . 'wat_scan_jobs'; }
     public static function logs(): string { global $wpdb; return $wpdb->prefix . 'wat_logs'; }
     public static function glossary(): string { global $wpdb; return $wpdb->prefix . 'wat_glossary'; }
+    public static function ai_usage(): string { global $wpdb; return $wpdb->prefix . 'wat_ai_usage'; }
 
     /**
      * Return a plugin-owned SQL identifier escaped for safe interpolation.

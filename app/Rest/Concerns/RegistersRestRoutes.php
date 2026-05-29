@@ -29,10 +29,10 @@ trait RegistersRestRoutes
 
     private function register_routes(): void
     {
-        $this->route('/dashboard', 'GET', 'dashboard');
+        $this->translate_route('/dashboard', 'GET', 'dashboard');
         $this->route('/health', 'GET', 'health');
         register_rest_route($this->namespace, '/languages', [
-            ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_manage']],
+            ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_translate']],
             ['methods' => 'POST', 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->language_args()],
         ]);
         register_rest_route($this->namespace, '/languages/(?P<id>\d+)', [
@@ -40,18 +40,20 @@ trait RegistersRestRoutes
             ['methods' => 'DELETE', 'callback' => [$this, 'delete_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->id_arg()],
         ]);
         $this->route('/languages/(?P<id>\d+)/delete', 'POST', 'delete_language', $this->id_arg());
-        $this->route('/strings', 'GET', 'strings', $this->strings_args());
-        $this->route('/strings/(?P<id>\d+)/translations', 'GET', 'string_translations', $this->id_arg());
-        $this->route('/strings/(?P<id>\d+)', ['PUT', 'POST'], 'update_string', array_merge($this->id_arg(), $this->translation_args()));
-        $this->route('/scan/start', 'POST', 'scan_start', $this->scan_start_args());
-        $this->route('/scan/status/(?P<id>\d+)', 'GET', 'scan_status', $this->id_arg());
-        $this->route('/scan/run-batch/(?P<id>\d+)', 'POST', 'scan_run_batch', array_merge($this->id_arg(), $this->scan_batch_args()));
-        $this->route('/scan/pause/(?P<id>\d+)', 'POST', 'scan_pause', $this->id_arg());
-        $this->route('/scan/resume/(?P<id>\d+)', 'POST', 'scan_resume', $this->id_arg());
-        $this->route('/scan/stop/(?P<id>\d+)', 'POST', 'scan_stop', $this->id_arg());
+        $this->translate_route('/strings', 'GET', 'strings', $this->strings_args());
+        $this->translate_route('/strings/(?P<id>\d+)/translations', 'GET', 'string_translations', $this->id_arg());
+        $this->translate_route('/strings/(?P<id>\d+)', ['PUT', 'POST'], 'update_string', array_merge($this->id_arg(), $this->translation_args()));
+        $this->translate_route('/scan/start', 'POST', 'scan_start', $this->scan_start_args());
+        $this->translate_route('/scan/status/(?P<id>\d+)', 'GET', 'scan_status', $this->id_arg());
+        $this->translate_route('/scan/run-batch/(?P<id>\d+)', 'POST', 'scan_run_batch', array_merge($this->id_arg(), $this->scan_batch_args()));
+        $this->translate_route('/scan/pause/(?P<id>\d+)', 'POST', 'scan_pause', $this->id_arg());
+        $this->translate_route('/scan/resume/(?P<id>\d+)', 'POST', 'scan_resume', $this->id_arg());
+        $this->translate_route('/scan/stop/(?P<id>\d+)', 'POST', 'scan_stop', $this->id_arg());
         $this->route('/csv/preview', 'POST', 'csv_preview');
         $this->route('/csv/import', 'POST', 'csv_import', $this->csv_import_args());
         $this->route('/csv/export', 'GET', 'csv_export');
+        $this->route('/xliff/export', 'GET', 'xliff_export');
+        $this->route('/xliff/import', 'POST', 'xliff_import');
         register_rest_route($this->namespace, '/glossary', [
             ['methods' => 'GET', 'callback' => [$this, 'glossary'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_glossary'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->glossary_args()],
@@ -91,6 +93,25 @@ trait RegistersRestRoutes
             'methods' => $methods,
             'callback' => [$this, $callback],
             'permission_callback' => [$this, 'can_manage'],
+        ];
+        if ($args) {
+            $route['args'] = $args;
+        }
+        register_rest_route($this->namespace, $path, $route);
+    }
+
+    /**
+     * Register a translation-workflow route available to editors and the dedicated
+     * translator role (can_translate), not just full administrators.
+     *
+     * @param array<string, mixed> $args REST argument schema.
+     */
+    private function translate_route(string $path, string|array $methods, string $callback, array $args = []): void
+    {
+        $route = [
+            'methods' => $methods,
+            'callback' => [$this, $callback],
+            'permission_callback' => [$this, 'can_translate'],
         ];
         if ($args) {
             $route['args'] = $args;

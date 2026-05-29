@@ -2,7 +2,7 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "webactueel/translate-language-switcher",
-  "version": "1.7.0",
+  "version": "2.4.0",
   "title": "Webactueel taalkiezer",
   "category": "widgets",
   "icon": "translation",

@@ -59,13 +59,13 @@ trait TranslationStringWrites
         }
         $status = sanitize_key($status);
         $translatedText = trim(wp_kses_post($translatedText));
-        if ($translatedText !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
+        if ($translatedText !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review', 'outdated'], true)) {
             $status = 'published';
         }
         if ($translatedText === '' && in_array($status, ['published', 'reviewed'], true)) {
             $status = 'draft';
         }
-        if (! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
+        if (! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review', 'outdated'], true)) {
             $status = 'draft';
         }
         $origin = sanitize_key($origin ?: 'manual');
@@ -90,6 +90,7 @@ trait TranslationStringWrites
         }
         if ($ok) {
             CacheInvalidator::bump();
+            do_action('wat_after_translation_saved', absint($stringId), $languageCode);
         }
         return $ok;
     }

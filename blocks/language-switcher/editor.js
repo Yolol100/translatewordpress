@@ -8,13 +8,14 @@
   var el = wp.element.createElement;
   var __ = wp.i18n.__;
   var ServerSideRender = wp.serverSideRender;
+  var useBlockProps = wp.blockEditor && wp.blockEditor.useBlockProps ? wp.blockEditor.useBlockProps : function(){ return {}; };
 
   function Preview() {
     if (ServerSideRender) {
-      return el(ServerSideRender, {
+      return el('div', useBlockProps(), el(ServerSideRender, {
         block: 'webactueel/translate-language-switcher',
         attributes: {}
-      });
+      }));
     }
 
     return el('div', { className: 'wat-block-preview-fallback' },

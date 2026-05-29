@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Rest\Concerns;
 
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
 use Webactueel\Translate\Translation\TranslationRepository;
 use WP_Error;
@@ -43,7 +44,7 @@ trait TranslationEndpoints
         }
         $repo = new TranslationRepository();
         $status = Input::key($params['status'] ?? 'published');
-        if ($status !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
+        if ($status !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review', 'outdated'], true)) {
             return new WP_Error('wat_invalid_translation_status', __('Ongeldige vertaalstatus.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
         if ($status === '') {
@@ -52,6 +53,12 @@ trait TranslationEndpoints
         if ($translated === '' && in_array($status, ['published', 'reviewed'], true)) {
             $status = 'draft';
         }
+
+        $settings = Settings::all();
+        if (! current_user_can('manage_options') && ! empty($settings['translator_review_required']) && $translated !== '' && in_array($status, ['published', 'reviewed'], true)) {
+            $status = 'needs_review';
+        }
+
         $saved = $repo->save_translation($id, $language, $translated, $status, 'manual');
         if (! $saved) {
             return new WP_Error('wat_translation_save_failed', __('Vertaling opslaan mislukt.', 'webactueel-translate-language-dropdowns'), ['status' => 500]);
@@ -60,7 +67,6 @@ trait TranslationEndpoints
         if (! empty($params['apply_memory']) && $translated !== '') {
             $memoryApplied = $repo->apply_translation_memory($id, $language, $translated, $status);
         }
-        do_action('wat_after_translation_saved', $id, $language);
         return ['saved' => true, 'memory_applied' => $memoryApplied];
     }
 }

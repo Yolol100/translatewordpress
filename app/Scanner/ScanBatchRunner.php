@@ -98,7 +98,20 @@ final class ScanBatchRunner
         $processed = 0;
         $errors = 0;
         $lastId = $lastCursor;
+
+        // Server-side wall-clock guard: stop processing before max_execution_time so a
+        // large client-requested batch cannot fatal mid-write and orphan the cursor.
+        $maxExecution = (int) ini_get('max_execution_time');
+        $budget = $maxExecution > 0 ? max(5, (int) floor($maxExecution * 0.7)) : 20;
+        $budget = (int) apply_filters('wat_scan_batch_time_budget', $budget, $jobId);
+        $startedAt = microtime(true);
+        $timedOut = false;
+
         foreach ($ids as $postId) {
+            if ((microtime(true) - $startedAt) >= $budget) {
+                $timedOut = true;
+                break;
+            }
             try {
                 $lastId = max($lastId, (int) $postId);
                 $post = get_post($postId);
@@ -113,7 +126,7 @@ final class ScanBatchRunner
             }
         }
 
-        $isDone = count($ids) < $batchSize;
+        $isDone = ! $timedOut && count($ids) < $batchSize;
         $this->jobs->update($jobId, [
             'status' => $isDone ? 'completed' : 'running',
             'cursor_value' => $lastId,
@@ -121,7 +134,13 @@ final class ScanBatchRunner
             'found_strings' => absint($job['found_strings'] ?? 0) + $found,
             'errors_count' => absint($job['errors_count'] ?? 0) + $errors,
             // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
-            'message' => $isDone ? __('Scan voltooid.', 'webactueel-translate-language-dropdowns') : sprintf(__('Batch verwerkt: %1$d items, %2$d strings.', 'webactueel-translate-language-dropdowns'), $processed, $found),
+            'message' => $isDone
+                ? __('Scan voltooid.', 'webactueel-translate-language-dropdowns')
+                : ($timedOut
+                    // translators: 1: processed item count, 2: found string count.
+                    ? sprintf(__('Batch ingekort wegens tijdslimiet: %1$d items, %2$d strings. Hervat automatisch.', 'webactueel-translate-language-dropdowns'), $processed, $found)
+                    // translators: 1: processed item count, 2: found string count.
+                    : sprintf(__('Batch verwerkt: %1$d items, %2$d strings.', 'webactueel-translate-language-dropdowns'), $processed, $found)),
             'started_at' => $job['started_at'] ?: current_time('mysql'),
             'completed_at' => $isDone ? current_time('mysql') : null,
         ]);

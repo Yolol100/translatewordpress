@@ -20,7 +20,37 @@ trait ScansPostContent
         $found += $this->scan_elementor($postId, $post->post_type);
         $found += $this->scan_acf($postId, $post->post_type);
         $found += $this->scan_relevant_post_meta($postId, $post->post_type);
+        $found += $this->scan_seo_fields($postId);
         return $found;
+    }
+
+    /**
+     * Scan the active SEO plugin's custom title and meta description for a post.
+     *
+     * SEO fields are stored as whole, unfragmented strings (one per field) so the
+     * title/description maps 1:1 back to its post meta after translation, instead of
+     * being split into sentences like body content.
+     */
+    private function scan_seo_fields(int $postId): int
+    {
+        if (! \Webactueel\Translate\Seo\SeoFieldExtractor::is_available()) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach (\Webactueel\Translate\Seo\SeoFieldExtractor::read_fields($postId) as $field => $value) {
+            $clean = trim(wp_strip_all_tags($value));
+            if ($clean === '') {
+                continue;
+            }
+            $context = \Webactueel\Translate\Seo\SeoFieldExtractor::context($field);
+            $sourceKey = \Webactueel\Translate\Seo\SeoFieldExtractor::source_key($field);
+            if ($this->repository->upsert_string($clean, \Webactueel\Translate\Seo\SeoFieldExtractor::SOURCE_TYPE, $postId, $context, $sourceKey) > 0) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private function scan_text(string $text, string $sourceType, int $sourceId, string $context, string $sourceKey = ''): int

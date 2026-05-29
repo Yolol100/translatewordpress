@@ -56,6 +56,40 @@ trait TranslationMemoryAndMap
         return 0;
     }
 
+
+
+    /** @return array<string, mixed> */
+    public function find_translation_memory_match(string $originalText, string $languageCode): array
+    {
+        global $wpdb;
+        $languageCode = sanitize_key($languageCode);
+        if (! $this->is_translatable_language($languageCode)) {
+            return [];
+        }
+        $normalized = \Webactueel\Translate\Translation\StringNormalizer::normalize($originalText);
+        if ($normalized === '') {
+            return [];
+        }
+        $stringsTable = Tables::sql_identifier(Tables::strings());
+        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT t.translated_text, t.status, t.origin, s.id AS source_string_id FROM `{$stringsTable}` s INNER JOIN `{$translationsTable}` t ON t.string_id = s.id WHERE s.normalized_text = %s AND t.language_code = %s AND t.status IN ('reviewed','published') AND TRIM(t.translated_text) <> '' ORDER BY t.updated_at DESC, t.id DESC LIMIT 1",
+            $normalized,
+            $languageCode
+        ), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        if (! is_array($row)) {
+            return [];
+        }
+        return [
+            'translated_text' => Input::scalar_string($row['translated_text'] ?? ''),
+            'status' => Input::key($row['status'] ?? 'reviewed'),
+            'origin' => Input::key($row['origin'] ?? 'memory'),
+            'source_string_id' => absint($row['source_string_id'] ?? 0),
+            'score' => 100,
+        ];
+    }
+
+
     /**
      * @param array<int, array<string, mixed>> $terms
      */

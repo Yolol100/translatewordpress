@@ -14,7 +14,7 @@ if (! defined('ABSPATH')) {
 
 final class Schema
 {
-    public const DB_VERSION = '4';
+    public const DB_VERSION = '6';
 
     /**
      * Apply schema updates lazily from admin and REST requests.
@@ -126,6 +126,8 @@ final class Schema
             found_strings INT DEFAULT 0,
             skipped_items INT DEFAULT 0,
             errors_count INT DEFAULT 0,
+            assigned_user_id BIGINT UNSIGNED DEFAULT 0,
+            due_at DATETIME NULL,
             options_json LONGTEXT NULL,
             message TEXT NULL,
             started_at DATETIME NULL,
@@ -135,7 +137,9 @@ final class Schema
             PRIMARY KEY (id),
             UNIQUE KEY job_key (job_key),
             KEY status (status),
-            KEY type (type)
+            KEY type (type),
+            KEY assigned_user_id (assigned_user_id),
+            KEY due_at (due_at)
         ) {$charset};");
 
         dbDelta('CREATE TABLE ' . Tables::glossary() . " (
@@ -149,6 +153,32 @@ final class Schema
             PRIMARY KEY (id),
             KEY language_code (language_code),
             KEY source_term (source_term)
+        ) {$charset};");
+
+
+
+        dbDelta('CREATE TABLE ' . Tables::ai_usage() . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            job_id BIGINT UNSIGNED DEFAULT 0,
+            string_id BIGINT UNSIGNED DEFAULT 0,
+            user_id BIGINT UNSIGNED DEFAULT 0,
+            provider VARCHAR(30) NOT NULL,
+            model VARCHAR(100) DEFAULT '',
+            source_language VARCHAR(12) DEFAULT '',
+            target_language VARCHAR(12) DEFAULT '',
+            source_chars INT DEFAULT 0,
+            output_chars INT DEFAULT 0,
+            estimated_words INT DEFAULT 0,
+            memory_reused TINYINT(1) DEFAULT 0,
+            glossary_terms INT DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY job_id (job_id),
+            KEY string_id (string_id),
+            KEY user_id (user_id),
+            KEY provider (provider),
+            KEY target_language (target_language),
+            KEY created_at (created_at)
         ) {$charset};");
 
         dbDelta('CREATE TABLE ' . Tables::logs() . " (

@@ -1,19 +1,10 @@
 /* Native WordPress workflow panel for Webactueel Translate. Scoped to the plugin admin wrapper. */
-.webactueel-translate-admin.wat-native-workflow-shell {
-  margin: 0 0 20px;
-}
-
-.webactueel-translate-admin.wat-native-workflow-shell[hidden],
-.webactueel-translate-admin.is-workflow-tab-active .wat-tab-content {
-  display: none !important;
-}
-
 .webactueel-translate-admin .wat-native-workflow-root {
   max-width: 1280px;
 }
 
 .webactueel-translate-admin .wat-native-workflow-card.components-card {
-  border-color: #dcdcde;
+  border-color: var(--wp-components-color-gray-300, #dcdcde);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -25,36 +16,6 @@
 
 .webactueel-translate-admin .wat-native-workflow-card .components-card__body {
   padding: 20px 24px 24px;
-}
-
-.webactueel-translate-admin .wat-native-workflow-heading {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.webactueel-translate-admin .wat-native-workflow-heading h2 {
-  margin: 0;
-  color: #1d2327;
-  font-size: 20px;
-  line-height: 1.3;
-}
-
-.webactueel-translate-admin .wat-native-workflow-heading p {
-  max-width: 760px;
-  margin: 0;
-  color: #646970;
-}
-
-.webactueel-translate-admin .wat-native-workflow-eyebrow {
-  width: fit-content;
-  border: 1px solid #c3c4c7;
-  border-radius: 999px;
-  background: #f6f7f7;
-  color: #50575e;
-  padding: 3px 9px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .webactueel-translate-admin .wat-native-workflow-header-actions {
@@ -73,7 +34,7 @@
   align-items: center;
   min-height: 28px;
   width: fit-content;
-  border: 1px solid #c3c4c7;
+  border: 1px solid var(--wp-components-color-gray-400, #c3c4c7);
   border-radius: 999px;
   background: #f6f7f7;
   color: #50575e;
@@ -98,7 +59,7 @@
 .webactueel-translate-admin .wat-native-workflow-badge.is-info {
   border-color: #b8d6fb;
   background: #f0f6fc;
-  color: #135e96;
+  color: var(--wp-admin-theme-color-darker-10, #135e96);
 }
 
 .webactueel-translate-admin .wat-native-workflow-loading {
@@ -119,7 +80,7 @@
 .webactueel-translate-admin .wat-native-workflow-metric {
   display: grid;
   gap: 5px;
-  border: 1px solid #dcdcde;
+  border: 1px solid var(--wp-components-color-gray-300, #dcdcde);
   border-radius: 8px;
   background: #fff;
   padding: 14px;
@@ -155,7 +116,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #2271b1;
+  background: var(--wp-admin-theme-color, #2271b1);
   transition: width 180ms ease;
 }
 
@@ -166,7 +127,7 @@
 }
 
 .webactueel-translate-admin .wat-native-workflow-panels .components-panel {
-  border-color: #dcdcde;
+  border-color: var(--wp-components-color-gray-300, #dcdcde);
 }
 
 .webactueel-translate-admin .wat-native-workflow-list {
@@ -180,7 +141,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 0;
-  border: 1px solid #dcdcde;
+  border: 1px solid var(--wp-components-color-gray-300, #dcdcde);
   border-radius: 8px;
   background: #fff;
   padding: 12px;
@@ -200,7 +161,7 @@
 }
 
 .webactueel-translate-admin .wat-native-workflow-empty {
-  border: 1px dashed #c3c4c7;
+  border: 1px dashed var(--wp-components-color-gray-400, #c3c4c7);
   border-radius: 8px;
   background: #f6f7f7;
   padding: 14px;
@@ -233,5 +194,54 @@
 
   .webactueel-translate-admin .wat-native-workflow-header-actions .components-base-control {
     min-width: 0;
+  }
+}
+
+.webactueel-translate-admin .wat-native-workflow-loading-inline { display: inline-flex; gap: 8px; align-items: center; }
+
+
+.wat-content-readiness-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wat-content-readiness-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--wp-components-color-gray-300, #dcdcde);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.wat-content-readiness-main p {
+  margin: 4px 0;
+  color: #50575e;
+}
+
+.wat-content-readiness-main small {
+  color: #646970;
+}
+
+.wat-content-readiness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 782px) {
+  .wat-content-readiness-item {
+    grid-template-columns: 1fr;
+  }
+
+  .wat-content-readiness-actions {
+    justify-content: flex-start;
   }
 }
