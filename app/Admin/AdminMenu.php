@@ -74,7 +74,9 @@ final class AdminMenu
         wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', $pluginUrl . 'build/shared/design-system.css', ['wp-components'], $version);
         wp_enqueue_style('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
         wp_enqueue_script('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.js', $dependencies, $version, true);
+        wp_enqueue_script('webactueel-translate-language-dropdowns-native-workflow', $pluginUrl . 'build/admin/native-workflow.js', ['webactueel-translate-language-dropdowns-admin'], $version, true);
         wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
+        wp_set_script_translations('webactueel-translate-language-dropdowns-native-workflow', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
         $configJson = wp_json_encode([
             'restUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
@@ -144,6 +146,7 @@ final class AdminMenu
         }
 
         echo '<div class="wrap wat-admin-wrap">';
+        echo '<div id="webactueel-translate-native-workflow-root" class="webactueel-translate-admin wat-native-workflow-shell"></div>';
         echo '<div id="webactueel-translate-admin-root" class="webactueel-translate-admin wat-admin webactueel-translate-language-dropdowns-admin">';
         echo '<div id="wat-admin-fallback" class="wat-admin-fallback">';
         echo '<h1>' . esc_html__('Webactueel Translate', 'webactueel-translate-language-dropdowns') . '</h1>';
