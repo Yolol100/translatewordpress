@@ -11,6 +11,7 @@ use Webactueel\Translate\Automation\AiTranslationService;
 use Webactueel\Translate\Performance\PerformanceMonitor;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Setup\SetupWizard;
+use Webactueel\Translate\Workflow\TranslationContextReport;
 use Webactueel\Translate\Workflow\TranslationQualityReport;
 use Webactueel\Translate\Workflow\WorkflowStatus;
 use WP_REST_Request;
@@ -67,6 +68,20 @@ final class ProductFeaturesRestService
     }
 
     /** @return array<string, array<string, mixed>> */
+    private function language_report_args(): array
+    {
+        return [
+            'language' => [
+                'type' => 'string',
+                'required' => true,
+                'validate_callback' => [self::class, 'validate_language_code'],
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'sanitize_callback' => 'absint'],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
     private function ai_job_args(): array
     {
         return [
@@ -111,14 +126,13 @@ final class ProductFeaturesRestService
             'methods' => 'GET',
             'callback' => [$this, 'workflow_quality'],
             'permission_callback' => [$this, 'can_translate'],
-            'args' => [
-                'language' => [
-                    'type' => 'string',
-                    'required' => true,
-                    'validate_callback' => [self::class, 'validate_language_code'],
-                    'sanitize_callback' => 'sanitize_key',
-                ],
-            ],
+            'args' => $this->language_report_args(),
+        ]);
+        register_rest_route($this->namespace, '/workflow/context', [
+            'methods' => 'GET',
+            'callback' => [$this, 'workflow_context'],
+            'permission_callback' => [$this, 'can_translate'],
+            'args' => $this->language_report_args(),
         ]);
         register_rest_route($this->namespace, '/automation/capabilities', [
             'methods' => 'GET', 'callback' => [$this, 'automation_capabilities'], 'permission_callback' => [$this, 'can_manage'],
@@ -181,6 +195,16 @@ final class ProductFeaturesRestService
     public function workflow_quality(WP_REST_Request $request): array
     {
         return ['quality' => TranslationQualityReport::for_language(Input::key($request->get_param('language')))];
+    }
+
+    public function workflow_context(WP_REST_Request $request): array
+    {
+        return [
+            'context' => TranslationContextReport::for_language(
+                Input::key($request->get_param('language')),
+                absint($request->get_param('limit') ?: 20)
+            ),
+        ];
     }
 
     public function automation_capabilities(): array
