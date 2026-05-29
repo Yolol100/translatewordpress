@@ -11,6 +11,7 @@ use Webactueel\Translate\Automation\AiTranslationService;
 use Webactueel\Translate\Performance\PerformanceMonitor;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Setup\SetupWizard;
+use Webactueel\Translate\Workflow\TranslationQualityReport;
 use Webactueel\Translate\Workflow\WorkflowStatus;
 use WP_REST_Request;
 
@@ -106,6 +107,19 @@ final class ProductFeaturesRestService
         register_rest_route($this->namespace, '/workflow/statuses', [
             'methods' => 'GET', 'callback' => [$this, 'workflow_statuses'], 'permission_callback' => [$this, 'can_translate'],
         ]);
+        register_rest_route($this->namespace, '/workflow/quality', [
+            'methods' => 'GET',
+            'callback' => [$this, 'workflow_quality'],
+            'permission_callback' => [$this, 'can_translate'],
+            'args' => [
+                'language' => [
+                    'type' => 'string',
+                    'required' => true,
+                    'validate_callback' => [self::class, 'validate_language_code'],
+                    'sanitize_callback' => 'sanitize_key',
+                ],
+            ],
+        ]);
         register_rest_route($this->namespace, '/automation/capabilities', [
             'methods' => 'GET', 'callback' => [$this, 'automation_capabilities'], 'permission_callback' => [$this, 'can_manage'],
         ]);
@@ -162,6 +176,11 @@ final class ProductFeaturesRestService
     public function workflow_statuses(): array
     {
         return ['statuses' => WorkflowStatus::labels()];
+    }
+
+    public function workflow_quality(WP_REST_Request $request): array
+    {
+        return ['quality' => TranslationQualityReport::for_language(Input::key($request->get_param('language')))];
     }
 
     public function automation_capabilities(): array
