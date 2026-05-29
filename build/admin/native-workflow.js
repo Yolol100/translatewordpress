@@ -77,15 +77,98 @@
     }));
   }
 
-  function openAdminTab(tabName) {
+  function setMainTab(tabName) {
     try {
       window.localStorage.setItem('wat_tab', tabName);
       var url = new URL(window.location.href);
       url.searchParams.set('wat_tab', tabName);
       window.location.href = url.toString();
     } catch (e) {
-      window.location.href = (cfg && cfg.restUrl ? window.location.href : window.location.href);
+      window.location.href = window.location.href;
     }
+  }
+
+  function openAdminTab(tabName) {
+    if (tabName === 'workflow') {
+      activateWorkflow(true);
+      return;
+    }
+    setMainTab(tabName);
+  }
+
+  function activateWorkflow(updateUrl) {
+    var root = document.getElementById('webactueel-translate-native-workflow-root');
+    var app = document.getElementById('webactueel-translate-admin-root');
+    var buttons = document.querySelectorAll('.wat-native-tabs .components-tab-panel__tabs button');
+    if (root) {
+      root.hidden = false;
+    }
+    if (app) {
+      app.classList.add('is-workflow-tab-active');
+    }
+    Array.prototype.forEach.call(buttons, function (button) {
+      var isWorkflow = button.getAttribute('data-wat-workflow-tab') === '1';
+      button.classList.toggle('is-active', isWorkflow);
+      button.setAttribute('aria-selected', isWorkflow ? 'true' : 'false');
+    });
+    if (updateUrl) {
+      try {
+        window.localStorage.setItem('wat_tab', 'workflow');
+        var url = new URL(window.location.href);
+        url.searchParams.set('wat_tab', 'workflow');
+        window.history.pushState({}, '', url.toString());
+      } catch (e) {}
+    }
+  }
+
+  function deactivateWorkflow() {
+    var root = document.getElementById('webactueel-translate-native-workflow-root');
+    var app = document.getElementById('webactueel-translate-admin-root');
+    if (root) {
+      root.hidden = true;
+    }
+    if (app) {
+      app.classList.remove('is-workflow-tab-active');
+    }
+  }
+
+  function installWorkflowTab() {
+    var attempts = 0;
+    var timer = window.setInterval(function () {
+      attempts += 1;
+      var tabList = document.querySelector('.wat-native-tabs .components-tab-panel__tabs');
+      if (!tabList) {
+        if (attempts > 60) {
+          window.clearInterval(timer);
+        }
+        return;
+      }
+      if (!tabList.querySelector('[data-wat-workflow-tab="1"]')) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = __('Workflow', 'webactueel-translate-language-dropdowns');
+        button.setAttribute('data-wat-workflow-tab', '1');
+        button.addEventListener('click', function () { activateWorkflow(true); });
+        tabList.insertBefore(button, tabList.children[1] || null);
+      }
+      Array.prototype.forEach.call(tabList.querySelectorAll('button:not([data-wat-workflow-tab="1"])'), function (button) {
+        if (button.getAttribute('data-wat-main-tab-listener') === '1') {
+          return;
+        }
+        button.setAttribute('data-wat-main-tab-listener', '1');
+        button.addEventListener('click', deactivateWorkflow);
+      });
+      var wanted = 'dashboard';
+      try {
+        wanted = new URLSearchParams(window.location.search).get('wat_tab') || window.localStorage.getItem('wat_tab') || 'dashboard';
+      } catch (e) {}
+      if (wanted === 'workflow') {
+        activateWorkflow(false);
+      } else {
+        deactivateWorkflow();
+      }
+      window.clearInterval(timer);
+    }, 100);
   }
 
   function NativeWorkflowPanel() {
@@ -225,4 +308,6 @@
   } else if (typeof wp.element.render === 'function') {
     wp.element.render(el(NativeWorkflowPanel), root);
   }
+
+  installWorkflowTab();
 })(window.wp, window.WebactueelTranslate || {});
