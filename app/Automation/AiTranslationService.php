@@ -22,7 +22,7 @@ final class AiTranslationService
     {
         $settings = Settings::all();
         $provider = self::provider($settings);
-        $databaseKeyStorageDisabled = defined('WAT_DISABLE_DB_AI_CREDENTIALS') && (bool) WAT_DISABLE_DB_AI_CREDENTIALS;
+        $databaseKeyStorageAllowed = Settings::allows_db_ai_credentials();
         return [
             'enabled' => ! empty($settings['ai_enabled']),
             'provider' => $provider,
@@ -33,10 +33,10 @@ final class AiTranslationService
             'hasEndpoint' => $provider !== 'openai_compatible' || self::custom_endpoint($settings) !== '',
             'providers' => self::providers(),
             'supportsReviewWorkflow' => true,
-            'storesApiKey' => ! $databaseKeyStorageDisabled && Settings::ai_api_key($provider) !== '',
-            'databaseKeyStorageDisabled' => $databaseKeyStorageDisabled,
+            'storesApiKey' => $databaseKeyStorageAllowed && Settings::ai_api_key($provider) !== '',
+            'databaseKeyStorageAllowed' => $databaseKeyStorageAllowed,
             'supportsServerConstants' => true,
-            'note' => __('AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen tenzij WAT_DISABLE_DB_AI_CREDENTIALS actief is. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden.', 'webactueel-translate-language-dropdowns'),
+            'note' => __('AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Database-opslag via de beheerinterface is standaard uitgeschakeld en werkt alleen wanneer WAT_ENABLE_DB_AI_CREDENTIALS of de wat_allow_db_ai_credentials filter dit expliciet toestaat. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden.', 'webactueel-translate-language-dropdowns'),
         ];
     }
 
@@ -123,7 +123,7 @@ final class AiTranslationService
      *
      * Preferred sources are server constants and the `wat_ai_api_key` filter so deployments
      * can keep credentials in environment/server configuration. The admin UI can also store
-     * a provider key in the WordPress database when a site owner explicitly saves one there.
+     * a provider key in the WordPress database only when the site owner explicitly enables database credential storage.
      */
     private static function api_key(string $provider): string
     {

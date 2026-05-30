@@ -1,50 +1,27 @@
 # Changelog
 
-## 2.4.0
-- Privacy: workflowjobs geven e-mailadressen van toegewezen vertalers alleen nog terug aan beheerders.
-- Healthcheck: controleert nu ook de AI-verbruiktabel zodat systeemcontrole geen onterecht groen signaal geeft.
-- Visual editor: live preview vervangt alleen nog simpele tekst-elementen en slaat inline markup niet meer lokaal plat.
-- Setup API: wizard-stapwaarden gelijkgetrokken met de actuele adminflow.
-- Cleanup: oude `wat-premium-app-header` CSS-restanten verwijderd.
+= 2.4.4 =
+* Added agency launch checklist for WordPress.org and client-demo readiness.
+* Refined WordPress.org copy around review-first agency workflows, optional AI and usage reporting.
+* Updated roadmap to separate launch-readiness, agency workflow, scale and external-integration items.
+* Rechecked release package metadata after documentation updates.
 
-- Workflow-controles laden pas nadat er een taal gekozen is, zodat er geen lege language REST-fouten ontstaan bij eerste render.
-- Assignee-lijst is admin-only gemaakt om vertalergegevens en e-mailadressen niet onnodig via REST bloot te stellen.
-- Systeemcontrole toont nu de juiste databaseversie via `wat_db_version`.
-- Dashboard blokkeert de visuele editor tot setup en scan klaar zijn.
-- Scan verwerkt grote sites rustiger in veilige stappen in plaats van onbeperkt door de browser te recursen.
-- Kleine cleanup van oude workflow-CSS en een dubbele visual-editor-tekstconditie.
+## 2.4.3
+- Improved frontend language switcher menu-button accessibility and keyboard behavior.
+- Aligned visible UI states with WordPress admin theme variables where safe.
+- Added reduced-motion safeguards for switcher/native workflow micro-interactions.
+- Rechecked Translation Memory: exact-match auto-apply is active before AI provider calls.
 
-## 2.3.3
-- Cleanup: oude no-op workflow-scripts verwijderd nadat workflow volledig binnen de React TabPanel draait.
-- Cleanup: admin enqueue opgeschoond zodat er geen leeg compatibiliteitsscript meer wordt geladen.
-- Cleanup: obsolete workflow-root CSS-selectors en dubbele CSS-declaratie verwijderd.
-- Release: block.json, asset fallback en POT-metadata gelijkgetrokken met de pluginversie.
+## 2.4.2
 
-## 2.3.2
-- Assetversie gelijkgetrokken met pluginversie zodat WordPress/browsercache de juiste adminbundles laadt.
-- Workflowpaneel verplaatst naar de echte React TabPanel-content; de losse native-workflow-root is vervangen door een no-op compatibiliteitshandle.
-- Vertalers krijgen toegang tot de pluginpagina via `wat_manage_translations`; Setup en Geavanceerd blijven alleen zichtbaar voor beheerders.
-- Dashboard en taaloverzicht zijn leesbaar voor vertalers met beperkte, niet-technische settingsdata.
-- Taal toevoegen versimpeld: snelle taalkeuze is de hoofdroute, handmatige locale/RTL/flag-velden staan achter Handmatig aanpassen.
-- Readme bijgewerkt naar de actuele klantflow.
-
-## 2.3.1
-- Vereenvoudigde adminnavigatie naar een klantvriendelijke hoofdflow: Start, Setup, Scan & vertaal, Controle & publicatie, Visuele controle en Geavanceerd.
-- CSV/XLIFF/import/export/logs/systeemcontrole gebundeld achter Geavanceerd zodat dagelijkse vertalers minder technische ruis zien.
-- Labels aangescherpt naar klanttaal: beschermde woorden, eerder vertaalde teksten, AI-verbruik en publicatiekwaliteit.
-- Oude `wat_tab=tools` en `wat_tab=status` routes mappen automatisch naar Geavanceerd.
-- Stable tag in readme gelijkgetrokken met de pluginversie.
-
-## 2.3.0
-- Added per-client AI usage CSV export (line items + summary footer) for agency re-billing, with spreadsheet formula-injection guard.
-- Added admin-post `wat_ai_usage_export` endpoint (nonce + manage_options protected) and exposed its URL to the admin UI.
-- Added `AiUsageLedger::export_rows()` and `export_csv()` with period and target-language filters.
-
-## 2.2.0
-- Added SEO meta auto-detection: scans the active SEO plugin's custom title and meta description (Yoast, Rank Math, AIOSEO, SEOPress) into the translation queue.
-- Added automatic sync of translated SEO titles/descriptions back into post meta so SeoMetaManager renders them on the front end.
-- SEO fields are re-queued on post save and only published/reviewed translations are surfaced as live SEO output.
-- Unified the `wat_after_translation_saved` event to fire from every translation writer (manual, visual editor, AI batch, CSV, XLIFF).
+- Fixed stale language switcher block asset fallback version so release metadata remains consistent during non-WordPress static checks.
+- Added setup recommendations endpoint for first-run guidance.
+- Added SEO health endpoint for hreflang, canonical, sitemap and SEO-plugin readiness.
+- Added AI batch volume estimate endpoint without hardcoded provider pricing claims.
+- Added WooCommerce safe-mode endpoint with checkout/cart/account test guidance.
+- Added WP-CLI `webactueel-translate release-check` command.
+- Added docs for competitor comparison, roadmap, staging testplan and WordPress.org copy.
+- Preserved earlier security hardening for capabilities, AI key storage and release packaging.
 
 ## 2.1.1
 - Replaced the workflow pseudo-tab DOM injection with a real React TabPanel tab and URL-synced visibility.

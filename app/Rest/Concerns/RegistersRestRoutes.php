@@ -6,6 +6,7 @@ namespace Webactueel\Translate\Rest\Concerns;
 
 if (! defined('ABSPATH')) {
     exit;
+
 }
 
 trait RegistersRestRoutes
@@ -29,10 +30,10 @@ trait RegistersRestRoutes
 
     private function register_routes(): void
     {
-        $this->translate_route('/dashboard', 'GET', 'dashboard');
+        $this->route('/dashboard', 'GET', 'dashboard');
         $this->route('/health', 'GET', 'health');
         register_rest_route($this->namespace, '/languages', [
-            ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_translate']],
+            ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->language_args()],
         ]);
         register_rest_route($this->namespace, '/languages/(?P<id>\d+)', [
@@ -43,17 +44,17 @@ trait RegistersRestRoutes
         $this->translate_route('/strings', 'GET', 'strings', $this->strings_args());
         $this->translate_route('/strings/(?P<id>\d+)/translations', 'GET', 'string_translations', $this->id_arg());
         $this->translate_route('/strings/(?P<id>\d+)', ['PUT', 'POST'], 'update_string', array_merge($this->id_arg(), $this->translation_args()));
-        $this->translate_route('/scan/start', 'POST', 'scan_start', $this->scan_start_args());
-        $this->translate_route('/scan/status/(?P<id>\d+)', 'GET', 'scan_status', $this->id_arg());
-        $this->translate_route('/scan/run-batch/(?P<id>\d+)', 'POST', 'scan_run_batch', array_merge($this->id_arg(), $this->scan_batch_args()));
-        $this->translate_route('/scan/pause/(?P<id>\d+)', 'POST', 'scan_pause', $this->id_arg());
-        $this->translate_route('/scan/resume/(?P<id>\d+)', 'POST', 'scan_resume', $this->id_arg());
-        $this->translate_route('/scan/stop/(?P<id>\d+)', 'POST', 'scan_stop', $this->id_arg());
-        $this->route('/csv/preview', 'POST', 'csv_preview');
-        $this->route('/csv/import', 'POST', 'csv_import', $this->csv_import_args());
-        $this->route('/csv/export', 'GET', 'csv_export');
-        $this->route('/xliff/export', 'GET', 'xliff_export');
-        $this->route('/xliff/import', 'POST', 'xliff_import');
+        $this->scan_route('/scan/start', 'POST', 'scan_start', $this->scan_start_args());
+        $this->scan_route('/scan/status/(?P<id>\d+)', 'GET', 'scan_status', $this->id_arg());
+        $this->scan_route('/scan/run-batch/(?P<id>\d+)', 'POST', 'scan_run_batch', array_merge($this->id_arg(), $this->scan_batch_args()));
+        $this->scan_route('/scan/pause/(?P<id>\d+)', 'POST', 'scan_pause', $this->id_arg());
+        $this->scan_route('/scan/resume/(?P<id>\d+)', 'POST', 'scan_resume', $this->id_arg());
+        $this->scan_route('/scan/stop/(?P<id>\d+)', 'POST', 'scan_stop', $this->id_arg());
+        $this->import_export_route('/csv/preview', 'POST', 'csv_preview');
+        $this->import_export_route('/csv/import', 'POST', 'csv_import', $this->csv_import_args());
+        $this->import_export_route('/csv/export', 'GET', 'csv_export');
+        $this->import_export_route('/xliff/export', 'GET', 'xliff_export');
+        $this->import_export_route('/xliff/import', 'POST', 'xliff_import');
         register_rest_route($this->namespace, '/glossary', [
             ['methods' => 'GET', 'callback' => [$this, 'glossary'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_glossary'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->glossary_args()],
@@ -101,8 +102,8 @@ trait RegistersRestRoutes
     }
 
     /**
-     * Register a translation-workflow route available to editors and the dedicated
-     * translator role (can_translate), not just full administrators.
+     * Register a translation-workflow route available to explicitly allowed
+     * translation users, not just full administrators.
      *
      * @param array<string, mixed> $args REST argument schema.
      */
@@ -112,6 +113,42 @@ trait RegistersRestRoutes
             'methods' => $methods,
             'callback' => [$this, $callback],
             'permission_callback' => [$this, 'can_translate'],
+        ];
+        if ($args) {
+            $route['args'] = $args;
+        }
+        register_rest_route($this->namespace, $path, $route);
+    }
+
+    /**
+     * Register a scan route protected by the dedicated scan capability.
+     *
+     * @param array<string, mixed> $args REST argument schema.
+     */
+    private function scan_route(string $path, string|array $methods, string $callback, array $args = []): void
+    {
+        $route = [
+            'methods' => $methods,
+            'callback' => [$this, $callback],
+            'permission_callback' => [$this, 'can_scan'],
+        ];
+        if ($args) {
+            $route['args'] = $args;
+        }
+        register_rest_route($this->namespace, $path, $route);
+    }
+
+    /**
+     * Register an import/export route protected by the dedicated data-movement capability.
+     *
+     * @param array<string, mixed> $args REST argument schema.
+     */
+    private function import_export_route(string $path, string|array $methods, string $callback, array $args = []): void
+    {
+        $route = [
+            'methods' => $methods,
+            'callback' => [$this, $callback],
+            'permission_callback' => [$this, 'can_import_export'],
         ];
         if ($args) {
             $route['args'] = $args;

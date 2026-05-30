@@ -76,7 +76,9 @@ final class AdminMenu
         wp_enqueue_style('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
         wp_enqueue_style('webactueel-translate-language-dropdowns-native-workflow', $pluginUrl . 'build/admin/native-workflow.css', ['webactueel-translate-language-dropdowns-admin'], $version);
         wp_enqueue_script('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.js', $dependencies, $version, true);
+        wp_enqueue_script('webactueel-translate-language-dropdowns-native-workflow', $pluginUrl . 'build/admin/native-workflow.js', ['webactueel-translate-language-dropdowns-admin'], $version, true);
         wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
+        wp_set_script_translations('webactueel-translate-language-dropdowns-native-workflow', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
         $configJson = wp_json_encode([
             'restUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
@@ -84,6 +86,9 @@ final class AdminMenu
             'currentTab' => Input::get_key('wat_tab', 'dashboard'),
             'version' => WAT_VERSION,
             'canManage' => current_user_can('manage_options'),
+            'canTranslate' => TranslatorRoles::can_translate(),
+            'canScan' => TranslatorRoles::can_scan(),
+            'canImportExport' => TranslatorRoles::can_import_export(),
             'exportUrl' => add_query_arg(
                 [
                     'action' => 'wat_csv_export',
@@ -91,11 +96,6 @@ final class AdminMenu
                 ],
                 admin_url('admin-post.php')
             ),
-            'xliffExportUrl' => esc_url_raw(add_query_arg(
-                '_wpnonce',
-                wp_create_nonce('wp_rest'),
-                rest_url('webactueel-translate-language-dropdowns/v1/xliff/export')
-            )),
             'usageExportUrl' => add_query_arg(
                 [
                     'action' => 'wat_ai_usage_export',
@@ -161,10 +161,16 @@ final class AdminMenu
         echo '<div id="webactueel-translate-admin-root" class="webactueel-translate-admin wat-admin webactueel-translate-language-dropdowns-admin">';
         echo '<div id="wat-admin-fallback" class="wat-admin-fallback">';
         echo '<h1>' . esc_html__('Webactueel Translate', 'webactueel-translate-language-dropdowns') . '</h1>';
-        echo '<p>' . esc_html__('De beheerinterface wordt geladen. Blijft dit scherm staan, controleer dan of WordPress admin-scripts en de REST API niet worden geblokkeerd.', 'webactueel-translate-language-dropdowns') . '</p>';
-        echo '<noscript><p>' . esc_html__('JavaScript is nodig om Webactueel Translate te beheren.', 'webactueel-translate-language-dropdowns') . '</p></noscript>';
+        echo '<p>' . esc_html__('De beheerinterface wordt geladen. Blijft dit scherm staan, controleer dan of WordPress admin-scripts, browser-JavaScript of de REST API niet worden geblokkeerd.', 'webactueel-translate-language-dropdowns') . '</p>';
+        echo '<div class="wat-admin-fallback-actions" aria-label="' . esc_attr__('Snelle controlelinks', 'webactueel-translate-language-dropdowns') . '">';
+        echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . self::SLUG . '&wat_tab=settings')) . '">' . esc_html__('Instellingen openen', 'webactueel-translate-language-dropdowns') . '</a>';
+        echo '<a class="button" href="' . esc_url(rest_url('webactueel-translate-language-dropdowns/v1/health')) . '">' . esc_html__('REST health endpoint testen', 'webactueel-translate-language-dropdowns') . '</a>';
+        echo '<a class="button" href="' . esc_url(add_query_arg('wat_visual_editor', '1', home_url('/'))) . '">' . esc_html__('Visuele editor openen', 'webactueel-translate-language-dropdowns') . '</a>';
+        echo '</div>';
+        echo '<noscript><div class="notice notice-warning inline"><p>' . esc_html__('JavaScript is nodig om Webactueel Translate volledig te beheren. Controleer browserinstellingen, beveiligingsplugins en console-errors.', 'webactueel-translate-language-dropdowns') . '</p></div></noscript>';
         echo '</div>';
         echo '</div>';
+        echo '<div id="webactueel-translate-native-workflow-root" class="webactueel-translate-admin wat-native-workflow-shell" hidden></div>';
         echo '</div>';
     }
 }

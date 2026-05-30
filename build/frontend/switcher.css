@@ -422,8 +422,8 @@
   --wat-switcher-border: #d7dde5;
   --wat-switcher-text: #1d2327;
   --wat-switcher-muted: #646970;
-  --wat-switcher-primary: #2271b1;
-  --wat-switcher-primary-hover: #135e96;
+  --wat-switcher-primary: var(--wp-admin-theme-color, #2271b1);
+  --wat-switcher-primary-hover: var(--wp-admin-theme-color-darker-10, #135e96);
   --wat-switcher-primary-soft: #f0f6fc;
   --wat-switcher-shadow: 0 10px 30px rgba(0, 0, 0, .10);
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif !important;
@@ -457,13 +457,13 @@
 
 .wat-language-switcher a:hover, .wat-language-switcher a:focus-visible, .wat-language-switcher .wat-switcher-toggle:hover, .wat-language-switcher .wat-switcher-toggle:focus-visible {
   background: #f0f6fc !important;
-  border-color: #2271b1 !important;
-  color: #0a4b78 !important;
+  border-color: var(--wat-switcher-primary) !important;
+  color: var(--wp-admin-theme-color-darker-20, #0a4b78) !important;
 }
 
 .wat-language-switcher a.is-active, .wat-language-switcher a[aria-current="page"] {
-  background: #2271b1 !important;
-  border-color: #2271b1 !important;
+  background: var(--wat-switcher-primary) !important;
+  border-color: var(--wat-switcher-primary) !important;
   color: #fff !important;
 }
 
@@ -478,6 +478,8 @@
 .wat-switcher-dropdown .wat-switcher-chevron {
   margin-left: auto !important;
   color: #646970 !important;
+  transition: transform .15s ease;
+  transform-origin: center;
 }
 
 .wat-switcher-dropdown .wat-switcher-menu {
@@ -539,4 +541,4 @@
 }
 
 .wat-switcher-dropdown.is-open .wat-switcher-chevron { transform: rotate(180deg); }
-@media (prefers-reduced-motion: reduce) { .wat-switcher-dropdown .wat-switcher-chevron { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .wat-switcher-dropdown .wat-switcher-chevron, .wat-language-switcher a, .wat-language-switcher .wat-switcher-toggle { transition: none !important; } }

@@ -55,8 +55,12 @@ foreach ($wat_options as $wat_option) {
 if (function_exists('wp_roles')) {
     foreach (array_keys(wp_roles()->roles) as $wat_role_name) {
         $wat_role = get_role((string) $wat_role_name);
-        if ($wat_role && $wat_role->has_cap('wat_manage_translations')) {
-            $wat_role->remove_cap('wat_manage_translations');
+        if ($wat_role) {
+            foreach (['wat_manage_translations', 'wat_run_scans', 'wat_import_export_translations'] as $wat_capability) {
+                if ($wat_role->has_cap($wat_capability)) {
+                    $wat_role->remove_cap($wat_capability);
+                }
+            }
         }
     }
 }

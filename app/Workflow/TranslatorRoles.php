@@ -11,6 +11,8 @@ if (! defined('ABSPATH')) {
 final class TranslatorRoles
 {
     public const CAP_TRANSLATE = 'wat_manage_translations';
+    public const CAP_SCAN = 'wat_run_scans';
+    public const CAP_IMPORT_EXPORT = 'wat_import_export_translations';
     public const ROLE_TRANSLATOR = 'wat_translator';
 
     public function register(): void
@@ -36,8 +38,19 @@ final class TranslatorRoles
         }
 
         $editor = get_role('editor');
-        if ($editor && ! $editor->has_cap(self::CAP_TRANSLATE)) {
-            $editor->add_cap(self::CAP_TRANSLATE);
+        $allow_editor_cap = (bool) apply_filters('wat_allow_editor_translation_capability', false);
+        if ($editor) {
+            if ($allow_editor_cap && ! $editor->has_cap(self::CAP_TRANSLATE)) {
+                $editor->add_cap(self::CAP_TRANSLATE);
+            } elseif (! $allow_editor_cap && $editor->has_cap(self::CAP_TRANSLATE)) {
+                $editor->remove_cap(self::CAP_TRANSLATE);
+            }
+        }
+
+        foreach ([self::CAP_SCAN, self::CAP_IMPORT_EXPORT] as $capability) {
+            if ($administrator && ! $administrator->has_cap($capability)) {
+                $administrator->add_cap($capability);
+            }
         }
 
         if (! get_role(self::ROLE_TRANSLATOR)) {
@@ -47,6 +60,8 @@ final class TranslatorRoles
                 [
                     'read' => true,
                     self::CAP_TRANSLATE => true,
+                    self::CAP_SCAN => false,
+                    self::CAP_IMPORT_EXPORT => false,
                 ]
             );
         }
@@ -55,5 +70,15 @@ final class TranslatorRoles
     public static function can_translate(): bool
     {
         return current_user_can('manage_options') || current_user_can(self::CAP_TRANSLATE);
+    }
+
+    public static function can_scan(): bool
+    {
+        return current_user_can('manage_options') || current_user_can(self::CAP_SCAN);
+    }
+
+    public static function can_import_export(): bool
+    {
+        return current_user_can('manage_options') || current_user_can(self::CAP_IMPORT_EXPORT);
     }
 }

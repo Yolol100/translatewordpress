@@ -21,7 +21,7 @@ final class SetupWizard
         $state = is_array($state) ? $state : [];
         return array_merge([
             'completed' => false,
-            'current_step' => 'settings',
+            'current_step' => 'languages',
             'completed_steps' => [],
             'dismissed' => false,
         ], $state);
@@ -32,15 +32,15 @@ final class SetupWizard
     {
         $settings = Settings::all();
         return [
-            ['key' => 'languages', 'label' => __('Talen kiezen', 'webactueel-translate-language-dropdowns'), 'tab' => 'settings', 'required' => true],
+            ['key' => 'languages', 'label' => __('Talen kiezen', 'webactueel-translate-language-dropdowns'), 'tab' => 'languages', 'required' => true],
             ['key' => 'routing', 'label' => __('URL-structuur controleren', 'webactueel-translate-language-dropdowns'), 'tab' => 'settings', 'required' => true, 'note' => sprintf(
                 /* translators: %s: Current URL mode setting, for example subdirectory or query parameter. */
                 __('Huidige modus: %s', 'webactueel-translate-language-dropdowns'),
                 (string) ($settings['url_mode'] ?? 'subdirectory')
             )],
-            ['key' => 'switcher', 'label' => __('Taalkiezer plaatsen', 'webactueel-translate-language-dropdowns'), 'tab' => 'settings', 'required' => true],
+            ['key' => 'switcher', 'label' => __('Taalkiezer plaatsen', 'webactueel-translate-language-dropdowns'), 'tab' => 'languages', 'required' => true],
             ['key' => 'scan', 'label' => __('Eerste scan starten', 'webactueel-translate-language-dropdowns'), 'tab' => 'translate', 'required' => true],
-            ['key' => 'safety', 'label' => __('Cache en checkout controleren', 'webactueel-translate-language-dropdowns'), 'tab' => 'advanced', 'required' => true],
+            ['key' => 'safety', 'label' => __('Cache en checkout controleren', 'webactueel-translate-language-dropdowns'), 'tab' => 'settings', 'required' => true],
         ];
     }
 

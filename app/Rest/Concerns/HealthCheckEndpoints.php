@@ -84,7 +84,7 @@ trait HealthCheckEndpoints
             'ok' => $summary['fail'] === 0,
             'summary' => $summary,
             'checks' => array_values($checks),
-            'schema_version' => get_option('wat_db_version', ''),
+            'schema_version' => get_option('wat_schema_version', ''),
             'cache_version' => get_option('wat_cache_version', '1'),
             'object_cache' => function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache(),
             'generated_at' => current_time('mysql'),
@@ -95,7 +95,7 @@ trait HealthCheckEndpoints
     {
         global $wpdb;
 
-        foreach ([Tables::languages(), Tables::strings(), Tables::translations(), Tables::sources(), Tables::glossary(), Tables::logs(), Tables::jobs(), Tables::ai_usage()] as $table) {
+        foreach ([Tables::languages(), Tables::strings(), Tables::translations(), Tables::sources(), Tables::glossary(), Tables::logs(), Tables::jobs()] as $table) {
             $table_like = $wpdb->esc_like($table);
             $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_like));
             if (! is_string($exists) || $exists === '') {
@@ -116,16 +116,6 @@ trait HealthCheckEndpoints
             return false;
         }
 
-        if (defined('WAT_AI_API_KEY') && is_string(WAT_AI_API_KEY) && WAT_AI_API_KEY !== '') {
-            return true;
-        }
-
-        $filtered = apply_filters('wat_ai_api_key', '', $provider);
-        if (is_string($filtered) && $filtered !== '') {
-            return true;
-        }
-
-        $credentials = get_option('wat_ai_credentials', []);
-        return is_array($credentials) && ! empty($credentials[$provider]);
+        return Settings::has_ai_api_key($provider);
     }
 }

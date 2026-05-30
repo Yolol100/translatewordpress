@@ -1492,7 +1492,9 @@
   background: #f8dfe1;
 }
 
-.webactueel-translate-admin .wat-app-header, .webactueel-translate-admin .wat-app-header-simple, 
+.webactueel-translate-admin .wat-app-header, .webactueel-translate-admin .wat-app-header-simple, .webactueel-translate-admin .wat-premium-app-header {
+  display: flex;
+}
 
 .webactueel-translate-admin .wat-app-brand {
   display: flex;
@@ -1562,6 +1564,20 @@
 .webactueel-translate-admin .wat-action-card:focus-visible, .webactueel-translate-admin .wat-tabs .components-tab-panel__tabs button:focus-visible, .webactueel-translate-admin .wat-native-tabs .components-tab-panel__tabs button:focus-visible {
   outline: 2px solid var(--wat-color-focus, #2271b1);
   outline-offset: 3px;
+}
+
+.webactueel-translate-admin .wat-premium-app-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(var(--wat-color-primary-rgb), 0.10), transparent 42%),
+    radial-gradient(circle at 86% 14%, rgba(var(--wat-color-primary-rgb), 0.10), transparent 26%);
+}
+
+.webactueel-translate-admin .wat-premium-app-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .webactueel-translate-admin .wat-app-brand__subtitle {
@@ -1716,7 +1732,7 @@
   }
 }
 
-.webactueel-translate-admin .wat-app-shell, .webactueel-translate-admin .wat-page, .webactueel-translate-admin .wat-tab-content, .webactueel-translate-admin .wat-dashboard-screen, .webactueel-translate-admin .wat-tools-screen, .webactueel-translate-admin .wat-settings-screen, .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action {
+.webactueel-translate-admin .wat-app-shell, .webactueel-translate-admin .wat-page, .webactueel-translate-admin .wat-tab-content, .webactueel-translate-admin .wat-dashboard-screen, .webactueel-translate-admin .wat-tools-screen, .webactueel-translate-admin .wat-settings-screen, .webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -1727,6 +1743,21 @@
   border-radius: var(--wat-radius-lg);
   background: linear-gradient(180deg, var(--wat-color-surface), var(--wat-color-surface-soft));
   box-shadow: var(--wat-shadow-sm);
+}
+
+.webactueel-translate-admin .wat-premium-app-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wat-space-5);
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--wat-color-border) 82%, transparent);
+  border-radius: calc(var(--wat-radius-lg) + 4px);
+  background: var(--wat-color-surface);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  border-color: var(--wat-color-border);
+  position: relative;
+  overflow: hidden;
+  min-height: 116px;
 }
 
 .webactueel-translate-admin .wat-native-hero__content, .webactueel-translate-admin .wat-hero > div:first-child, .webactueel-translate-admin .wat-page-header > div:first-child {
@@ -2394,7 +2425,7 @@
   box-shadow: none;
 }
 
-.webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action {
+.webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -3269,7 +3300,7 @@
     grid-template-columns: 1fr;
   }
 
-  .webactueel-translate-admin .wat-app-brand, .webactueel-translate-admin .wat-app-header__meta, .webactueel-translate-admin .wat-hero-actions {
+  .webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-app-brand, .webactueel-translate-admin .wat-app-header__meta, .webactueel-translate-admin .wat-hero-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -3286,12 +3317,12 @@
     --wat-card-header-padding: 14px 16px;
   }
 
-  .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header {
+  .webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header {
     min-height: 0;
     padding: 18px;
   }
 
-  .webactueel-translate-admin .wat-app-brand, .webactueel-translate-admin .wat-app-header__meta, .webactueel-translate-admin .wat-hero-actions, .webactueel-translate-admin .wat-card-actions, .webactueel-translate-admin .wat-inline-actions, .webactueel-translate-admin .wat-copy-actions, .webactueel-translate-admin .wat-page-actions, .webactueel-translate-admin .wat-modal-actions, .webactueel-translate-admin .wat-custom-modal-footer {
+  .webactueel-translate-admin .wat-app-brand, .webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-app-header__meta, .webactueel-translate-admin .wat-hero-actions, .webactueel-translate-admin .wat-card-actions, .webactueel-translate-admin .wat-inline-actions, .webactueel-translate-admin .wat-copy-actions, .webactueel-translate-admin .wat-page-actions, .webactueel-translate-admin .wat-modal-actions, .webactueel-translate-admin .wat-custom-modal-footer {
     width: 100%;
     align-items: stretch;
     flex-direction: column;
@@ -3455,7 +3486,7 @@
   gap: 18px;
 }
 
-.webactueel-translate-admin .wat-app-header, .webactueel-translate-admin .wat-app-header-simple {
+.webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-app-header, .webactueel-translate-admin .wat-app-header-simple {
   display: none !important;
 }
 
@@ -3618,7 +3649,7 @@
     justify-content: flex-start;
   }
 
-  .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action, .webactueel-translate-admin .wat-visual-core-grid, .webactueel-translate-admin .wat-settings-screen .wat-settings-grid, .webactueel-translate-admin .wat-tools-screen .wat-csv-simple, .webactueel-translate-admin .wat-tools-screen .wat-glossary-layout {
+  .webactueel-translate-admin .wat-premium-app-header, .webactueel-translate-admin .wat-native-hero, .webactueel-translate-admin .wat-hero, .webactueel-translate-admin .wat-page-header, .webactueel-translate-admin .wat-next-action, .webactueel-translate-admin .wat-visual-core-grid, .webactueel-translate-admin .wat-settings-screen .wat-settings-grid, .webactueel-translate-admin .wat-tools-screen .wat-csv-simple, .webactueel-translate-admin .wat-tools-screen .wat-glossary-layout {
     grid-template-columns: 1fr;
   }
 
@@ -3870,71 +3901,13 @@
   }
 }
 
-.webactueel-translate-admin .wat-advanced-screen--client-safe {
-  display: grid;
-  gap: var(--wat-section-gap);
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure {
-  border: 1px solid var(--wat-color-border);
-  border-radius: var(--wat-radius-lg);
-  background: var(--wat-color-surface);
-  box-shadow: var(--wat-shadow-sm);
-  overflow: hidden;
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure > summary {
-  cursor: pointer;
-  padding: 16px 20px;
-  font-weight: 600;
-  color: var(--wat-color-heading);
-  background: var(--wat-color-surface-subtle);
-  border-bottom: 1px solid transparent;
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure[open] > summary {
-  border-bottom-color: var(--wat-color-border-soft);
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure > summary:focus-visible {
-  outline: 2px solid var(--wp-admin-theme-color, #2271b1);
-  outline-offset: -2px;
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure .wat-page {
-  padding: 20px;
-}
-
-.webactueel-translate-admin .wat-advanced-disclosure .wat-hero,
-.webactueel-translate-admin .wat-advanced-disclosure .wat-native-hero,
-.webactueel-translate-admin .wat-advanced-disclosure .wat-system-summary {
-  margin-bottom: 16px;
-}
-
-/* v2.4.0 content workflow UI helpers */
-.wat-card-actions--scan,
-.wat-assignment-controls,
-.wat-inline-actions {
+/* v2.4.2 design QA: clearer fallback when the React/admin bundle cannot mount. */
+.webactueel-translate-admin .wat-admin-fallback-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: end;
+  margin: 14px 0 10px;
 }
-.wat-assignment-controls {
-  width: 100%;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--wp-components-color-gray-300, #dcdcde);
-}
-.wat-assignment-controls .components-base-control {
-  min-width: 180px;
-}
-.wat-native-workflow-job-main {
-  min-width: 220px;
-}
-.wat-tools-section--xliff .wat-card {
-  margin-top: 16px;
-}
-.wat-ai-usage-card {
-  margin-bottom: 16px;
+.webactueel-translate-admin .wat-admin-fallback .notice.inline {
+  margin: 12px 0 0;
 }

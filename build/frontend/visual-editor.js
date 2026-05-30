@@ -306,11 +306,7 @@
           url: window.location.href
         }
       }).then(function (response) {
-        // Keep the live preview conservative: only replace text for simple elements.
-        // Complex elements may contain spans/icons/emphasis and should not be flattened in the editor DOM.
-        if (props.target && props.target.children && props.target.children.length === 0) {
-          props.target.textContent = translation;
-        }
+        props.target.textContent = translation;
         setMeta({ status: response && response.status ? response.status : '', origin: 'manual', memory: null });
         props.onNotice(response && response.message ? response.message : __('Vertaling opgeslagen.'), 'success');
         props.onClose();

@@ -163,7 +163,7 @@ final class AssignmentManager
     private static function normalize_job_row(array $row): array
     {
         $options = json_decode(Input::scalar_string($row['options_json'] ?? '{}'), true);
-        $job = [
+        return [
             'id' => absint($row['id'] ?? 0),
             'type' => Input::key($row['type'] ?? ''),
             'status' => Input::key($row['status'] ?? ''),
@@ -173,18 +173,13 @@ final class AssignmentManager
             'message' => Input::scalar_string($row['message'] ?? ''),
             'assigned_user_id' => absint($row['assigned_user_id'] ?? 0),
             'assignee_name' => sanitize_text_field(Input::scalar_string($row['assignee_name'] ?? '')),
+            'assignee_email' => sanitize_email(Input::scalar_string($row['assignee_email'] ?? '')),
             'due_at' => Input::scalar_string($row['due_at'] ?? ''),
             'created_at' => Input::scalar_string($row['created_at'] ?? ''),
             'updated_at' => Input::scalar_string($row['updated_at'] ?? ''),
             'completed_at' => Input::scalar_string($row['completed_at'] ?? ''),
             'options' => is_array($options) ? $options : [],
         ];
-
-        if (current_user_can('manage_options')) {
-            $job['assignee_email'] = sanitize_email(Input::scalar_string($row['assignee_email'] ?? ''));
-        }
-
-        return $job;
     }
 
     private static function normalize_due_at(string $dueAt): string

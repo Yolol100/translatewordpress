@@ -1,0 +1,42 @@
+Webactueel Translate v2.4.2 QA report
+
+Build output: translatewordpress-main-v2.4.2-designqa.zip
+Verdict: GO AFTER STAGING TESTS
+
+Confirmed local checks:
+- PHP lint: OK for all PHP files in the package.
+- REST route scan: visible register_rest_route blocks include permission_callback declarations.
+- Release package: no node_modules, .git, logs, cache folders or test-output folders detected.
+- Zip structure: plugin root folder only.
+- Version metadata: plugin header, WAT_VERSION, readme stable tag, POT project version and changelog updated to 2.4.2.
+
+Applied in v2.4.2:
+- Admin fallback improved with actionable buttons for Settings, REST health and Visual Editor.
+- Fallback text made more specific for blocked scripts, JavaScript or REST failures.
+- DESIGN-QA-REPORT.md added with UX, working-state, cleanup and staging guidance.
+- PHPCS context comments added around read-only plugin-owned database reads in QA endpoints.
+
+Not removed:
+- No code or assets were removed because static evidence was insufficient to prove safe deletion.
+
+Manual staging tests still required:
+- WordPress activation, deactivation and uninstall.
+- Admin, editor, wat_translator, subscriber and logged-out role matrix.
+- REST nonce/capability failure tests.
+- CSV/XLIFF import/export happy and failure paths.
+- AI provider disabled, missing key, configured key, timeout and malformed response tests.
+- Elementor/frontend/visual editor checks.
+- WooCommerce cart, checkout, order-pay, account, coupon and email checks.
+- Plugin Check and PHPCS/WPCS in a real WordPress test environment.
+
+Recheck v2.4.2:
+- Fixed stale fallback version in blocks/language-switcher/editor.asset.php.
+- PHP lint and zip integrity rerun.
+
+2.4.3 UX and workflow polish
+- Improved frontend language switcher menu-button semantics: aria-haspopup, menuitem tabindex management, Enter/Space open behavior, Home/End focus handling.
+- Aligned switcher focus and hover colors closer to WordPress admin theme tokens.
+- Added reduced-motion coverage for switcher interactions and native workflow progress motion.
+- Confirmed Translation Memory exact-match auto-apply is already active in AI batch processing before provider calls.
+- Confirmed native workflow tab is no-op/React-owned, not DOM-injected.
+

@@ -29,16 +29,6 @@ trait DashboardLanguageEndpoints
             $wpdb->prepare('SELECT * FROM %i ORDER BY id DESC LIMIT 1', $jobsTable),
             ARRAY_A
         );
-        $settings = Settings::all();
-        if (! current_user_can('manage_options')) {
-            $settings = [
-                'frontend_enabled' => ! empty($settings['frontend_enabled']),
-                'translator_review_required' => ! empty($settings['translator_review_required']),
-                'ai_review_required' => ! empty($settings['ai_review_required']),
-                'hreflang_enabled' => ! empty($settings['hreflang_enabled']),
-            ];
-        }
-
         return [
             'activeLanguages' => (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE is_active = 1', $languagesTable)),
             'totalStrings' => (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $stringsTable)),
@@ -57,7 +47,7 @@ trait DashboardLanguageEndpoints
                 )
             ),
             'lastScan' => $latestJob ?: null,
-            'settings' => $settings,
+            'settings' => Settings::all(),
             'cacheVersion' => (string) get_option('wat_cache_version', '1'),
             'compatibility' => CompatibilityRegistry::detected(),
             'multilingualConflict' => CompatibilityRegistry::has_multilingual_conflict(),

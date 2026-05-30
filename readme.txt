@@ -2,22 +2,24 @@
 Contributors: webactueel
 Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 2.4.0
+Stable tag: 2.4.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Klantvriendelijke WordPress-vertaalplugin met scanflow, review-first vertalingen, visuele controle, beschermde woorden, Translation Memory, XLIFF/CSV en meertalige SEO-basis.
+Frontend translation plugin with manual translations, CSV/XLIFF import/export, scanning and a visual translation editor.
+
+Built for review-first agency workflows: scan content, translate manually or with AI assistance, review changes, then publish with more control.
 
 == Description ==
 
-Webactueel Translate begeleidt site-eigenaren door een eenvoudige vertaalflow: setup, website scannen, vertalen, controleren en publiceren. Beheerders kunnen talen, SEO, AI, import/export en technische instellingen beheren; vertalers zien vooral de vertaal-, controle- en visuele reviewstappen. Geavanceerde CSV/XLIFF-, log- en systeemfuncties blijven beschikbaar voor beheer en support, maar staan niet centraal in de dagelijkse klantflow.
+Webactueel Translate scans frontend-visible WordPress content and lets administrators or translator-role users manage translations manually, visually or via CSV. The current release includes a stronger workflow layer: visual editing, managed AI batches, quality and context reporting, media translation, WooCommerce-aware output, browser-language redirects, Yoast/Rank Math SEO filters, hreflang/canonical/sitemap foundations, glossary-aware translation maps and lightweight performance diagnostics.
 
 == Features ==
 
-* Klantvriendelijke hoofdflow: Start, Setup, Scan & vertaal, Controle & publicatie, Visuele controle en Geavanceerd.
-* Taalbeheer met snelle taalkeuze en handmatige velden achter geavanceerd.
+* One WordPress admin page with tabs.
+* Language management.
 * Visual translation editor for editing page text in context.
 * Dedicated translator role/capability for review-first translation workflows.
 * Managed AI batch translation foundations for small, review-first administrator-controlled batches.
@@ -36,7 +38,7 @@ Webactueel Translate begeleidt site-eigenaren door een eenvoudige vertaalflow: s
 * Shortcode: [webactueel_translate_switcher]
 * Requires the PHP DOM/ext-xml extension for frontend HTML output translation; without it, the plugin activates safely and skips frontend replacement with an admin notice.
 * Debug-only slow-buffer telemetry with duration, buffer size, map size, replacement count, URL rewrite count and memory peak.
-* AI translation foundation for OpenAI, DeepL and OpenAI-compatible providers. API keys can be supplied via server constants or the wat_ai_api_key filter; if a site owner saves a key in the admin UI, that key is stored in the WordPress database. Submitted text is disclosed to the selected external provider only when AI translation is enabled.
+* AI translation foundation for OpenAI, DeepL and OpenAI-compatible providers. API keys should be supplied via server constants or the wat_ai_api_key filter. Database storage through the admin UI is disabled by default and only works when explicitly enabled by WAT_ENABLE_DB_AI_CREDENTIALS or the wat_allow_db_ai_credentials filter. Submitted text is disclosed to the selected external provider only when AI translation is enabled.
 * Review-first workflow statuses for AI/manual translations.
 * Yoast SEO and Rank Math title/description filter support for per-language SEO metadata.
 * Glossary-aware translation maps for consistent brand and terminology replacement.
@@ -66,7 +68,7 @@ Context warnings are read-only workflow diagnostics. They do not change translat
 
 This plugin stores its own settings, languages, translation strings, translation values, scan jobs and logs in WordPress options and custom database tables. Translation strings may contain personal data when personal data exists in the original site content.
 
-When AI translation is enabled, the text submitted for translation is sent to the configured external provider (OpenAI, DeepL or an OpenAI-compatible provider) for processing. The provider, model, source text, target language and tone/formality options may be part of that request. API keys can be read from server constants, supplied through the wat_ai_api_key filter or saved through the plugin settings; keys saved through the admin UI are stored in the WordPress database with autoload disabled unless `WAT_DISABLE_DB_AI_CREDENTIALS` is enabled. Site owners should only enable AI translation after confirming that the selected provider, processing location, retention terms, data processing agreement and privacy policy fit their legal and client requirements. AI translation is disabled by default and generated translations can remain review-first before publication.
+When AI translation is enabled, the text submitted for translation is sent to the configured external provider (OpenAI, DeepL or an OpenAI-compatible provider) for processing. The provider, model, source text, target language and tone/formality options may be part of that request. API keys can be read from server constants or supplied through the wat_ai_api_key filter. Saving keys through the plugin settings is disabled by default; it only stores keys in the WordPress database with autoload disabled when `WAT_ENABLE_DB_AI_CREDENTIALS` or the `wat_allow_db_ai_credentials` filter explicitly allows this. Site owners should only enable AI translation after confirming that the selected provider, processing location, retention terms, data processing agreement and privacy policy fit their legal and client requirements. AI translation is disabled by default and generated translations can remain review-first before publication.
 
 External AI services used only when enabled/configured:
 
@@ -78,37 +80,12 @@ When frontend language detection is enabled, the plugin can store the selected l
 
 == Changelog ==
 
-= 2.4.0 =
-* Privacy: workflowjobs geven e-mailadressen van toegewezen vertalers alleen nog terug aan beheerders.
-* Healthcheck controleert nu ook de AI-verbruiktabel.
-* Visual editor slaat inline markup niet meer lokaal plat bij live preview.
-* Setup API-stappen zijn gelijkgetrokken met de actuele adminflow.
-* Oude premium-header CSS-restanten verwijderd.
-
-* Workflow-controles laden pas nadat er een taal gekozen is.
-* Assignee-lijst is admin-only gemaakt om vertalergegevens beter af te schermen.
-* Systeemcontrole toont de juiste databaseversie.
-* Dashboard blokkeert de visuele editor tot setup en scan klaar zijn.
-* Scan verwerkt grote sites rustiger in veilige stappen.
-* Kleine cleanup van oude workflow-CSS en een dubbele visual-editor-tekstconditie.
-
-= 2.3.3 =
-* Cleanup: oude no-op workflow-scripts verwijderd zodat de admin geen lege compatibiliteitshandles meer laadt.
-* Cleanup: overgebleven workflow-root CSS en dubbele CSS-declaratie verwijderd.
-* Release: block.json, asset fallback en POT metadata gelijkgetrokken met 2.3.3.
-
-= 2.3.2 =
-* UX/release: assetversie gelijkgetrokken met pluginversie zodat adminbundles niet op oude cache blijven hangen.
-* UX/a11y: workflowpaneel binnen de React TabPanel-flow geplaatst in plaats van in een losse externe root.
-* Rollen: vertalers krijgen toegang tot de vertaalpagina, terwijl Setup en Geavanceerd admin-only blijven.
-* Setup: taal toevoegen versimpeld met snelle taalkeuze en handmatige velden achter Geavanceerd.
-* Docs: readme bijgewerkt naar de actuele klantflow en v2.3.2 release.
-
-= 2.3.1 =
-* UX: vereenvoudigde hoofdflow naar Start, Setup, Scan & vertaal, Controle & publicatie, Visuele controle en Geavanceerd.
-* UX: technische import/export-, XLIFF-, log- en systeemcontrolefuncties samengebracht achter Geavanceerd.
-* UX: klantvriendelijkere labels toegevoegd voor beschermde woorden, eerder vertaalde teksten, AI-verbruik en publicatiecontrole.
-* Release: Stable tag gelijkgetrokken met de pluginversie.
+= 2.4.4 =
+* Improved frontend language switcher menu-button accessibility and keyboard behavior.
+* Added stronger menuitem tabindex handling for dropdown language navigation.
+* Aligned switcher and workflow visual states closer to WordPress admin theme variables.
+* Added reduced-motion safeguards for switcher and native workflow micro-interactions.
+* Rechecked Translation Memory: exact-match auto-apply is active before AI provider calls.
 
 = 2.1.1 =
 * Enhanced the visual editor with keyboard-accessible click-to-edit segments, live status feedback and Translation Memory suggestions.
@@ -129,7 +106,7 @@ When frontend language detection is enabled, the plugin can store the selected l
 
 = 1.7.4 =
 * Security/workflow: REST translation saves now respect the review-first workflow for non-admin translators, preventing direct publish/review status when review is required.
-* Security/workflow: translation, scan and CSV REST routes now use the `can_translate` capability so editors and the dedicated `wat_translator` role can use the review-first workflow, not only administrators.
+* Security/workflow: translation routes use `can_translate`; scan and CSV import/export routes use dedicated capabilities so editors and the dedicated `wat_translator` role can use the review-first workflow, not only administrators.
 * Reliability: AI batch `run_batch()` now performs an atomic per-cursor claim so concurrent run-batch requests can no longer double-translate strings or corrupt job counters.
 * Reliability: AI rate limiter replaced the non-atomic transient counter with an atomic options-table UPSERT counter that is safe under concurrency on shared hosting; matching uninstall cleanup added.
 * Reliability: scan batch runner now enforces a server-side wall-clock budget and resumes from the cursor instead of risking a fatal mid-batch timeout.
@@ -149,7 +126,7 @@ When frontend language detection is enabled, the plugin can store the selected l
 * Preserved WordPress-safe HTML in AI translation input and provider output instead of stripping all markup.
 * Added DeepL HTML tag handling when translated text contains markup.
 * Made AI API-key status include server constants and the wat_ai_api_key filter.
-* Added optional WAT_DISABLE_DB_AI_CREDENTIALS support to prevent storing AI keys in the database.
+* Hardened AI API-key handling: server constants/filter are preferred and database credential storage is opt-in via WAT_ENABLE_DB_AI_CREDENTIALS or the wat_allow_db_ai_credentials filter.
 * Completed uninstall cleanup for AI credentials, plugin options, transients, translator capabilities and temporary CSV preview files.
 * Relaxed REST AI model validation for safe OpenAI-compatible custom model identifiers while preserving provider-side normalization.
 * Hardened scanner decoding for serialized arrays by disabling class instantiation.

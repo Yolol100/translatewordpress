@@ -70,27 +70,35 @@ final class Settings
         $normalized = self::normalize(array_merge(self::defaults(), is_array($settings) ? $settings : []));
         $provider = self::allowed_key($normalized['ai_provider'] ?? 'openai', ['openai', 'deepl', 'openai_compatible'], 'openai');
         $normalized['ai_has_api_key'] = self::has_ai_api_key($provider);
+        $normalized['ai_database_key_storage_allowed'] = self::allows_db_ai_credentials();
         return $normalized;
     }
 
     public static function ai_api_key(string $provider): string
     {
         $provider = self::allowed_key($provider, ['openai', 'deepl', 'openai_compatible'], 'openai');
+        $constant = self::ai_api_key_constant($provider);
+        $key = defined($constant) ? (string) constant($constant) : '';
+        $filtered = apply_filters('wat_ai_api_key', $key, $provider);
+        if (is_scalar($filtered) && trim((string) $filtered) !== '') {
+            return trim((string) $filtered);
+        }
+
+        if (! self::allows_db_ai_credentials()) {
+            return '';
+        }
+
         $credentials = get_option('wat_ai_credentials', []);
         if (! is_array($credentials)) {
             return '';
         }
-        $key = $credentials[$provider] ?? '';
-        return is_scalar($key) ? trim((string) $key) : '';
+        $dbKey = $credentials[$provider] ?? '';
+        return is_scalar($dbKey) ? trim((string) $dbKey) : '';
     }
 
     public static function has_ai_api_key(string $provider): bool
     {
-        $provider = self::allowed_key($provider, ['openai', 'deepl', 'openai_compatible'], 'openai');
-        $constant = $provider === 'deepl' ? 'WAT_DEEPL_API_KEY' : ($provider === 'openai_compatible' ? 'WAT_OPENAI_COMPATIBLE_API_KEY' : 'WAT_OPENAI_API_KEY');
-        $key = defined($constant) ? (string) constant($constant) : self::ai_api_key($provider);
-        $filtered = apply_filters('wat_ai_api_key', $key, $provider);
-        return is_scalar($filtered) && trim((string) $filtered) !== '';
+        return self::ai_api_key($provider) !== '';
     }
 
     private static function update_ai_api_key(string $provider, string $apiKey): void
@@ -99,13 +107,23 @@ final class Settings
         $credentials = get_option('wat_ai_credentials', []);
         $credentials = is_array($credentials) ? $credentials : [];
         $apiKey = trim(sanitize_text_field($apiKey));
-        $dbStorageDisabled = defined('WAT_DISABLE_DB_AI_CREDENTIALS') && (bool) WAT_DISABLE_DB_AI_CREDENTIALS;
-        if ($apiKey === '' || $dbStorageDisabled) {
+        if ($apiKey === '' || ! self::allows_db_ai_credentials()) {
             unset($credentials[$provider]);
         } else {
             $credentials[$provider] = $apiKey;
         }
         update_option('wat_ai_credentials', $credentials, false);
+    }
+
+    private static function ai_api_key_constant(string $provider): string
+    {
+        return $provider === 'deepl' ? 'WAT_DEEPL_API_KEY' : ($provider === 'openai_compatible' ? 'WAT_OPENAI_COMPATIBLE_API_KEY' : 'WAT_OPENAI_API_KEY');
+    }
+
+    public static function allows_db_ai_credentials(): bool
+    {
+        $enabled = defined('WAT_ENABLE_DB_AI_CREDENTIALS') && (bool) WAT_ENABLE_DB_AI_CREDENTIALS;
+        return (bool) apply_filters('wat_allow_db_ai_credentials', $enabled);
     }
 
     public static function update(array $input): array

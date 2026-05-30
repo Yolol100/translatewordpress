@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Webactueel Translate 2.4.0\n"
+"Project-Id-Version: Webactueel Translate 2.4.4\n"
 "Report-Msgid-Bugs-To: https://webactueel.nl/\n"
 "POT-Creation-Date: 2026-05-15 00:00+0000\n"
 "MIME-Version: 1.0\n"
@@ -2585,7 +2585,7 @@ msgstr ""
 msgid "Regel %d: dubbele hash/language combinatie."
 msgstr ""
 #: app/Automation/AiTranslationService.php:36
-msgid "AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Als je een sleutel via de beheerinterface invoert, wordt die in de WordPress-database opgeslagen tenzij WAT_DISABLE_DB_AI_CREDENTIALS actief is. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden."
+msgid "AI API-sleutels kunnen veilig via serverconstanten of de wat_ai_api_key filter worden geleverd. Database-opslag via de beheerinterface is standaard uitgeschakeld en werkt alleen wanneer WAT_ENABLE_DB_AI_CREDENTIALS of de wat_allow_db_ai_credentials filter dit expliciet toestaat. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden."
 msgstr ""
 
 
@@ -2611,4 +2611,10 @@ msgstr ""
 
 #: app/Automation/AiTranslationService.php
 msgid "AI-verzoek voorbereiden mislukt."
+msgstr ""
+
+msgid "API-sleutel is geconfigureerd"
+msgstr ""
+
+msgid "Gebruik WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY, WAT_OPENAI_COMPATIBLE_API_KEY of het wat_ai_api_key filter"
 msgstr ""

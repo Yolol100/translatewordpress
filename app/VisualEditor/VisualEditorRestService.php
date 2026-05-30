@@ -68,7 +68,12 @@ final class VisualEditorRestService
 
     public function can_save_segment(): bool
     {
-        return current_user_can('manage_options') || $this->can_translate();
+        if (current_user_can('manage_options')) {
+            return true;
+        }
+
+        $settings = Settings::all();
+        return ! empty($settings['translator_review_required']) && $this->can_translate();
     }
 
 

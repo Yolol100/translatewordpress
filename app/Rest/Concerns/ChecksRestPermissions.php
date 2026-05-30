@@ -27,4 +27,20 @@ trait ChecksRestPermissions
     {
         return TranslatorRoles::can_translate();
     }
+
+    /**
+     * Privileged scan capability for potentially heavy content indexing tasks.
+     */
+    public function can_scan(): bool
+    {
+        return TranslatorRoles::can_scan();
+    }
+
+    /**
+     * Privileged import/export capability for bulk translation data movement.
+     */
+    public function can_import_export(): bool
+    {
+        return TranslatorRoles::can_import_export();
+    }
 }

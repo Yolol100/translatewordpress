@@ -3,4 +3,4 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-return array('dependencies' => array('wp-api-fetch','wp-components','wp-element','wp-i18n','wp-notices'), 'version' => '2.4.0');
+return array('dependencies' => array('wp-api-fetch','wp-components','wp-element','wp-i18n','wp-notices'), 'version' => '1.7.0-gutenberg-react1');

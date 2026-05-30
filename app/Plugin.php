@@ -16,12 +16,12 @@ use Webactueel\Translate\Installer\ReplacementManager;
 use Webactueel\Translate\Rest\RestServiceProvider;
 use Webactueel\Translate\Seo\SeoTranslationSync;
 use Webactueel\Translate\Support\Logger;
+use Webactueel\Translate\Workflow\TranslatorRoles;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Privacy;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Diagnostics;
 use Webactueel\Translate\ProductFeatures;
-use Webactueel\Translate\Workflow\TranslatorRoles;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -128,7 +128,7 @@ final class Plugin
 
     public static function admin_csv_export(): void
     {
-        if (! current_user_can('manage_options')) {
+        if (! TranslatorRoles::can_import_export()) {
             wp_die(esc_html__('Geen toegang.', 'webactueel-translate-language-dropdowns'));
         }
         check_admin_referer('wat_csv_export');

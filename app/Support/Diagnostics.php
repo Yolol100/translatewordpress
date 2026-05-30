@@ -23,6 +23,7 @@ final class Diagnostics
         }
 
         \WP_CLI::add_command('webactueel-translate status', [self::class, 'wp_cli_status']);
+        \WP_CLI::add_command('webactueel-translate release-check', [self::class, 'wp_cli_release_check']);
     }
 
     /**
@@ -41,6 +42,33 @@ final class Diagnostics
         }
 
         \WP_CLI::log('Recommended release gate: Plugin Check, PHPCS/WPCS, role tests, cache-per-language test, CSV import/export test and output-buffer TTFB comparison.');
+    }
+
+
+    /**
+     * Print a release-readiness checklist for staging handoff.
+     *
+     * @param array<int, string> $args Positional CLI args.
+     * @param array<string, mixed> $assoc_args Associative CLI args.
+     */
+    public static function wp_cli_release_check(array $args = [], array $assoc_args = []): void
+    {
+        unset($args, $assoc_args);
+
+        $status = self::runtime_status();
+        $checks = [
+            'PHP >= 8.1' => version_compare((string) $status['php_version'], '8.1', '>='),
+            'DOM/ext-xml available' => (bool) $status['dom_extension'] && (bool) $status['libxml_extension'],
+            'Settings autoload safe' => get_option('wat_settings') !== false,
+            'Cache version present' => get_option('wat_cache_version') !== false,
+            'Uninstall data retention explicit' => get_option('wat_delete_data_on_uninstall') !== false,
+        ];
+
+        foreach ($checks as $label => $passed) {
+            $passed ? \WP_CLI::success($label) : \WP_CLI::warning($label);
+        }
+
+        \WP_CLI::log('Manual gates still required: role matrix, REST nonce/capability failures, CSV/XLIFF import/export, Elementor, WooCommerce cart/checkout/order-pay/account, Plugin Check and WPCS.');
     }
 
     /**
