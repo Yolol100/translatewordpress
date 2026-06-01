@@ -10,7 +10,6 @@ if (! defined('ABSPATH')) {
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names.
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 final class Schema
 {
@@ -156,7 +155,6 @@ final class Schema
         ) {$charset};");
 
 
-
         dbDelta('CREATE TABLE ' . Tables::ai_usage() . " (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             job_id BIGINT UNSIGNED DEFAULT 0,
@@ -202,8 +200,8 @@ final class Schema
     private static function seed_default_language(): void
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::languages());
-        $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}`"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is generated from the plugin-owned languages table helper.
+        $table = Tables::languages();
+        $count = (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $table));
         if ($count > 0) {
             return;
         }

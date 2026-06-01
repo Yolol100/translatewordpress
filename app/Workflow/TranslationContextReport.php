@@ -61,8 +61,8 @@ final class TranslationContextReport
     private static function conflicting_translation_groups(string $languageCode, int $limit): array
     {
         global $wpdb;
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $stringsTable = Tables::strings();
+        $translationsTable = Tables::translations();
 
         $rows = $wpdb->get_results(
             $wpdb->prepare(
@@ -74,13 +74,15 @@ final class TranslationContextReport
                     COUNT(DISTINCT NULLIF(TRIM(COALESCE(t.translated_text, '')), '')) AS translation_variants,
                     GROUP_CONCAT(DISTINCT t.status ORDER BY t.status SEPARATOR ',') AS statuses,
                     MAX(s.last_seen_at) AS last_seen_at
-                FROM `{$stringsTable}` s
-                INNER JOIN `{$translationsTable}` t ON t.string_id = s.id AND t.language_code = %s AND TRIM(COALESCE(t.translated_text, '')) <> ''
+                FROM %i s
+                INNER JOIN %i t ON t.string_id = s.id AND t.language_code = %s AND TRIM(COALESCE(t.translated_text, '')) <> ''
                 WHERE TRIM(COALESCE(s.normalized_text, '')) <> ''
                 GROUP BY MD5(s.normalized_text)
                 HAVING context_count > 1 AND translation_variants > 1
                 ORDER BY translation_variants DESC, context_count DESC, last_seen_at DESC
                 LIMIT %d",
+                $stringsTable,
+                $translationsTable,
                 $languageCode,
                 $limit
             ),
@@ -94,8 +96,8 @@ final class TranslationContextReport
     private static function reused_source_groups(string $languageCode, int $limit): array
     {
         global $wpdb;
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $stringsTable = Tables::strings();
+        $translationsTable = Tables::translations();
 
         $rows = $wpdb->get_results(
             $wpdb->prepare(
@@ -107,13 +109,15 @@ final class TranslationContextReport
                     COUNT(DISTINCT NULLIF(TRIM(COALESCE(t.translated_text, '')), '')) AS translation_variants,
                     GROUP_CONCAT(DISTINCT s.source_type ORDER BY s.source_type SEPARATOR ',') AS source_types,
                     MAX(s.last_seen_at) AS last_seen_at
-                FROM `{$stringsTable}` s
-                LEFT JOIN `{$translationsTable}` t ON t.string_id = s.id AND t.language_code = %s AND TRIM(COALESCE(t.translated_text, '')) <> ''
+                FROM %i s
+                LEFT JOIN %i t ON t.string_id = s.id AND t.language_code = %s AND TRIM(COALESCE(t.translated_text, '')) <> ''
                 WHERE TRIM(COALESCE(s.normalized_text, '')) <> ''
                 GROUP BY MD5(s.normalized_text)
                 HAVING context_count > 1
                 ORDER BY context_count DESC, string_count DESC, last_seen_at DESC
                 LIMIT %d",
+                $stringsTable,
+                $translationsTable,
                 $languageCode,
                 $limit
             ),

@@ -12,7 +12,6 @@ if (! defined('ABSPATH')) {
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
@@ -54,9 +53,8 @@ final class ScanJobManager
     public function get(int $id): array
     {
         global $wpdb;
-        $jobs_table = Tables::sql_identifier(Tables::jobs());
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table name only.
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$jobs_table}` WHERE id = %d", $id), ARRAY_A);
+        $jobs_table = Tables::jobs();
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE id = %d', $jobs_table, $id), ARRAY_A);
         return is_array($row) ? $row : [];
     }
 

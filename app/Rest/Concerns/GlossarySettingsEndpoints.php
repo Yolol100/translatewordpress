@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Rest\Concerns;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
+use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\Compatibility\CompatibilityRegistry;
 use Webactueel\Translate\Database\Tables;
 use Webactueel\Translate\Support\Logger;
@@ -17,10 +17,6 @@ use WP_REST_Request;
 if (! defined('ABSPATH')) {
     exit;
 }
-
-// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are normalized through Tables::sql_identifier().
-
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait GlossarySettingsEndpoints
 {
@@ -75,7 +71,7 @@ trait GlossarySettingsEndpoints
 
     public function cache_clear(): array
     {
-        return ['cacheVersion' => CacheInvalidator::bump(), 'cleared' => true];
+        return ['cacheVersion' => TranslationCache::bump(), 'cleared' => true];
     }
 
     public function preferences(): array
@@ -113,8 +109,10 @@ trait GlossarySettingsEndpoints
     public function clear_logs(): array
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::logs());
-        $result = $wpdb->query("DELETE FROM `{$table}`"); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is generated from the plugin-owned logs table helper.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin log cleanup targets one plugin-owned custom table.
+        $result = $wpdb->query(
+            $wpdb->prepare('DELETE FROM %i', Tables::logs())
+        );
         return ['cleared' => $result !== false];
     }
 }

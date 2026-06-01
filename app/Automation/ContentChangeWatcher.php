@@ -89,8 +89,8 @@ final class ContentChangeWatcher
         if ($sourceType === '' || $sourceId <= 0) {
             return;
         }
-        $strings = Tables::sql_identifier(Tables::strings());
-        $translations = Tables::sql_identifier(Tables::translations());
+        $strings = Tables::strings();
+        $translations = Tables::translations();
         $languages = array_filter(array_map(static function (array $language): string {
             return ! empty($language['is_default']) ? '' : Input::key($language['code'] ?? '');
         }, LanguageDetector::active_languages()));
@@ -98,9 +98,9 @@ final class ContentChangeWatcher
             return;
         }
         $placeholders = implode(',', array_fill(0, count($languages), '%s'));
-        $params = array_merge(['outdated', current_time('mysql'), $sourceType, $sourceId], array_values($languages));
+        $params = array_merge([$translations, $strings, 'outdated', current_time('mysql'), $sourceType, $sourceId], array_values($languages));
         $wpdb->query($wpdb->prepare(
-            "UPDATE `{$translations}` t INNER JOIN `{$strings}` s ON s.id = t.string_id SET t.status = %s, t.updated_at = %s WHERE s.source_type = %s AND s.source_id = %d AND t.language_code IN ({$placeholders}) AND t.status IN ('published','reviewed','needs_review','draft')",
+            "UPDATE %i t INNER JOIN %i s ON s.id = t.string_id SET t.status = %s, t.updated_at = %s WHERE s.source_type = %s AND s.source_id = %d AND t.language_code IN ({$placeholders}) AND t.status IN ('published','reviewed','needs_review','draft')",
             ...$params
         ));
     }

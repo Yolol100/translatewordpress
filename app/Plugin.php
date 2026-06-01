@@ -6,8 +6,17 @@ namespace Webactueel\Translate;
 
 use Webactueel\Translate\Admin\AdminMenu;
 use Webactueel\Translate\Admin\UrlMappingAdmin;
+use Webactueel\Translate\Blocks\LanguageSwitcherBlock;
+use Webactueel\Translate\Media\MediaTranslationManager;
+use Webactueel\Translate\Performance\PerformanceMonitor;
+use Webactueel\Translate\Rest\ProductFeaturesRestService;
+use Webactueel\Translate\Seo\MultilingualSitemapManager;
+use Webactueel\Translate\Seo\SeoMetaManager;
+use Webactueel\Translate\VisualEditor\VisualEditor;
+use Webactueel\Translate\VisualEditor\VisualEditorRestService;
+use Webactueel\Translate\WooCommerce\WooCommerceSupport;
 use Webactueel\Translate\Automation\ContentChangeWatcher;
-use Webactueel\Translate\Cache\CacheInvalidator;
+use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\Database\Schema;
 use Webactueel\Translate\Frontend\FrontendBootstrap;
 use Webactueel\Translate\Frontend\LanguageRouter;
@@ -21,7 +30,6 @@ use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Privacy;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Diagnostics;
-use Webactueel\Translate\ProductFeatures;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -73,7 +81,7 @@ final class Plugin
      * Register all WordPress integration points for the current request.
      *
      * This is the composition root for the plugin. New feature modules should normally
-     * be registered here or from ProductFeatures rather than from global scope.
+     * be registered here or from a dedicated module rather than from global scope.
      */
     public function boot(): void
     {
@@ -86,7 +94,7 @@ final class Plugin
         (new UrlMappingAdmin())->register();
         (new RestServiceProvider())->register();
         (new FrontendBootstrap())->register();
-        (new ProductFeatures())->register();
+        $this->register_product_features();
         (new TranslatorRoles())->register();
         (new ContentChangeWatcher())->register();
         (new SeoTranslationSync())->register();
@@ -100,9 +108,22 @@ final class Plugin
         add_action('wat_log', [Logger::class, 'write'], 10, 3);
         add_action('admin_post_wat_csv_export', [self::class, 'admin_csv_export']);
         add_action('admin_post_wat_ai_usage_export', [self::class, 'admin_ai_usage_export']);
-        add_action('wat_settings_updated', [CacheInvalidator::class, 'bump']);
+        add_action('wat_settings_updated', [TranslationCache::class, 'bump']);
         add_action('wat_language_routes_changed', [LanguageRouter::class, 'schedule_rewrite_flush']);
         add_filter('plugin_action_links_' . plugin_basename(WAT_PLUGIN_FILE), [self::class, 'plugin_action_links']);
+    }
+
+    private function register_product_features(): void
+    {
+        (new ProductFeaturesRestService())->register();
+        (new VisualEditor())->register();
+        (new VisualEditorRestService())->register();
+        (new LanguageSwitcherBlock())->register();
+        (new SeoMetaManager())->register();
+        (new MultilingualSitemapManager())->register();
+        (new MediaTranslationManager())->register();
+        (new WooCommerceSupport())->register();
+        (new PerformanceMonitor())->register();
     }
 
     /**

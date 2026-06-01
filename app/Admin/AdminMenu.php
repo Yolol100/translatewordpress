@@ -55,31 +55,66 @@ final class AdminMenu
 
     public function enqueue(string $hook): void
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page routing.
-        $page = Input::get_key('page');
-        $allowedHooks = [
-            'toplevel_page_' . self::SLUG,
-        ];
-        if (! in_array($hook, $allowedHooks, true) && $page !== self::SLUG) {
+        if (! $this->is_admin_app_request($hook)) {
             return;
         }
 
-        $assetFile = WAT_PLUGIN_DIR . 'build/admin/index.asset.php';
-        $asset = is_readable($assetFile) ? require $assetFile : ['dependencies' => ['wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n', 'wp-notices'], 'version' => WAT_VERSION];
-        $dependencies = isset($asset['dependencies']) && is_array($asset['dependencies']) ? array_values(array_filter($asset['dependencies'], 'is_string')) : ['wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n', 'wp-notices'];
+        $asset = $this->admin_asset_metadata();
+        $dependencies = isset($asset['dependencies']) && is_array($asset['dependencies']) ? array_values(array_filter($asset['dependencies'], 'is_string')) : $this->default_admin_dependencies();
         $version = isset($asset['version']) && is_scalar($asset['version']) ? (string) $asset['version'] : WAT_VERSION;
-        $pluginUrl = WAT_PLUGIN_URL;
-        $pluginDir = WAT_PLUGIN_DIR;
 
+        $this->enqueue_admin_styles($version);
+        $this->enqueue_admin_scripts($dependencies, $version);
+        $this->localize_admin_config();
+    }
+
+    private function is_admin_app_request(string $hook): bool
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page routing.
+        $page = Input::get_key('page');
+        return $hook === 'toplevel_page_' . self::SLUG || $page === self::SLUG;
+    }
+
+    private function admin_asset_metadata(): array
+    {
+        $assetFile = WAT_PLUGIN_DIR . 'build/admin/index.asset.php';
+        return is_readable($assetFile) ? require $assetFile : ['dependencies' => $this->default_admin_dependencies(), 'version' => WAT_VERSION];
+    }
+
+    private function default_admin_dependencies(): array
+    {
+        return ['wp-element', 'wp-components', 'wp-api-fetch', 'wp-i18n'];
+    }
+
+    private function enqueue_admin_styles(string $version): void
+    {
         wp_enqueue_style('wp-components');
-        wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', $pluginUrl . 'build/shared/design-system.css', ['wp-components'], $version);
-        wp_enqueue_style('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
-        wp_enqueue_style('webactueel-translate-language-dropdowns-native-workflow', $pluginUrl . 'build/admin/native-workflow.css', ['webactueel-translate-language-dropdowns-admin'], $version);
-        wp_enqueue_script('webactueel-translate-language-dropdowns-admin', $pluginUrl . 'build/admin/index.js', $dependencies, $version, true);
-        wp_enqueue_script('webactueel-translate-language-dropdowns-native-workflow', $pluginUrl . 'build/admin/native-workflow.js', ['webactueel-translate-language-dropdowns-admin'], $version, true);
-        wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
-        wp_set_script_translations('webactueel-translate-language-dropdowns-native-workflow', 'webactueel-translate-language-dropdowns', $pluginDir . 'languages');
-        $configJson = wp_json_encode([
+        wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', WAT_PLUGIN_URL . 'build/shared/design-system.css', ['wp-components'], $version);
+        wp_enqueue_style('webactueel-translate-language-dropdowns-admin', WAT_PLUGIN_URL . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
+        wp_enqueue_style('webactueel-translate-language-dropdowns-native-workflow', WAT_PLUGIN_URL . 'build/admin/native-workflow.css', ['webactueel-translate-language-dropdowns-admin'], $version);
+    }
+
+    private function enqueue_admin_scripts(array $dependencies, string $version): void
+    {
+        wp_enqueue_script('webactueel-translate-language-dropdowns-admin', WAT_PLUGIN_URL . 'build/admin/index.js', $dependencies, $version, true);
+        wp_enqueue_script('webactueel-translate-language-dropdowns-native-workflow', WAT_PLUGIN_URL . 'build/admin/native-workflow.js', ['webactueel-translate-language-dropdowns-admin'], $version, true);
+        wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', WAT_PLUGIN_DIR . 'languages');
+        wp_set_script_translations('webactueel-translate-language-dropdowns-native-workflow', 'webactueel-translate-language-dropdowns', WAT_PLUGIN_DIR . 'languages');
+    }
+
+    private function localize_admin_config(): void
+    {
+        $configJson = wp_json_encode($this->admin_config(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if (! is_string($configJson)) {
+            $configJson = '{}';
+        }
+
+        wp_add_inline_script('webactueel-translate-language-dropdowns-admin', 'window.WebactueelTranslate = ' . $configJson . ';', 'before');
+    }
+
+    private function admin_config(): array
+    {
+        return [
             'restUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin UI tab selection; no state change is performed.
@@ -89,27 +124,22 @@ final class AdminMenu
             'canTranslate' => TranslatorRoles::can_translate(),
             'canScan' => TranslatorRoles::can_scan(),
             'canImportExport' => TranslatorRoles::can_import_export(),
-            'exportUrl' => add_query_arg(
-                [
-                    'action' => 'wat_csv_export',
-                    '_wpnonce' => wp_create_nonce('wat_csv_export'),
-                ],
-                admin_url('admin-post.php')
-            ),
-            'usageExportUrl' => add_query_arg(
-                [
-                    'action' => 'wat_ai_usage_export',
-                    '_wpnonce' => wp_create_nonce('wat_ai_usage_export'),
-                ],
-                admin_url('admin-post.php')
-            ),
+            'exportUrl' => $this->admin_post_url('wat_csv_export'),
+            'usageExportUrl' => $this->admin_post_url('wat_ai_usage_export'),
             'siteUrl' => esc_url_raw(home_url('/')),
             'visualEditorUrl' => esc_url_raw(add_query_arg('wat_visual_editor', '1', home_url('/'))),
-        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        if (! is_string($configJson)) {
-            $configJson = '{}';
-        }
-        wp_add_inline_script('webactueel-translate-language-dropdowns-admin', 'window.WebactueelTranslate = ' . $configJson . ';', 'before');
+        ];
+    }
+
+    private function admin_post_url(string $action): string
+    {
+        return add_query_arg(
+            [
+                'action' => $action,
+                '_wpnonce' => wp_create_nonce($action),
+            ],
+            admin_url('admin-post.php')
+        );
     }
 
     public function admin_notices(): void

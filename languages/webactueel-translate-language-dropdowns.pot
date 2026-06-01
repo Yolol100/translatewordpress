@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Webactueel Translate 2.4.4\n"
+"Project-Id-Version: Webactueel Translate 2.4.10\n"
 "Report-Msgid-Bugs-To: https://webactueel.nl/\n"
 "POT-Creation-Date: 2026-05-15 00:00+0000\n"
 "MIME-Version: 1.0\n"
@@ -2617,4 +2617,19 @@ msgid "API-sleutel is geconfigureerd"
 msgstr ""
 
 msgid "Gebruik WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY, WAT_OPENAI_COMPATIBLE_API_KEY of het wat_ai_api_key filter"
+msgstr ""
+
+msgid "Webactueel Translate bewaart plugininstellingen, talen, vertaalstrings, vertaalde tekst, scantaken, optionele technische logs en beheerdersvoorkeuren voor de plugininterface. Vertaalstrings en exports kunnen persoonsgegevens bevatten wanneer die persoonsgegevens in de oorspronkelijke sitecontent voorkomen."
+msgstr ""
+
+msgid "Wanneer AI-vertaling is ingeschakeld, kan de brontekst samen met taal-, model-, toon- en formaliteitsinstellingen naar de gekozen externe provider worden verzonden. Ondersteunde providers zijn OpenAI, DeepL en OpenAI-compatibele endpoints die de sitebeheerder zelf configureert. AI-vertaling staat standaard uit en gegenereerde vertalingen kunnen review-first blijven voordat ze worden gepubliceerd."
+msgstr ""
+
+msgid "API-sleutels worden bij voorkeur via serverconstanten of het wat_ai_api_key filter geleverd. Opslag van AI-sleutels in de WordPress-database is standaard uitgeschakeld en werkt alleen wanneer WAT_ENABLE_DB_AI_CREDENTIALS of het wat_allow_db_ai_credentials filter dit expliciet toestaat."
+msgstr ""
+
+msgid "Wanneer taalherinnering is ingeschakeld, kan de plugin de gekozen taal bewaren in de wat_language cookie. CSV-previews worden tijdelijk opgeslagen in een beschermde tijdelijke map, gekoppeld aan de beheerder die de preview startte, en na import of verval verwijderd. Optionele AI-gebruiksgegevens en technische logs zijn bedoeld voor beheerderscontrole, kostenbewaking en foutdiagnose."
+msgstr ""
+
+msgid "Site-eigenaren moeten zelf controleren of de gekozen AI-provider, verwerkingslocatie, bewaartermijnen, verwerkersafspraken en privacyverklaring passen bij hun wettelijke verplichtingen en klantafspraken."
 msgstr ""

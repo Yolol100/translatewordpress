@@ -12,11 +12,10 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are normalized through Tables::sql_identifier().
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are prepared with %i placeholders.
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 trait DetectsLanguage
 {
@@ -28,9 +27,8 @@ trait DetectsLanguage
         }
 
         global $wpdb;
-        $languages_table = Tables::sql_identifier(Tables::languages());
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table name only.
-        $code = (string) $wpdb->get_var("SELECT code FROM `{$languages_table}` WHERE is_default = 1 LIMIT 1");
+        $languages_table = Tables::languages();
+        $code = (string) $wpdb->get_var($wpdb->prepare('SELECT code FROM %i WHERE is_default = 1 LIMIT 1', $languages_table));
         self::$defaultLanguageCache = $code ?: strtolower(substr(get_locale() ?: 'nl_NL', 0, 2));
         return self::$defaultLanguageCache;
     }
@@ -50,9 +48,8 @@ trait DetectsLanguage
         if (array_key_exists($code, self::$languageExistsCache)) {
             return self::$languageExistsCache[$code];
         }
-        $languages_table = Tables::sql_identifier(Tables::languages());
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table name only.
-        self::$languageExistsCache[$code] = (bool) $wpdb->get_var($wpdb->prepare("SELECT id FROM `{$languages_table}` WHERE code = %s AND is_active = 1", $code));
+        $languages_table = Tables::languages();
+        self::$languageExistsCache[$code] = (bool) $wpdb->get_var($wpdb->prepare('SELECT id FROM %i WHERE code = %s AND is_active = 1', $languages_table, $code));
         return self::$languageExistsCache[$code];
     }
 
@@ -63,9 +60,8 @@ trait DetectsLanguage
         }
 
         global $wpdb;
-        $languages_table = Tables::sql_identifier(Tables::languages());
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table name only.
-        self::$activeLanguagesCache = $wpdb->get_results("SELECT * FROM `{$languages_table}` WHERE is_active = 1 ORDER BY is_default DESC, native_name ASC", ARRAY_A) ?: [];
+        $languages_table = Tables::languages();
+        self::$activeLanguagesCache = $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE is_active = 1 ORDER BY is_default DESC, native_name ASC', $languages_table), ARRAY_A) ?: [];
         return self::$activeLanguagesCache;
     }
 

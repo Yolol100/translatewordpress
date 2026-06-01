@@ -26,14 +26,32 @@ final class Privacy
             return;
         }
 
-        $content = wp_kses_post(
+        $paragraphs = [
             __(
-                'Webactueel Translate bewaart vertaalstrings, vertaalde tekst, taalinstellingen, scantaken, optionele technische logs en beheerdersvoorkeuren voor de interface. Vertaalstrings kunnen persoonsgegevens bevatten wanneer die persoonsgegevens in paginacontent voorkomen. Geëxporteerde CSV-bestanden kunnen dezelfde vertaalde content bevatten. Technische logs zijn bedoeld voor beheerders en gevoelige contextwaarden worden vóór opslag geredigeerd.',
+                'Webactueel Translate bewaart plugininstellingen, talen, vertaalstrings, vertaalde tekst, scantaken, optionele technische logs en beheerdersvoorkeuren voor de plugininterface. Vertaalstrings en exports kunnen persoonsgegevens bevatten wanneer die persoonsgegevens in de oorspronkelijke sitecontent voorkomen.',
                 'webactueel-translate-language-dropdowns'
-            )
-        );
+            ),
+            __(
+                'Wanneer AI-vertaling is ingeschakeld, kan de brontekst samen met taal-, model-, toon- en formaliteitsinstellingen naar de gekozen externe provider worden verzonden. Ondersteunde providers zijn OpenAI, DeepL en OpenAI-compatibele endpoints die de sitebeheerder zelf configureert. AI-vertaling staat standaard uit en gegenereerde vertalingen kunnen review-first blijven voordat ze worden gepubliceerd.',
+                'webactueel-translate-language-dropdowns'
+            ),
+            __(
+                'API-sleutels worden bij voorkeur via serverconstanten of het wat_ai_api_key filter geleverd. Opslag van AI-sleutels in de WordPress-database is standaard uitgeschakeld en werkt alleen wanneer WAT_ENABLE_DB_AI_CREDENTIALS of het wat_allow_db_ai_credentials filter dit expliciet toestaat.',
+                'webactueel-translate-language-dropdowns'
+            ),
+            __(
+                'Wanneer taalherinnering is ingeschakeld, kan de plugin de gekozen taal bewaren in de wat_language cookie. CSV-previews worden tijdelijk opgeslagen in een beschermde tijdelijke map, gekoppeld aan de beheerder die de preview startte, en na import of verval verwijderd. Optionele AI-gebruiksgegevens en technische logs zijn bedoeld voor beheerderscontrole, kostenbewaking en foutdiagnose.',
+                'webactueel-translate-language-dropdowns'
+            ),
+            __(
+                'Site-eigenaren moeten zelf controleren of de gekozen AI-provider, verwerkingslocatie, bewaartermijnen, verwerkersafspraken en privacyverklaring passen bij hun wettelijke verplichtingen en klantafspraken.',
+                'webactueel-translate-language-dropdowns'
+            ),
+        ];
 
-        wp_add_privacy_policy_content('Webactueel Translate', wpautop($content));
+        $content = wp_kses_post(wpautop(implode("\n\n", $paragraphs), false));
+
+        wp_add_privacy_policy_content('Webactueel Translate', $content);
     }
 
     public static function register_exporter(array $exporters): array

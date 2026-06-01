@@ -103,16 +103,28 @@
         node.removeEventListener('keydown', handler.keydown);
         segmentHandlers.delete(node);
       }
-      if (node.dataset) {
-        delete node.dataset.watVisualSegment;
-        delete node.dataset.watOriginal;
-      }
       if (node.getAttribute('tabindex') === '0' && node.dataset.watHadTabindex !== '1') {
         node.removeAttribute('tabindex');
       }
-      node.removeAttribute('role');
-      node.removeAttribute('aria-label');
-      delete node.dataset.watHadTabindex;
+      if (node.dataset.watHadRole === '1' && node.dataset.watOriginalRole) {
+        node.setAttribute('role', node.dataset.watOriginalRole);
+      } else {
+        node.removeAttribute('role');
+      }
+      if (node.dataset.watHadAriaLabel === '1' && node.dataset.watOriginalAriaLabel) {
+        node.setAttribute('aria-label', node.dataset.watOriginalAriaLabel);
+      } else {
+        node.removeAttribute('aria-label');
+      }
+      if (node.dataset) {
+        delete node.dataset.watVisualSegment;
+        delete node.dataset.watOriginal;
+        delete node.dataset.watHadTabindex;
+        delete node.dataset.watHadRole;
+        delete node.dataset.watOriginalRole;
+        delete node.dataset.watHadAriaLabel;
+        delete node.dataset.watOriginalAriaLabel;
+      }
     });
   }
 
@@ -135,6 +147,10 @@
       node.dataset.watVisualSegment = '1';
       node.dataset.watOriginal = text;
       node.dataset.watHadTabindex = node.hasAttribute('tabindex') ? '1' : '0';
+      node.dataset.watHadRole = node.hasAttribute('role') ? '1' : '0';
+      node.dataset.watOriginalRole = node.getAttribute('role') || '';
+      node.dataset.watHadAriaLabel = node.hasAttribute('aria-label') ? '1' : '0';
+      node.dataset.watOriginalAriaLabel = node.getAttribute('aria-label') || '';
       node.classList.add('wat-visual-editor-segment');
       node.setAttribute('role', 'button');
       node.setAttribute('aria-label', __('Vertaal dit tekstsegment') + ': ' + text.slice(0, 90));

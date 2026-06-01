@@ -24,6 +24,7 @@ $wat_tables = [
     $wpdb->prefix . 'wat_scan_jobs',
     $wpdb->prefix . 'wat_logs',
     $wpdb->prefix . 'wat_glossary',
+    $wpdb->prefix . 'wat_ai_usage',
 ];
 foreach ($wat_tables as $wat_table) {
     $wat_table = (string) $wat_table;
@@ -31,7 +32,6 @@ foreach ($wat_tables as $wat_table) {
         continue;
     }
 
-    $wat_table = esc_sql($wat_table);
     $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $wat_table)); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier placeholder is prepared and table prefix is validated above.
 }
 
@@ -66,7 +66,7 @@ if (function_exists('wp_roles')) {
 }
 remove_role('wat_translator');
 
-$wat_option_table = esc_sql($wpdb->options);
+$wat_option_table = $wpdb->options;
 foreach (['wat_csv_preview_', 'wat_ai_rate_'] as $wat_transient_prefix) {
     $wpdb->query(
         $wpdb->prepare(

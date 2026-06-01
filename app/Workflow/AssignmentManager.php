@@ -45,12 +45,12 @@ final class AssignmentManager
     public static function summary(): array
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::jobs());
+        $table = Tables::jobs();
         $openStatuses = ['queued', 'running', 'paused', 'failed'];
         $placeholders = implode(',', array_fill(0, count($openStatuses), '%s'));
-        $params = $openStatuses;
+        $params = array_merge([$table], $openStatuses);
         $rows = $wpdb->get_results(
-            $wpdb->prepare("SELECT status, COUNT(*) AS total FROM `{$table}` WHERE assigned_user_id > 0 AND status IN ({$placeholders}) GROUP BY status", $params),
+            $wpdb->prepare("SELECT status, COUNT(*) AS total FROM %i WHERE assigned_user_id > 0 AND status IN ({$placeholders}) GROUP BY status", $params),
             ARRAY_A
         ) ?: [];
 
@@ -67,8 +67,8 @@ final class AssignmentManager
 
         $overdue = (int) $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(*) FROM `{$table}` WHERE assigned_user_id > 0 AND due_at IS NOT NULL AND due_at <> '0000-00-00 00:00:00' AND due_at < %s AND status IN ({$placeholders})",
-                array_merge([current_time('mysql')], $openStatuses)
+                "SELECT COUNT(*) FROM %i WHERE assigned_user_id > 0 AND due_at IS NOT NULL AND due_at <> '0000-00-00 00:00:00' AND due_at < %s AND status IN ({$placeholders})",
+                array_merge([$table, current_time('mysql')], $openStatuses)
             )
         );
 
@@ -83,12 +83,14 @@ final class AssignmentManager
     public static function list_jobs(int $limit = 20): array
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::jobs());
-        $users = Tables::sql_identifier($wpdb->users);
+        $table = Tables::jobs();
+        $users = $wpdb->users;
         $limit = max(1, min(100, absint($limit ?: 20)));
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT j.*, u.display_name AS assignee_name, u.user_email AS assignee_email FROM `{$table}` j LEFT JOIN `{$users}` u ON u.ID = j.assigned_user_id WHERE j.type = %s ORDER BY COALESCE(j.due_at, j.created_at) ASC, j.id DESC LIMIT %d",
+                "SELECT j.*, u.display_name AS assignee_name, u.user_email AS assignee_email FROM %i j LEFT JOIN %i u ON u.ID = j.assigned_user_id WHERE j.type = %s ORDER BY COALESCE(j.due_at, j.created_at) ASC, j.id DESC LIMIT %d",
+                $table,
+                $users,
                 TranslationJobQueue::TYPE_AI_TRANSLATION,
                 $limit
             ),
@@ -141,11 +143,13 @@ final class AssignmentManager
     public static function get_job(int $jobId)
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::jobs());
-        $users = Tables::sql_identifier($wpdb->users);
+        $table = Tables::jobs();
+        $users = $wpdb->users;
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT j.*, u.display_name AS assignee_name, u.user_email AS assignee_email FROM `{$table}` j LEFT JOIN `{$users}` u ON u.ID = j.assigned_user_id WHERE j.id = %d AND j.type = %s LIMIT 1",
+                "SELECT j.*, u.display_name AS assignee_name, u.user_email AS assignee_email FROM %i j LEFT JOIN %i u ON u.ID = j.assigned_user_id WHERE j.id = %d AND j.type = %s LIMIT 1",
+                $table,
+                $users,
                 absint($jobId),
                 TranslationJobQueue::TYPE_AI_TRANSLATION
             ),

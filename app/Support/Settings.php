@@ -20,6 +20,16 @@ final class Settings
     use NormalizesSettings;
     use SanitizesSettingValues;
 
+    /**
+     * @var array<string, mixed>|null
+     */
+    private static ?array $settingsCache = null;
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    private static ?array $aiCredentialsCache = null;
+
     public static function defaults(): array
     {
         return [
@@ -66,12 +76,18 @@ final class Settings
 
     public static function all(): array
     {
+        if (self::$settingsCache !== null) {
+            return self::$settingsCache;
+        }
+
         $settings = get_option('wat_settings', []);
         $normalized = self::normalize(array_merge(self::defaults(), is_array($settings) ? $settings : []));
         $provider = self::allowed_key($normalized['ai_provider'] ?? 'openai', ['openai', 'deepl', 'openai_compatible'], 'openai');
         $normalized['ai_has_api_key'] = self::has_ai_api_key($provider);
         $normalized['ai_database_key_storage_allowed'] = self::allows_db_ai_credentials();
-        return $normalized;
+
+        self::$settingsCache = $normalized;
+        return self::$settingsCache;
     }
 
     public static function ai_api_key(string $provider): string
@@ -88,10 +104,7 @@ final class Settings
             return '';
         }
 
-        $credentials = get_option('wat_ai_credentials', []);
-        if (! is_array($credentials)) {
-            return '';
-        }
+        $credentials = self::stored_ai_credentials();
         $dbKey = $credentials[$provider] ?? '';
         return is_scalar($dbKey) ? trim((string) $dbKey) : '';
     }
@@ -113,6 +126,27 @@ final class Settings
             $credentials[$provider] = $apiKey;
         }
         update_option('wat_ai_credentials', $credentials, false);
+        self::reset_cache();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function stored_ai_credentials(): array
+    {
+        if (self::$aiCredentialsCache !== null) {
+            return self::$aiCredentialsCache;
+        }
+
+        $credentials = get_option('wat_ai_credentials', []);
+        self::$aiCredentialsCache = is_array($credentials) ? $credentials : [];
+        return self::$aiCredentialsCache;
+    }
+
+    private static function reset_cache(): void
+    {
+        self::$settingsCache = null;
+        self::$aiCredentialsCache = null;
     }
 
     private static function ai_api_key_constant(string $provider): string
@@ -130,21 +164,50 @@ final class Settings
     {
         $settings = self::all();
 
+        self::update_boolean_settings($settings, $input);
+        $settings['url_mode'] = 'subdirectory';
+        self::update_numeric_settings($settings, $input);
+        self::update_ai_settings($settings, $input);
+        self::update_language_and_switcher_settings($settings, $input);
+        self::update_exclusion_settings($settings, $input);
+        self::persist_settings($settings);
+
+        return self::all();
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $input
+     */
+    private static function update_boolean_settings(array &$settings, array $input): void
+    {
         foreach (self::boolean_keys() as $key) {
             if (array_key_exists($key, $input)) {
                 $settings[$key] = self::bool_value($input[$key]);
             }
         }
+    }
 
-        // URL mode is intentionally fixed; per-language domains are configured via language_domains.
-        $settings['url_mode'] = 'subdirectory';
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $input
+     */
+    private static function update_numeric_settings(array &$settings, array $input): void
+    {
         self::update_numeric_setting($settings, $input, 'max_buffer_size', 100000, 5000000);
         self::update_numeric_setting($settings, $input, 'max_replacements', 10, 5000);
         self::update_numeric_setting($settings, $input, 'scan_batch_size', 1, 100);
         self::update_numeric_setting($settings, $input, 'cache_ttl', 300, DAY_IN_SECONDS * 7);
         self::update_numeric_setting($settings, $input, 'csv_preview_rows', 20, 1000);
         self::update_numeric_setting($settings, $input, 'csv_import_max_rows', 100, 50000);
+    }
 
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $input
+     */
+    private static function update_ai_settings(array &$settings, array $input): void
+    {
         if (isset($input['ai_provider'])) {
             $settings['ai_provider'] = self::allowed_key($input['ai_provider'], ['openai', 'deepl', 'openai_compatible'], 'openai');
         }
@@ -155,9 +218,9 @@ final class Settings
             $settings['ai_custom_endpoint'] = self::sanitize_ai_endpoint($input['ai_custom_endpoint'] ?? '');
         }
         if (array_key_exists('ai_api_key', $input) && is_scalar($input['ai_api_key'])) {
-            $api_key = trim((string) $input['ai_api_key']);
-            if ($api_key !== '') {
-                self::update_ai_api_key(Input::key($settings['ai_provider'] ?? 'openai'), $api_key);
+            $apiKey = trim((string) $input['ai_api_key']);
+            if ($apiKey !== '') {
+                self::update_ai_api_key(Input::key($settings['ai_provider'] ?? 'openai'), $apiKey);
             }
         }
         if (! empty($input['ai_api_key_clear'])) {
@@ -169,7 +232,14 @@ final class Settings
         if (isset($input['ai_formality'])) {
             $settings['ai_formality'] = self::allowed_key($input['ai_formality'], ['default', 'more', 'less', 'prefer_more', 'prefer_less'], 'default');
         }
+    }
 
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $input
+     */
+    private static function update_language_and_switcher_settings(array &$settings, array $input): void
+    {
         if (isset($input['language_domains'])) {
             $settings['language_domains'] = self::sanitize_language_domains($input['language_domains']);
         }
@@ -182,17 +252,29 @@ final class Settings
         if (isset($input['switcher_position'])) {
             $settings['switcher_position'] = self::allowed_key($input['switcher_position'], self::switcher_positions(), 'bottom-right');
         }
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $input
+     */
+    private static function update_exclusion_settings(array &$settings, array $input): void
+    {
         if (isset($input['exclude_selectors'])) {
             $settings['exclude_selectors'] = Input::textarea($input['exclude_selectors']);
         }
         if (isset($input['exclude_paths'])) {
             $settings['exclude_paths'] = Input::textarea($input['exclude_paths']);
         }
+    }
 
+    /** @param array<string, mixed> $settings */
+    private static function persist_settings(array $settings): void
+    {
         update_option('wat_settings', $settings, false);
         update_option('wat_delete_data_on_uninstall', $settings['delete_data_on_uninstall'] ? '1' : '0', false);
+        self::reset_cache();
         do_action('wat_settings_updated', $settings);
-        return self::all();
     }
 
     public static function sanitize_ai_endpoint($value): string

@@ -76,9 +76,9 @@ final class TranslationJobQueue
     public static function get_job(int $jobId)
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::jobs());
+        $table = Tables::jobs();
         $job = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d AND type = %s", absint($jobId), self::TYPE_AI_TRANSLATION),
+            $wpdb->prepare("SELECT * FROM %i WHERE id = %d AND type = %s", $table, absint($jobId), self::TYPE_AI_TRANSLATION),
             ARRAY_A
         );
         if (! is_array($job)) {
@@ -108,42 +108,19 @@ final class TranslationJobQueue
             return $job;
         }
 
-        $status = Input::key($job['status'] ?? '');
-        if (in_array($status, ['completed', 'cancelled'], true)) {
+        if (self::is_terminal_job($job)) {
             return $job;
         }
 
         $options = self::normalize_options(is_array($job['options'] ?? null) ? $job['options'] : []);
-        $validator = new self();
-        if (! $validator->is_translatable_language(Input::key($options['target_language'] ?? ''))) {
-            self::update_job($jobId, [
-                'status' => 'failed',
-                'message' => __('Kies een actieve niet-standaardtaal voordat je de AI-batch uitvoert.', 'webactueel-translate-language-dropdowns'),
-                'updated_at' => current_time('mysql'),
-            ]);
+        if (! self::ensure_target_language($jobId, $options)) {
             return self::get_job($jobId);
         }
 
-        $batchSize = max(1, min(self::MAX_BATCH_SIZE, absint($batchSize ?: ($options['batch_size'] ?? 5))));
+        $batchSize = self::resolve_batch_size($batchSize, $options);
         $cursor = absint($job['cursor_value'] ?? 0);
 
-        global $wpdb;
-        $now = current_time('mysql');
-        // Atomic claim: only one concurrent request may advance this job at this cursor.
-        // A second parallel run-batch sees 0 affected rows and bails, preventing
-        // duplicate translations, double provider billing and corrupted counters.
-        $claimed = $wpdb->query($wpdb->prepare(
-            'UPDATE ' . Tables::sql_identifier(Tables::jobs()) . ' SET status = %s, started_at = COALESCE(started_at, %s), updated_at = %s WHERE id = %d AND type = %s AND status IN (%s, %s) AND cursor_value = %d',
-            'running',
-            $now,
-            $now,
-            absint($jobId),
-            self::TYPE_AI_TRANSLATION,
-            'queued',
-            'running',
-            $cursor
-        ));
-        if ($claimed === 0) {
+        if (! self::claim_job_cursor($jobId, $cursor)) {
             return self::get_job($jobId);
         }
 
@@ -153,75 +130,204 @@ final class TranslationJobQueue
             return self::get_job($jobId);
         }
 
-        $repository = new TranslationRepository();
-        $ai = new AiTranslationService();
-        $processed = 0;
-        $memoryReused = 0;
-        $skipped = 0;
-        $errors = 0;
-        $lastCursor = $cursor;
-        $stopMessage = '';
+        $summary = self::process_batch_items($items, $options, $jobId, $cursor);
+        self::update_job($jobId, self::batch_update_payload($job, $summary, $batchSize, count($items)));
 
-        foreach ($items as $item) {
-            $stringId = absint($item['id'] ?? 0);
-            $original = Input::scalar_string($item['original_text'] ?? '');
-            if ($stringId <= 0 || $original === '' || self::string_length($original) > self::MAX_AI_TEXT_LENGTH) {
-                $skipped++;
-                $lastCursor = max($lastCursor, $stringId);
-                continue;
-            }
+        return self::get_job($jobId);
+    }
 
-            $targetLanguage = Input::key($options['target_language'] ?? '');
-            $memoryMatch = $repository->find_translation_memory_match($original, $targetLanguage);
-            if ($memoryMatch !== []) {
-                $translated = Input::scalar_string($memoryMatch['translated_text'] ?? '');
-                $reviewStatus = 'reviewed';
-                $origin = 'memory';
-                $result = ['translated_text' => $translated, 'review_status' => $reviewStatus, 'origin' => $origin, 'memory_score' => absint($memoryMatch['score'] ?? 100)];
-                $memoryReused++;
-                AiUsageLedger::record([
-                    'job_id' => $jobId,
-                    'string_id' => $stringId,
-                    'provider' => 'memory',
-                    'model' => 'exact-normalized-match',
-                    'source_language' => Input::key($options['source_language'] ?? ''),
-                    'target_language' => $targetLanguage,
-                    'source_text' => $original,
-                    'translated_text' => $translated,
-                    'memory_reused' => true,
-                    'glossary_terms' => 0,
-                ]);
-            } else {
-                $result = $ai->translate(
-                    $original,
-                    Input::key($options['source_language'] ?? ''),
-                    $targetLanguage,
-                    ['job_id' => $jobId, 'string_id' => $stringId, 'batch' => true]
-                );
+    /** @param array<string, mixed> $job */
+    private static function is_terminal_job(array $job): bool
+    {
+        return in_array(Input::key($job['status'] ?? ''), ['completed', 'cancelled'], true);
+    }
 
-                if (is_wp_error($result)) {
-                    $errors++;
-                    $stopMessage = $result->get_error_message();
-                    break;
-                }
-
-                $translated = Input::scalar_string($result['translated_text'] ?? '');
-                $reviewStatus = Input::key($result['review_status'] ?? 'needs_review') ?: 'needs_review';
-                $origin = Input::key($result['origin'] ?? 'ai') ?: 'ai';
-            }
-            if ($translated === '' || ! $repository->save_translation($stringId, Input::key($options['target_language'] ?? ''), $translated, $reviewStatus, $origin)) {
-                $errors++;
-                $lastCursor = max($lastCursor, $stringId);
-                continue;
-            }
-
-            $processed++;
-            $lastCursor = max($lastCursor, $stringId);
+    /** @param array<string, mixed> $options */
+    private static function ensure_target_language(int $jobId, array $options): bool
+    {
+        $validator = new self();
+        if ($validator->is_translatable_language(Input::key($options['target_language'] ?? ''))) {
+            return true;
         }
 
-        $newProcessed = absint($job['processed_items'] ?? 0) + $processed;
-        $newSkipped = absint($job['skipped_items'] ?? 0) + $skipped;
-        $newErrors = absint($job['errors_count'] ?? 0) + $errors;
+        self::update_job($jobId, [
+            'status' => 'failed',
+            'message' => __('Kies een actieve niet-standaardtaal voordat je de AI-batch uitvoert.', 'webactueel-translate-language-dropdowns'),
+            'updated_at' => current_time('mysql'),
+        ]);
+
+        return false;
+    }
+
+    /** @param array<string, mixed> $options */
+    private static function resolve_batch_size(int $batchSize, array $options): int
+    {
+        return max(1, min(self::MAX_BATCH_SIZE, absint($batchSize ?: ($options['batch_size'] ?? 5))));
+    }
+
+    private static function claim_job_cursor(int $jobId, int $cursor): bool
+    {
+        global $wpdb;
+        $now = current_time('mysql');
+        // Atomic claim: only one concurrent request may advance this job at this cursor.
+        // A second parallel run-batch sees 0 affected rows and bails, preventing
+        // duplicate translations, double provider billing and corrupted counters.
+        $claimed = $wpdb->query($wpdb->prepare(
+            'UPDATE %i SET status = %s, started_at = COALESCE(started_at, %s), updated_at = %s WHERE id = %d AND type = %s AND status IN (%s, %s) AND cursor_value = %d',
+            Tables::jobs(),
+            'running',
+            $now,
+            $now,
+            absint($jobId),
+            self::TYPE_AI_TRANSLATION,
+            'queued',
+            'running',
+            $cursor
+        ));
+
+        return $claimed !== false && (int) $claimed !== 0;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     * @param array<string, mixed> $options
+     * @return array{processed:int,memory_reused:int,skipped:int,errors:int,last_cursor:int,stop_message:string}
+     */
+    private static function process_batch_items(array $items, array $options, int $jobId, int $cursor): array
+    {
+        $repository = new TranslationRepository();
+        $ai = new AiTranslationService();
+        $summary = [
+            'processed' => 0,
+            'memory_reused' => 0,
+            'skipped' => 0,
+            'errors' => 0,
+            'last_cursor' => $cursor,
+            'stop_message' => '',
+        ];
+
+        foreach ($items as $item) {
+            $itemResult = self::process_batch_item($item, $options, $jobId, $repository, $ai);
+            $status = Input::key($itemResult['status'] ?? '');
+
+            if ($status !== 'paused') {
+                $summary['last_cursor'] = max($summary['last_cursor'], absint($itemResult['cursor'] ?? 0));
+            }
+
+            if (! empty($itemResult['memory_reused'])) {
+                ++$summary['memory_reused'];
+            }
+
+            if ($status === 'processed') {
+                ++$summary['processed'];
+                continue;
+            }
+
+            if ($status === 'skipped') {
+                ++$summary['skipped'];
+                continue;
+            }
+
+            ++$summary['errors'];
+            if ($status === 'paused') {
+                $summary['stop_message'] = Input::scalar_string($itemResult['message'] ?? '');
+                break;
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     */
+    private static function process_batch_item(array $item, array $options, int $jobId, TranslationRepository $repository, AiTranslationService $ai): array
+    {
+        $stringId = absint($item['id'] ?? 0);
+        $original = Input::scalar_string($item['original_text'] ?? '');
+
+        if ($stringId <= 0 || $original === '' || self::string_length($original) > self::MAX_AI_TEXT_LENGTH) {
+            return ['status' => 'skipped', 'cursor' => $stringId];
+        }
+
+        $translation = self::resolve_batch_translation($repository, $ai, $options, $jobId, $stringId, $original);
+        if (is_wp_error($translation)) {
+            return ['status' => 'paused', 'message' => $translation->get_error_message()];
+        }
+
+        $translated = Input::scalar_string($translation['translated_text'] ?? '');
+        $reviewStatus = Input::key($translation['review_status'] ?? 'needs_review') ?: 'needs_review';
+        $origin = Input::key($translation['origin'] ?? 'ai') ?: 'ai';
+        $targetLanguage = Input::key($options['target_language'] ?? '');
+
+        if ($translated === '' || ! $repository->save_translation($stringId, $targetLanguage, $translated, $reviewStatus, $origin)) {
+            return [
+                'status' => 'error',
+                'cursor' => $stringId,
+                'memory_reused' => ! empty($translation['memory_reused']),
+            ];
+        }
+
+        return [
+            'status' => 'processed',
+            'cursor' => $stringId,
+            'memory_reused' => ! empty($translation['memory_reused']),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>|WP_Error
+     */
+    private static function resolve_batch_translation(TranslationRepository $repository, AiTranslationService $ai, array $options, int $jobId, int $stringId, string $original)
+    {
+        $targetLanguage = Input::key($options['target_language'] ?? '');
+        $memoryMatch = $repository->find_translation_memory_match($original, $targetLanguage);
+        if ($memoryMatch !== []) {
+            $translated = Input::scalar_string($memoryMatch['translated_text'] ?? '');
+            AiUsageLedger::record([
+                'job_id' => $jobId,
+                'string_id' => $stringId,
+                'provider' => 'memory',
+                'model' => 'exact-normalized-match',
+                'source_language' => Input::key($options['source_language'] ?? ''),
+                'target_language' => $targetLanguage,
+                'source_text' => $original,
+                'translated_text' => $translated,
+                'memory_reused' => true,
+                'glossary_terms' => 0,
+            ]);
+
+            return [
+                'translated_text' => $translated,
+                'review_status' => 'reviewed',
+                'origin' => 'memory',
+                'memory_score' => absint($memoryMatch['score'] ?? 100),
+                'memory_reused' => true,
+            ];
+        }
+
+        return $ai->translate(
+            $original,
+            Input::key($options['source_language'] ?? ''),
+            $targetLanguage,
+            ['job_id' => $jobId, 'string_id' => $stringId, 'batch' => true]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $job
+     * @param array{processed:int,memory_reused:int,skipped:int,errors:int,last_cursor:int,stop_message:string} $summary
+     * @return array<string, mixed>
+     */
+    private static function batch_update_payload(array $job, array $summary, int $batchSize, int $itemCount): array
+    {
+        $newProcessed = absint($job['processed_items'] ?? 0) + $summary['processed'];
+        $newSkipped = absint($job['skipped_items'] ?? 0) + $summary['skipped'];
+        $newErrors = absint($job['errors_count'] ?? 0) + $summary['errors'];
+        $stopMessage = $summary['stop_message'];
         $nextStatus = $stopMessage !== '' ? 'paused' : 'running';
         $message = $stopMessage !== ''
             ? sprintf(
@@ -230,31 +336,29 @@ final class TranslationJobQueue
                 sanitize_text_field($stopMessage)
             )
             : sprintf(
-                /* translators: 1: processed translations, 2: skipped items, 3: errors. */
+                /* translators: 1: processed translations, 2: skipped items, 3: errors, 4: memory matches. */
                 __('Laatste batch verwerkt: %1$d vertaald, %2$d overgeslagen, %3$d fouten, %4$d uit vertaalgeheugen.', 'webactueel-translate-language-dropdowns'),
-                $processed,
-                $skipped,
-                $errors,
-                $memoryReused
+                $summary['processed'],
+                $summary['skipped'],
+                $summary['errors'],
+                $summary['memory_reused']
             );
 
-        if ($stopMessage === '' && count($items) < $batchSize) {
+        if ($stopMessage === '' && $itemCount < $batchSize) {
             $nextStatus = 'completed';
             $message = __('AI-batch afgerond. Controleer de gegenereerde vertalingen voordat je ze publiceert.', 'webactueel-translate-language-dropdowns');
         }
 
-        self::update_job($jobId, [
+        return [
             'status' => $nextStatus,
-            'cursor_value' => $lastCursor,
+            'cursor_value' => $summary['last_cursor'],
             'processed_items' => $newProcessed,
             'skipped_items' => $newSkipped,
             'errors_count' => $newErrors,
             'message' => $message,
             'updated_at' => current_time('mysql'),
             'completed_at' => $nextStatus === 'completed' ? current_time('mysql') : null,
-        ]);
-
-        return self::get_job($jobId);
+        ];
     }
 
     /** @param array<string, mixed> $options @return array<string, mixed> */
@@ -280,8 +384,9 @@ final class TranslationJobQueue
     {
         global $wpdb;
         [$joinSql, $whereSql, $params] = self::candidate_sql_parts($options, 0);
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $sql = "SELECT COUNT(DISTINCT s.id) FROM `{$stringsTable}` s {$joinSql} WHERE {$whereSql}";
+        $stringsTable = Tables::strings();
+        $sql = "SELECT COUNT(DISTINCT s.id) FROM %i s {$joinSql} WHERE {$whereSql}";
+        array_unshift($params, $stringsTable);
         return (int) $wpdb->get_var($wpdb->prepare($sql, $params));
     }
 
@@ -290,8 +395,9 @@ final class TranslationJobQueue
     {
         global $wpdb;
         [$joinSql, $whereSql, $params] = self::candidate_sql_parts($options, $cursor);
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $sql = "SELECT s.id, s.original_text FROM `{$stringsTable}` s {$joinSql} WHERE {$whereSql} ORDER BY s.id ASC LIMIT %d";
+        $stringsTable = Tables::strings();
+        $sql = "SELECT s.id, s.original_text FROM %i s {$joinSql} WHERE {$whereSql} ORDER BY s.id ASC LIMIT %d";
+        array_unshift($params, $stringsTable);
         $params[] = $batchSize;
         $rows = $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A);
         return is_array($rows) ? $rows : [];
@@ -300,12 +406,12 @@ final class TranslationJobQueue
     /** @param array<string, mixed> $options @return array{0:string,1:string,2:array<int, mixed>} */
     private static function candidate_sql_parts(array $options, int $cursor): array
     {
-        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $translationsTable = Tables::translations();
         $targetLanguage = Input::key($options['target_language'] ?? '');
         $status = Input::key($options['status'] ?? 'new');
-        $params = [$targetLanguage, max(0, $cursor), self::MAX_AI_TEXT_LENGTH];
+        $params = [$translationsTable, $targetLanguage, max(0, $cursor), self::MAX_AI_TEXT_LENGTH];
         $where = ['s.id > %d', 'TRIM(s.original_text) <> ""', 'CHAR_LENGTH(s.original_text) <= %d'];
-        $joinSql = "LEFT JOIN `{$translationsTable}` t ON t.string_id = s.id AND t.language_code = %s";
+        $joinSql = "LEFT JOIN %i t ON t.string_id = s.id AND t.language_code = %s";
 
         if (in_array($status, ['new', 'missing'], true)) {
             $where[] = '(t.id IS NULL OR TRIM(COALESCE(t.translated_text, "")) = "")';

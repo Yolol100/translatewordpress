@@ -18,7 +18,7 @@ body.wat-visual-editor-active {
   left: 24px;
   right: 24px;
   bottom: 24px;
-  z-index: 999998;
+  z-index: var(--wat-z-visual-bar);
   display: flex;
   gap: 14px;
   align-items: center;
@@ -70,7 +70,7 @@ body.wat-visual-editor-active {
   top: 24px;
   right: 24px;
   bottom: 24px;
-  z-index: 999999;
+  z-index: var(--wat-z-visual-sidebar);
   display: flex;
   flex-direction: column;
   width: min(440px, calc(100vw - 32px));
@@ -315,7 +315,7 @@ body.wat-visual-editor-active {
   position: fixed;
   top: 48px;
   left: 50%;
-  z-index: 1000000;
+  z-index: var(--wat-z-visual-notice);
   max-width: min(560px, calc(100vw - 32px));
   transform: translateX(-50%);
   padding: 10px 14px;

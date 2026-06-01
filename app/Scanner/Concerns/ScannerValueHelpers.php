@@ -17,22 +17,36 @@ trait ScannerValueHelpers
     private function maybe_decode_value(string $value)
     {
         $trimmed = trim($value);
-        if ($trimmed === '') {
+        if ($trimmed === '' || ! $this->is_decodeable_payload($trimmed)) {
             return null;
         }
-        if (($trimmed[0] === '{' || $trimmed[0] === '[') && strlen($trimmed) < 1000000) {
-            $json = json_decode($trimmed, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
-                return $json;
-            }
+
+        return $this->decode_json_array($trimmed) ?? $this->decode_serialized_array($trimmed);
+    }
+
+    private function is_decodeable_payload(string $value): bool
+    {
+        return strlen($value) < 1000000;
+    }
+
+    private function decode_json_array(string $value): ?array
+    {
+        if (! $this->looks_like_json_payload($value)) {
+            return null;
         }
-        if (is_serialized($trimmed) && strlen($trimmed) < 1000000) {
-            $unserialized = $this->safe_unserialize_array($trimmed);
-            if (is_array($unserialized)) {
-                return $unserialized;
-            }
-        }
-        return null;
+
+        $json = json_decode($value, true);
+        return json_last_error() === JSON_ERROR_NONE && is_array($json) ? $json : null;
+    }
+
+    private function looks_like_json_payload(string $value): bool
+    {
+        return $value[0] === '{' || $value[0] === '[';
+    }
+
+    private function decode_serialized_array(string $value): ?array
+    {
+        return is_serialized($value) ? $this->safe_unserialize_array($value) : null;
     }
 
     private function safe_unserialize_array(string $value): ?array

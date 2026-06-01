@@ -46,9 +46,19 @@
   function WatFallbackButton(props) {
     var safeProps = stripComponentProps(props, ['isPrimary', 'isSecondary', 'isTertiary', 'isDestructive', 'variant', 'isBusy', 'icon', 'label', 'showTooltip']);
     var children = safeProps.children || props.label || '';
+    var href = props && props.href ? String(props.href) : '';
+    var disabled = !!(props && props.disabled);
     delete safeProps.children;
-    safeProps.type = safeProps.type || 'button';
     safeProps.className = ['button', props.isPrimary || props.variant === 'primary' ? 'button-primary' : '', safeProps.className].filter(Boolean).join(' ');
+    if (href && !disabled) {
+      safeProps.href = href;
+      delete safeProps.type;
+      delete safeProps.disabled;
+      return el('a', safeProps, children);
+    }
+    delete safeProps.href;
+    safeProps.type = safeProps.type || 'button';
+    safeProps.disabled = disabled || safeProps.disabled;
     return el('button', safeProps, children);
   }
 
@@ -139,8 +149,6 @@
   c.Card = components.Card || watCompatComponent('div', 'components-card');
   c.CardBody = components.CardBody || watCompatComponent('div', 'components-card__body');
   c.CardHeader = components.CardHeader || watCompatComponent('div', 'components-card__header');
-  c.Panel = components.Panel || watCompatComponent('div', 'components-panel');
-  c.PanelBody = components.PanelBody || watCompatComponent('div', 'components-panel__body');
   c.Button = components.Button || WatFallbackButton;
   c.Notice = components.Notice || WatFallbackNotice;
   c.Spinner = components.Spinner || watCompatComponent('span', 'spinner is-active');
@@ -219,50 +227,6 @@
     return parseInt(v || 0, 10).toLocaleString('nl-NL');
   }
 
-  function formatDateLabel(value) {
-    if (!value) {
-      return __('Nog niet uitgevoerd', 'webactueel-translate-language-dropdowns');
-    }
-    if (typeof value === 'number') {
-      var numericDate = new Date(value > 100000000000 ? value : value * 1000);
-      return isNaN(numericDate.getTime()) ? __('Nog niet uitgevoerd', 'webactueel-translate-language-dropdowns') : numericDate.toLocaleString('nl-NL');
-    }
-    if (typeof value === 'string') {
-      var date = new Date(value);
-      return isNaN(date.getTime()) ? safe(value) : date.toLocaleString('nl-NL');
-    }
-    return __('Nog niet uitgevoerd', 'webactueel-translate-language-dropdowns');
-  }
-
-  function formatScanLabel(value) {
-    if (!value) {
-      return __('Nog niet uitgevoerd', 'webactueel-translate-language-dropdowns');
-    }
-    if (typeof value === 'string' || typeof value === 'number') {
-      return formatDateLabel(value);
-    }
-    if (typeof value === 'object') {
-      if (value.label) {
-        return safe(value.label);
-      }
-      if (value.completed_at) {
-        return formatDateLabel(value.completed_at);
-      }
-      if (value.updated_at) {
-        return formatDateLabel(value.updated_at);
-      }
-      if (value.created_at) {
-        return formatDateLabel(value.created_at);
-      }
-      if (value.total_strings !== undefined || value.found_strings !== undefined) {
-        return num(value.total_strings !== undefined ? value.total_strings : value.found_strings) + ' ' + __('teksten gevonden', 'webactueel-translate-language-dropdowns');
-      }
-      if (value.status) {
-        return safe(value.status);
-      }
-    }
-    return __('Nog niet uitgevoerd', 'webactueel-translate-language-dropdowns');
-  }
 
   function cls() {
     return Array.prototype.slice.call(arguments).filter(Boolean).join(' ');
@@ -271,7 +235,7 @@
   function useFetch(path, deps, enabled) {
     var st = useState({ loading: enabled === false ? false : true, error: '', data: null });
     var refreshTick = useState(0);
-    var effectDeps = (deps || []).concat([refreshTick[0]]);
+    var effectDeps = (deps || []).concat([refreshTick[0], enabled]);
 
     useEffect(function () {
       if (enabled === false || !path) {
@@ -305,6 +269,22 @@
         refreshTick[1](refreshTick[0] + 1);
       }
     });
+  }
+
+  function storageGet(key, fallback) {
+    try {
+      return window.localStorage ? (window.localStorage.getItem(key) || fallback || '') : (fallback || '');
+    } catch (e) {
+      return fallback || '';
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      if (window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch (e) {}
   }
 
   function useToasts() {
@@ -368,7 +348,7 @@
     function read() {
       return valid(
         new URLSearchParams(window.location.search).get('wat_tab') ||
-        window.localStorage.getItem('wat_tab') ||
+        storageGet('wat_tab', '') ||
         cfg.currentTab ||
         'dashboard'
       );
@@ -389,7 +369,7 @@
     function set(name) {
       name = valid(name);
       st[1](name);
-      window.localStorage.setItem('wat_tab', name);
+      storageSet('wat_tab', name);
       var url = new URL(window.location.href);
       url.searchParams.set('wat_tab', name);
       window.history.pushState({}, '', url.toString());
@@ -451,6 +431,28 @@
     );
   }
 
+  function HealthCheckList(p) {
+    var h = p.health || {};
+    var checks = h.checks || [];
+    if (!checks.length) {
+      return el(Empty, {
+        title: __('Geen technische details beschikbaar', 'webactueel-translate-language-dropdowns'),
+        text: __('Open dit scherm opnieuw of controleer de health endpoint response.', 'webactueel-translate-language-dropdowns')
+      });
+    }
+    return el('div', { className: 'wat-health-list' }, checks.map(function (check, index) {
+      var status = check.status || 'ok';
+      var tone = status === 'fail' ? 'danger' : (status === 'warn' ? 'warning' : 'success');
+      return el('div', { key: check.key || check.label || index, className: cls('wat-health-item', 'wat-health-item--' + status) },
+        el(Badge, { tone: tone }, status === 'fail' ? __('Fout', 'webactueel-translate-language-dropdowns') : (status === 'warn' ? __('Let op', 'webactueel-translate-language-dropdowns') : __('OK', 'webactueel-translate-language-dropdowns'))),
+        el('div', null,
+          el('strong', null, check.label || check.key || __('Controle', 'webactueel-translate-language-dropdowns')),
+          check.detail ? el('p', null, check.detail) : null
+        )
+      );
+    }));
+  }
+
   function Table(p) {
     return el(
       'div',
@@ -489,14 +491,6 @@
               )
         )
       )
-    );
-  }
-
-  function Panel(p) {
-    return el(
-      c.Panel,
-      { className: 'wat-soft-panel' },
-      el(c.PanelBody, { title: p.title, initialOpen: !!p.open, opened: p.open !== undefined ? !!p.open : undefined }, p.children)
     );
   }
 
@@ -662,36 +656,6 @@
     );
   }
 
-  function SeoScreen(p) {
-    var d = p.dashboard || {};
-    return el('div', { className: 'wat-page' },
-      el(HeroBanner, { eyebrow: __('Meertalige SEO', 'webactueel-translate-language-dropdowns'), title: __('Controleer SEO voordat je live gaat', 'webactueel-translate-language-dropdowns'), text: __('Houd hreflang, meta titles, descriptions en URL’s overzichtelijk per taal.', 'webactueel-translate-language-dropdowns'), actions: [el(c.Button, { key: 'settings', variant: 'primary', onClick: function () { p.setTab('settings'); } }, __('SEO-instellingen bekijken', 'webactueel-translate-language-dropdowns'))], status: el(Badge, { tone: d.hreflangEnabled === false ? 'warning' : 'success' }, d.hreflangEnabled === false ? __('Controle nodig', 'webactueel-translate-language-dropdowns') : __('Hreflang klaar', 'webactueel-translate-language-dropdowns')) }),
-      el('div', { className: 'wat-settings-grid' },
-        el(Card, { title: __('Hreflang status', 'webactueel-translate-language-dropdowns') }, el('p', null, __('Hreflang helpt zoekmachines de juiste taalversie te kiezen.', 'webactueel-translate-language-dropdowns')), el(Badge, { tone: 'success' }, __('Beschikbaar', 'webactueel-translate-language-dropdowns'))),
-        el(Card, { title: __('Meta titles & descriptions', 'webactueel-translate-language-dropdowns') }, el('p', null, __('De plugin heeft een veilige basis voor per-taal SEO metadata. Controleer dit in staging met je SEO-plugin.', 'webactueel-translate-language-dropdowns'))),
-        el(Card, { title: __('URL slugs en sitemaps', 'webactueel-translate-language-dropdowns') }, el('p', null, __('Per-taal URL-slugs, canonicals en de meertalige sitemap zijn beschikbaar. Sitemap: /?wat_language_sitemap=1.', 'webactueel-translate-language-dropdowns')))
-      )
-    );
-  }
-
-
-  function HealthCheckList(p) {
-    var health = p.health || {};
-    var checks = health.checks || [];
-    if (!checks.length) {
-      return el(Empty, { title: __('Nog geen systeemcontrole geladen', 'webactueel-translate-language-dropdowns'), text: __('Open deze tab opnieuw of ververs de pagina.', 'webactueel-translate-language-dropdowns') });
-    }
-    return el('div', { className: 'wat-health-list' }, checks.map(function (check, index) {
-      var tone = check.status === 'fail' ? 'danger' : (check.status === 'warn' ? 'warning' : (check.status === 'pass' ? 'success' : 'info'));
-      return el('div', { key: check.label || index, className: 'wat-health-item wat-health-item--' + (check.status || 'info') },
-        el(Badge, { tone: tone }, String(check.status || 'info').toUpperCase()),
-        el('div', null,
-          el('strong', null, check.label || '—'),
-          el('p', null, check.detail || '')
-        )
-      );
-    }));
-  }
 
   function StatusScreen(p) {
     var h = p.health || {};
@@ -768,7 +732,7 @@
   }
 
   function Translate(p) {
-    var languageFilter = useState(window.localStorage.getItem('wat_translate_language') || '');
+    var languageFilter = useState(storageGet('wat_translate_language', ''));
     var sourceFilter = useState('');
     var debouncedSearch = useDebouncedValue(p.search, 300);
     var strings = useFetch('/strings?page=1&per_page=300&search=' + encodeURIComponent(debouncedSearch) + '&status=' + encodeURIComponent(p.status) + '&language=' + encodeURIComponent(languageFilter[0]) + '&source_type=' + encodeURIComponent(sourceFilter[0]), [p.tick, debouncedSearch, p.status, languageFilter[0], sourceFilter[0]], !p.csvOnly);
@@ -776,7 +740,6 @@
     var tr = useState({ language_code: 'en', translated_text: '', status: 'published' });
     var scan = useState(null);
     var busy = useState(false);
-    var csvOpen = useState(!!p.csvOnly);
     var csvLanguages = useState([]);
     var csvMode = useState('all');
     var csvReady = useState(false);
@@ -816,7 +779,7 @@
         csvLanguages[1](defaults);
         if (!languageFilter[0] && defaults[0]) {
           languageFilter[1](defaults[0]);
-          window.localStorage.setItem('wat_translate_language', defaults[0]);
+          storageSet('wat_translate_language', defaults[0]);
         }
         csvReady[1](true);
       }
@@ -843,7 +806,7 @@
         .then(function (job) {
           scan[1](job);
           p.toast.add((job.found_strings || 0) + __(' teksten gevonden.', 'webactueel-translate-language-dropdowns'));
-          refreshLight();
+          if (p.refresh) { p.refresh(); } else if (p.refreshDashboard) { p.refreshDashboard(); }
         })
         .catch(function (e) {
           p.toast.add(e.message || __('Scan mislukt.', 'webactueel-translate-language-dropdowns'), 'error');
@@ -898,7 +861,7 @@
       });
       if (code) {
         languageFilter[1](code);
-        window.localStorage.setItem('wat_translate_language', code);
+        storageSet('wat_translate_language', code);
       }
     }
 
@@ -1122,7 +1085,10 @@
       !p.csvOnly ? el(Card, {
         title: __('Gevonden teksten', 'webactueel-translate-language-dropdowns'),
         className: 'wat-results-card',
-        action: el(c.Button, { variant: 'secondary', href: cfg.visualEditorUrl || (cfg.siteUrl ? cfg.siteUrl + '?wat_visual_editor=1' : window.location.origin + '/?wat_visual_editor=1') }, __('Visuele editor openen', 'webactueel-translate-language-dropdowns'))
+        action: el('div', { className: 'wat-inline-actions wat-card-actions--end' },
+          el(c.Button, { variant: 'primary', isBusy: busy[0], disabled: busy[0], onClick: startScan }, busy[0] ? __('Scannen…', 'webactueel-translate-language-dropdowns') : __('Scan starten', 'webactueel-translate-language-dropdowns')),
+          el(c.Button, { variant: 'secondary', href: cfg.visualEditorUrl || (cfg.siteUrl ? cfg.siteUrl + '?wat_visual_editor=1' : window.location.origin + '/?wat_visual_editor=1') }, __('Visuele editor openen', 'webactueel-translate-language-dropdowns'))
+        )
       },
         el('div', { className: 'wat-results-meta' },
           el('strong', null, __('Teksten gevonden', 'webactueel-translate-language-dropdowns')),
@@ -1134,7 +1100,7 @@
             label: __('Taal', 'webactueel-translate-language-dropdowns'),
             value: languageFilter[0],
             options: [{ label: __('Alle talen', 'webactueel-translate-language-dropdowns'), value: '' }].concat(languageOptions),
-            onChange: function (v) { languageFilter[1](v); window.localStorage.setItem('wat_translate_language', v || ''); }
+            onChange: function (v) { languageFilter[1](v); storageSet('wat_translate_language', v || ''); }
           }),
           el(c.SelectControl, {
             label: __('Status', 'webactueel-translate-language-dropdowns'),
@@ -1216,31 +1182,6 @@
     );
   }
 
-  function switcherPreviewText(language, layout) {
-    var code = String(language.code || '').toUpperCase();
-    var name = language.name || code;
-    var flag = language.flag || '';
-
-    if (layout === 'flags') {
-      return flag || code;
-    }
-    if (layout === 'code') {
-      return code;
-    }
-    if (layout === 'flags_name') {
-      return (flag ? flag + ' ' : '') + name;
-    }
-    if (layout === 'flag_code') {
-      return (flag ? flag + ' ' : '') + code;
-    }
-    if (layout === 'name_code') {
-      return name + ' (' + code + ')';
-    }
-    if (layout === 'flags_name_code') {
-      return (flag ? flag + ' ' : '') + name + ' (' + code + ')';
-    }
-    return name;
-  }
 
   function switcherFlagChip(language) {
     var code = String(language.code || '').toLowerCase();
@@ -2276,7 +2217,7 @@
     ];
     var tab = useTabState(tabs);
     var dash = useFetch('/dashboard', [dashboardTick[0]]);
-    var logs = useFetch('/logs', [dashboardTick[0]], false);
+    var logs = useFetch('/logs', [dashboardTick[0]], tab[0] === 'status' || tab[0] === 'settings');
     var health = useFetch('/health', [dashboardTick[0]]);
     var prefs = useFetch('/preferences', [tick[0]]);
 
@@ -2306,7 +2247,7 @@
         return el(ToolsScreen, { dashboard: dash.data || {}, toast: toast, tick: tick[0], refresh: refresh, refreshDashboard: refreshDashboard, search: search[0], setSearch: search[1], status: status[0], setStatus: status[1], setTab: tab[1] });
       }
       if (t.name === 'settings') {
-        return el(Settings, { dashboard: dash.data || {}, logs: [], toast: toast, refresh: refresh, tick: tick[0] });
+        return el(Settings, { dashboard: dash.data || {}, logs: logs.data || [], toast: toast, refresh: refresh, tick: tick[0] });
       }
       if (t.name === 'status') {
         return el(StatusScreen, { dashboard: dash.data || {}, health: health.data || {}, logs: logs.data || [], toast: toast, refresh: refresh });

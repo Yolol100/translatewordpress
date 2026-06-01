@@ -198,8 +198,8 @@ final class SeoFieldExtractor
         global $wpdb;
         $column = $field === self::FIELD_TITLE ? 'title' : 'description';
         $table = $wpdb->prefix . 'aioseo_posts';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Column is from a fixed allow-list; table name is the AIOSEO-owned posts table.
-        $value = $wpdb->get_var($wpdb->prepare("SELECT `{$column}` FROM `" . esc_sql($table) . "` WHERE post_id = %d LIMIT 1", $postId));
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Column is from a fixed allow-list; table name is the AIOSEO-owned posts table.
+        $value = $wpdb->get_var($wpdb->prepare('SELECT %i FROM %i WHERE post_id = %d LIMIT 1', $column, $table, $postId));
 
         return is_scalar($value) ? (string) $value : '';
     }

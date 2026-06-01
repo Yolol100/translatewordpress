@@ -4,7 +4,7 @@ Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 2.4.4
+Stable tag: 2.4.13
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,38 @@ External AI services used only when enabled/configured:
 When frontend language detection is enabled, the plugin can store the selected language in the `wat_language` cookie. CSV previews are temporarily copied to a protected temporary directory, tied to the administrator who created them and removed after import or expiry. The admin interface may store dashboard preferences in user meta and local browser storage. The plugin registers WordPress privacy policy helper text plus exporter and eraser callbacks for administrator preferences.
 
 == Changelog ==
+
+= 2.4.13 =
+* CSS architecture cleanup: restored reproducible source CSS, central design tokens, modular component CSS and scoped build output without `!important` overrides.
+* Design consistency hardening: canonical admin grids, table wrappers and mobile actions normalized.
+* Hardened visual editor REST validation with explicit length limits for selected source text, translations, selectors and same-site URLs.
+* Aligned visual editor translator permissions with the normal translation workflow while keeping review-required submissions in needs_review for non-admin users.
+* Restricted visual-editor saves to plain text segments to prevent accidental inline HTML from being stored through the frontend editing surface.
+* Added final admin CSS normalization for grids, action rows and responsive table scrolling to reduce conflicting layout overrides across the admin interface.
+
+= 2.4.11 =
+* Fixed the frontend language switcher dropdown loading its behaviour script twice on pages containing the switcher block, which made the menu toggle open and immediately closed. The block now reuses the same single switcher script as the shortcode and floating switcher instead of a separate, outdated module, so only one keyboard-accessible script is enqueued and run.
+* Removed an unused no-op admin script and synced build asset version fallbacks; no behaviour change.
+
+= 2.4.10 =
+* Expanded WordPress privacy policy helper text for translation content, AI provider sharing, API-key handling, language cookies, temporary CSV previews and AI usage/log retention considerations.
+* Added REST argument schemas for CSV/XLIFF export parameters and XLIFF import language filters.
+* Added a WordPress Playground blueprint starter and runtime QA command documentation for Plugin Check, staging, WooCommerce/HPOS and privacy checks.
+
+= 2.4.9 =
+* Centralized shared CSS tokens for admin UI, switcher UI and z-index layers.
+* Reduced frontend switcher `!important` usage and moved more styling to themeable CSS variables.
+* Added documented z-index strategy with overridable CSS variables.
+* Reduced broad PHPCS disables around REST/database code and switched selected custom-table queries to `%i` identifiers.
+* Fixed visual editor ARIA restoration and AI cost estimate source column.
+* Fixed REST CSV/XLIFF export responses so downloads are served as raw files instead of JSON-encoded strings.
+* Aligned release package naming, folder naming and asset versions for the market build.
+* Improved admin focus styling so focused fields keep a visible outline alongside the custom focus ring.
+
+= 2.4.5 =
+* Fixed opt-in uninstall cleanup so the AI usage table is removed together with the other plugin-owned tables.
+* Fixed the health-check schema version value to read the stored database schema option.
+* Added the AI usage table to the database table health-check.
 
 = 2.4.4 =
 * Improved frontend language switcher menu-button accessibility and keyboard behavior.

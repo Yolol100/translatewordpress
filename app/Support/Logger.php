@@ -10,9 +10,8 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are normalized through Tables::sql_identifier().
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are prepared with %i placeholders.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
 final class Logger
 {
@@ -65,8 +64,7 @@ final class Logger
     {
         global $wpdb;
         $limit = max(1, min(200, $limit));
-        $logs_table = Tables::sql_identifier(Tables::logs());
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table name only.
-        return $wpdb->get_results($wpdb->prepare("SELECT * FROM `{$logs_table}` ORDER BY id DESC LIMIT %d", $limit), ARRAY_A) ?: [];
+        $logs_table = Tables::logs();
+        return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i ORDER BY id DESC LIMIT %d', $logs_table, $limit), ARRAY_A) ?: [];
     }
 }

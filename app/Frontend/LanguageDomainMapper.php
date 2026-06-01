@@ -6,6 +6,7 @@ namespace Webactueel\Translate\Frontend;
 
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Support\Formatting;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -13,10 +14,6 @@ if (! defined('ABSPATH')) {
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 // Reviewed: custom prefixed tables and public wat_* hooks are intentional.
 
 final class LanguageDomainMapper
@@ -111,7 +108,7 @@ final class LanguageDomainMapper
     private static function add_to_map(array &$map, string $code, string $url): void
     {
         $code = sanitize_key($code);
-        $url = self::sanitize_base_url($url);
+        $url = Formatting::base_url($url);
         if ($code === '' || $url === '') {
             return;
         }
@@ -129,30 +126,6 @@ final class LanguageDomainMapper
             self::add_to_map($map, Input::scalar_string($code), Input::scalar_string($url));
         }
         return $map;
-    }
-
-    private static function sanitize_base_url(string $url): string
-    {
-        $url = esc_url_raw(trim($url), ['http', 'https']);
-        if ($url === '') {
-            return '';
-        }
-
-        $parts = wp_parse_url($url);
-        if (! is_array($parts)) {
-            return '';
-        }
-
-        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
-            return '';
-        }
-
-        $port = isset($parts['port']) ? ':' . absint($parts['port']) : '';
-        $path = isset($parts['path']) ? '/' . trim((string) $parts['path'], '/') : '';
-
-        return rtrim($scheme . '://' . $host . $port . $path, '/');
     }
 
     private static function host_from_url(string $url): string

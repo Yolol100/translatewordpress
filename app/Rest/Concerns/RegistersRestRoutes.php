@@ -52,9 +52,9 @@ trait RegistersRestRoutes
         $this->scan_route('/scan/stop/(?P<id>\d+)', 'POST', 'scan_stop', $this->id_arg());
         $this->import_export_route('/csv/preview', 'POST', 'csv_preview');
         $this->import_export_route('/csv/import', 'POST', 'csv_import', $this->csv_import_args());
-        $this->import_export_route('/csv/export', 'GET', 'csv_export');
-        $this->import_export_route('/xliff/export', 'GET', 'xliff_export');
-        $this->import_export_route('/xliff/import', 'POST', 'xliff_import');
+        $this->import_export_route('/csv/export', 'GET', 'csv_export', $this->export_args());
+        $this->import_export_route('/xliff/export', 'GET', 'xliff_export', $this->export_args());
+        $this->import_export_route('/xliff/import', 'POST', 'xliff_import', $this->import_languages_args());
         register_rest_route($this->namespace, '/glossary', [
             ['methods' => 'GET', 'callback' => [$this, 'glossary'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_glossary'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->glossary_args()],

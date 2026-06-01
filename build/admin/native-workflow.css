@@ -1,3 +1,4 @@
+/* Generated from src/admin/styles/native-workflow.css. Do not edit build files directly. */
 /* Native WordPress workflow panel for Webactueel Translate. Scoped to the plugin admin wrapper. */
 .webactueel-translate-admin.wat-native-workflow-shell {
   margin: 0 0 20px;
@@ -5,7 +6,7 @@
 
 .webactueel-translate-admin.wat-native-workflow-shell[hidden],
 .webactueel-translate-admin.is-workflow-tab-active .wat-workflow-tab-content {
-  display: none !important;
+  display: none;
 }
 
 .webactueel-translate-admin .wat-native-workflow-root {

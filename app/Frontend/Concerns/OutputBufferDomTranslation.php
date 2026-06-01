@@ -23,56 +23,102 @@ trait OutputBufferDomTranslation
     private function translate_dom(string $html, array $map): string
     {
         $previous = libxml_use_internal_errors(true);
+        $dom = $this->load_translation_dom($html);
+        if (! $dom) {
+            $this->restore_libxml_state($previous);
+            return $html;
+        }
+
+        $xpath = new DOMXPath($dom);
+        $exclusions = $this->xpath_exclusion_predicates();
+        $maxReplacements = absint($this->settings['max_replacements'] ?? 1000);
+
+        $count = $this->replace_text_nodes($dom, $xpath, $map, $exclusions, $maxReplacements);
+        $this->set_html_language($xpath);
+        $this->lastReplacementCount = $count;
+        $this->lastUrlRewriteCount = $this->rewrite_internal_urls($xpath);
+        $count = $this->replace_attribute_nodes($xpath, $map, $exclusions, $count, $maxReplacements);
+
+        $output = $this->save_translation_dom($dom, $html);
+        $this->restore_libxml_state($previous);
+
+        return $this->apply_translation_replacement_filter($output, $count);
+    }
+
+    private function load_translation_dom(string $html): ?DOMDocument
+    {
         $dom = new DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, $this->dom_load_flags());
+        if (! $loaded) {
+            return null;
+        }
+
+        return $dom;
+    }
+
+    private function dom_load_flags(): int
+    {
         $flags = LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING;
         if (defined('LIBXML_NONET')) {
             $flags |= LIBXML_NONET;
         }
-        $loaded = $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, $flags);
-        if (! $loaded) {
-            libxml_clear_errors();
-            libxml_use_internal_errors($previous);
-            return $html;
-        }
-        $xpath = new DOMXPath($dom);
-        $exclusions = $this->xpath_exclusion_predicates();
+
+        return $flags;
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    private function replace_text_nodes(DOMDocument $dom, DOMXPath $xpath, array $map, string $exclusions, int $maxReplacements): int
+    {
         $query = '//text()[not(ancestor-or-self::script) and not(ancestor-or-self::style) and not(ancestor-or-self::code) and not(ancestor-or-self::pre) and not(ancestor-or-self::textarea) and not(ancestor-or-self::noscript) and not(ancestor-or-self::svg) and not(ancestor-or-self::math) and not(ancestor-or-self::template)' . $exclusions . ']';
         $nodes = $xpath->query($query);
-        $maxReplacements = absint($this->settings['max_replacements'] ?? 1000);
         $count = 0;
-        if ($nodes) {
-            foreach ($nodes as $node) {
-                if ($count >= $maxReplacements) {
-                    break;
-                }
-                $normalized = StringNormalizer::normalize($node->nodeValue ?? '');
-                if (isset($map[$normalized]) && $this->replace_text_node($dom, $node, $map[$normalized])) {
-                    $count++;
-                    $this->lastReplacementCount = $count;
-                }
+        if (! $nodes) {
+            return $count;
+        }
+
+        foreach ($nodes as $node) {
+            if ($count >= $maxReplacements) {
+                break;
+            }
+
+            $normalized = StringNormalizer::normalize($node->nodeValue ?? '');
+            if (isset($map[$normalized]) && $this->replace_text_node($dom, $node, $map[$normalized])) {
+                $count++;
+                $this->lastReplacementCount = $count;
             }
         }
-        $this->set_html_language($xpath);
-        $this->lastReplacementCount = $count;
-        $this->lastUrlRewriteCount = $this->rewrite_internal_urls($xpath);
 
+        return $count;
+    }
+
+    /**
+     * @param array<string, string> $map
+     */
+    private function replace_attribute_nodes(DOMXPath $xpath, array $map, string $exclusions, int $count, int $maxReplacements): int
+    {
         $attributes = apply_filters('wat_translatable_attributes', ['alt', 'title', 'aria-label', 'aria-placeholder', 'placeholder']);
         foreach ((array) $attributes as $attribute) {
             $attribute = preg_replace('/[^a-zA-Z0-9_:\-]/', '', (string) $attribute);
             if ($attribute === '') {
                 continue;
             }
+
             $attrNodes = $xpath->query('//*[@' . $attribute . $exclusions . ']');
             if (! $attrNodes) {
                 continue;
             }
+
             foreach ($attrNodes as $node) {
                 if (! $node instanceof DOMElement) {
                     continue;
                 }
+
                 if ($count >= $maxReplacements) {
                     break 2;
                 }
+
                 $value = $node->attributes->getNamedItem($attribute)->nodeValue ?? '';
                 $normalized = StringNormalizer::normalize($value);
                 if (isset($map[$normalized])) {
@@ -82,10 +128,24 @@ trait OutputBufferDomTranslation
                 }
             }
         }
-        $output = $dom->saveHTML() ?: $html;
-        $output = preg_replace('/^<\?xml encoding="utf-8" \?>/i', '', $output) ?: $output;
+
+        return $count;
+    }
+
+    private function save_translation_dom(DOMDocument $dom, string $fallback): string
+    {
+        $output = $dom->saveHTML() ?: $fallback;
+        return preg_replace('/^<\?xml encoding="utf-8" \?>/i', '', $output) ?: $output;
+    }
+
+    private function restore_libxml_state(bool $previous): void
+    {
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
+    }
+
+    private function apply_translation_replacement_filter(string $output, int $count): string
+    {
         $filtered = apply_filters('wat_translation_replacement', $output, $this->language, $count);
         return is_scalar($filtered) ? (string) $filtered : $output;
     }
@@ -164,12 +224,7 @@ trait OutputBufferDomTranslation
 
         $previous = libxml_use_internal_errors(true);
         $temporaryDom = new DOMDocument('1.0', 'UTF-8');
-        $flags = LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING;
-        if (defined('LIBXML_NONET')) {
-            $flags |= LIBXML_NONET;
-        }
-
-        $loaded = $temporaryDom->loadHTML('<?xml encoding="utf-8" ?><body>' . $translation . '</body>', $flags);
+        $loaded = $temporaryDom->loadHTML('<?xml encoding="utf-8" ?><body>' . $translation . '</body>', $this->dom_load_flags());
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
         if (! $loaded) {

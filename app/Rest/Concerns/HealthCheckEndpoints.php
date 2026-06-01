@@ -12,9 +12,6 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* filter names are backward-compatible plugin API.
-
-// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned custom tables; table identifiers are normalized through Tables::sql_identifier().
 
 /**
  * Runtime health checks for the admin command center.
@@ -28,66 +25,124 @@ trait HealthCheckEndpoints
      */
     public function health(): array
     {
-        global $wpdb;
+        $checks = $this->health_checks(Settings::all());
+        $summary = $this->health_summary($checks);
 
-        $settings = Settings::all();
-        $checks = [
-            'php' => [
-                'label' => __('PHP-versie', 'webactueel-translate-language-dropdowns'),
-                'status' => version_compare(PHP_VERSION, '8.1', '>=') ? 'pass' : 'fail',
-                'detail' => PHP_VERSION,
-            ],
-            'dom' => [
-                'label' => __('DOM/ext-xml', 'webactueel-translate-language-dropdowns'),
-                'status' => class_exists('DOMDocument') && extension_loaded('libxml') ? 'pass' : 'fail',
-                'detail' => class_exists('DOMDocument') ? __('Beschikbaar', 'webactueel-translate-language-dropdowns') : __('Niet beschikbaar', 'webactueel-translate-language-dropdowns'),
-            ],
-            'database' => [
-                'label' => __('Database-tabellen', 'webactueel-translate-language-dropdowns'),
-                'status' => $this->all_plugin_tables_exist() ? 'pass' : 'fail',
-                'detail' => __('Plugin-tabellen gecontroleerd.', 'webactueel-translate-language-dropdowns'),
-            ],
-            'rest' => [
-                'label' => __('REST API', 'webactueel-translate-language-dropdowns'),
-                'status' => 'pass',
-                'detail' => __('Admin-endpoints zijn geregistreerd voor de huidige gebruiker.', 'webactueel-translate-language-dropdowns'),
-            ],
-            'ai' => [
-                'label' => __('AI-provider', 'webactueel-translate-language-dropdowns'),
-                'status' => ! empty($settings['ai_enabled']) ? ($this->has_ai_credentials($settings) ? 'pass' : 'warn') : 'info',
-                'detail' => ! empty($settings['ai_enabled']) ? __('AI staat aan; controleer providerconfiguratie.', 'webactueel-translate-language-dropdowns') : __('AI staat uit.', 'webactueel-translate-language-dropdowns'),
-            ],
-            'frontend' => [
-                'label' => __('Frontend-renderer', 'webactueel-translate-language-dropdowns'),
-                'status' => ! empty($settings['frontend_enabled']) ? 'pass' : 'info',
-                'detail' => ! empty($settings['frontend_enabled']) ? __('Frontendvertaling staat aan.', 'webactueel-translate-language-dropdowns') : __('Frontendvertaling staat uit.', 'webactueel-translate-language-dropdowns'),
-            ],
-            'compatibility' => [
-                'label' => __('Compatibiliteit', 'webactueel-translate-language-dropdowns'),
-                'status' => CompatibilityRegistry::has_multilingual_conflict() ? 'warn' : 'pass',
-                'detail' => CompatibilityRegistry::has_multilingual_conflict() ? __('Andere meertalige plugin gedetecteerd.', 'webactueel-translate-language-dropdowns') : __('Geen bekende meertalige conflictplugin actief.', 'webactueel-translate-language-dropdowns'),
-            ],
-            'debug' => [
-                'label' => __('Debugmodus', 'webactueel-translate-language-dropdowns'),
-                'status' => defined('WP_DEBUG') && WP_DEBUG ? 'info' : 'pass',
-                'detail' => defined('WP_DEBUG') && WP_DEBUG ? __('WP_DEBUG staat aan.', 'webactueel-translate-language-dropdowns') : __('WP_DEBUG staat uit.', 'webactueel-translate-language-dropdowns'),
-            ],
+        return [
+            'ok' => $summary['fail'] === 0,
+            'summary' => $summary,
+            'checks' => array_values($checks),
+            'schema_version' => get_option('wat_db_version', ''),
+            'cache_version' => get_option('wat_cache_version', '1'),
+            'object_cache' => function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache(),
+            'generated_at' => current_time('mysql'),
         ];
+    }
 
+    private function health_checks(array $settings): array
+    {
+        return [
+            'php' => $this->php_health_check(),
+            'dom' => $this->dom_health_check(),
+            'database' => $this->database_health_check(),
+            'rest' => $this->rest_health_check(),
+            'ai' => $this->ai_health_check($settings),
+            'frontend' => $this->frontend_health_check($settings),
+            'compatibility' => $this->compatibility_health_check(),
+            'debug' => $this->debug_health_check(),
+        ];
+    }
+
+    private function health_summary(array $checks): array
+    {
         $summary = ['pass' => 0, 'warn' => 0, 'fail' => 0, 'info' => 0];
         foreach ($checks as $check) {
             $status = is_string($check['status']) ? $check['status'] : 'info';
             ++$summary[$status];
         }
 
+        return $summary;
+    }
+
+    private function php_health_check(): array
+    {
         return [
-            'ok' => $summary['fail'] === 0,
-            'summary' => $summary,
-            'checks' => array_values($checks),
-            'schema_version' => get_option('wat_schema_version', ''),
-            'cache_version' => get_option('wat_cache_version', '1'),
-            'object_cache' => function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache(),
-            'generated_at' => current_time('mysql'),
+            'label' => __('PHP-versie', 'webactueel-translate-language-dropdowns'),
+            'status' => version_compare(PHP_VERSION, '8.1', '>=') ? 'pass' : 'fail',
+            'detail' => PHP_VERSION,
+        ];
+    }
+
+    private function dom_health_check(): array
+    {
+        $available = class_exists('DOMDocument') && extension_loaded('libxml');
+
+        return [
+            'label' => __('DOM/ext-xml', 'webactueel-translate-language-dropdowns'),
+            'status' => $available ? 'pass' : 'fail',
+            'detail' => class_exists('DOMDocument') ? __('Beschikbaar', 'webactueel-translate-language-dropdowns') : __('Niet beschikbaar', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function database_health_check(): array
+    {
+        return [
+            'label' => __('Database-tabellen', 'webactueel-translate-language-dropdowns'),
+            'status' => $this->all_plugin_tables_exist() ? 'pass' : 'fail',
+            'detail' => __('Plugin-tabellen gecontroleerd.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function rest_health_check(): array
+    {
+        return [
+            'label' => __('REST API', 'webactueel-translate-language-dropdowns'),
+            'status' => 'pass',
+            'detail' => __('Admin-endpoints zijn geregistreerd voor de huidige gebruiker.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function ai_health_check(array $settings): array
+    {
+        $enabled = ! empty($settings['ai_enabled']);
+
+        return [
+            'label' => __('AI-provider', 'webactueel-translate-language-dropdowns'),
+            'status' => $enabled ? ($this->has_ai_credentials($settings) ? 'pass' : 'warn') : 'info',
+            'detail' => $enabled ? __('AI staat aan; controleer providerconfiguratie.', 'webactueel-translate-language-dropdowns') : __('AI staat uit.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function frontend_health_check(array $settings): array
+    {
+        $enabled = ! empty($settings['frontend_enabled']);
+
+        return [
+            'label' => __('Frontend-renderer', 'webactueel-translate-language-dropdowns'),
+            'status' => $enabled ? 'pass' : 'info',
+            'detail' => $enabled ? __('Frontendvertaling staat aan.', 'webactueel-translate-language-dropdowns') : __('Frontendvertaling staat uit.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function compatibility_health_check(): array
+    {
+        $hasConflict = CompatibilityRegistry::has_multilingual_conflict();
+
+        return [
+            'label' => __('Compatibiliteit', 'webactueel-translate-language-dropdowns'),
+            'status' => $hasConflict ? 'warn' : 'pass',
+            'detail' => $hasConflict ? __('Andere meertalige plugin gedetecteerd.', 'webactueel-translate-language-dropdowns') : __('Geen bekende meertalige conflictplugin actief.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+    private function debug_health_check(): array
+    {
+        $debug = defined('WP_DEBUG') && WP_DEBUG;
+
+        return [
+            'label' => __('Debugmodus', 'webactueel-translate-language-dropdowns'),
+            'status' => $debug ? 'info' : 'pass',
+            'detail' => $debug ? __('WP_DEBUG staat aan.', 'webactueel-translate-language-dropdowns') : __('WP_DEBUG staat uit.', 'webactueel-translate-language-dropdowns'),
         ];
     }
 
@@ -95,8 +150,9 @@ trait HealthCheckEndpoints
     {
         global $wpdb;
 
-        foreach ([Tables::languages(), Tables::strings(), Tables::translations(), Tables::sources(), Tables::glossary(), Tables::logs(), Tables::jobs()] as $table) {
+        foreach ([Tables::languages(), Tables::strings(), Tables::translations(), Tables::sources(), Tables::glossary(), Tables::logs(), Tables::jobs(), Tables::ai_usage()] as $table) {
             $table_like = $wpdb->esc_like($table);
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Health check intentionally verifies plugin-owned table existence.
             $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_like));
             if (! is_string($exists) || $exists === '') {
                 return false;

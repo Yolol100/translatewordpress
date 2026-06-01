@@ -1,0 +1,11 @@
+{
+  "name": "webactueel-translate-language-dropdowns",
+  "version": "2.4.13",
+  "private": true,
+  "scripts": {
+    "build:css": "node tools/build-css.js",
+    "lint:js": "node --check build/admin/index.js && node --check build/admin/native-workflow.js && node --check build/frontend/switcher.js && node --check build/frontend/visual-editor.js && node --check blocks/language-switcher/editor.js",
+    "lint:php": "find . -name '*.php' -print0 | xargs -0 -n1 php -l"
+  },
+  "devDependencies": {}
+}

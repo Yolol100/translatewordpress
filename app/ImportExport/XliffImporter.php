@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\ImportExport;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
-use Webactueel\Translate\Database\Tables;
-use Webactueel\Translate\Support\Input;
-use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Cache\TranslationCache;
+use Webactueel\Translate\ImportExport\Concerns\SharedImportHelpers;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
+use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Translation\TranslationRepository;
 
 if (! defined('ABSPATH')) {
     exit;
 }
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Public wat_* hooks are intentional.
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Dynamic parts are escaped plugin-owned table names.
@@ -21,6 +22,7 @@ if (! defined('ABSPATH')) {
 final class XliffImporter
 {
     use ValidatesLanguages;
+    use SharedImportHelpers;
 
     /**
      * @param array<string, mixed> $file Uploaded file array from REST.
@@ -44,18 +46,61 @@ final class XliffImporter
      */
     public function import_file(string $path, array $languages = []): array
     {
-        global $wpdb;
-
         if (! is_readable($path)) {
             return ['imported' => 0, 'skipped' => 0, 'errors' => [__('XLIFF bestand kon niet gelezen worden.', 'webactueel-translate-language-dropdowns')]];
         }
 
-        $settings = Settings::all();
-        $maxRows = isset($settings['csv_import_max_rows']) ? Input::absint($settings['csv_import_max_rows'], 10000) : 10000;
-        $maxRows = (int) apply_filters('wat_xliff_import_max_units', max(1, min(50000, $maxRows)));
-        $maxRows = max(1, min(50000, $maxRows));
-        $languages = array_values(array_unique(array_filter(array_map('sanitize_key', $languages))));
+        $loaded = $this->load_xliff_units($path);
+        if (isset($loaded['error'])) {
+            return $loaded['error'];
+        }
 
+        $maxRows = $this->import_row_limit('wat_xliff_import_max_units');
+        $languages = $this->normalize_import_languages($languages);
+        $repo = new TranslationRepository();
+        $result = [
+            'imported' => 0,
+            'skipped' => 0,
+            'errors' => [],
+            'truncated' => false,
+        ];
+        $seen = [];
+        $count = 0;
+
+        foreach ($loaded['units'] as $unit) {
+            if (! $unit instanceof \DOMElement) {
+                continue;
+            }
+            $count++;
+            if ($count > $maxRows) {
+                $result['truncated'] = true;
+                $result['errors'][] = sprintf(__('XLIFF import gestopt na %d units. Verdeel grotere imports in kleinere bestanden.', 'webactueel-translate-language-dropdowns'), $maxRows);
+                break;
+            }
+
+            $unitResult = $this->import_xliff_unit($unit, $languages, $repo, $seen);
+            $result['imported'] += $unitResult['imported'];
+            $result['skipped'] += $unitResult['skipped'];
+            $result['errors'] = array_merge($result['errors'], $unitResult['errors']);
+        }
+
+        TranslationCache::bump();
+        do_action('wat_after_xliff_import', $result['imported'], $result['errors']);
+
+        return [
+            'imported' => $result['imported'],
+            'skipped' => $result['skipped'],
+            'max_units' => $maxRows,
+            'truncated' => $result['truncated'],
+            'errors' => array_slice($result['errors'], 0, 50),
+        ];
+    }
+
+    /**
+     * @return array{units:\DOMNodeList}|array{error:array<string, mixed>}
+     */
+    private function load_xliff_units(string $path): array
+    {
         $previous = libxml_use_internal_errors(true);
         $dom = new \DOMDocument();
         $loaded = $dom->load($path, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
@@ -65,10 +110,12 @@ final class XliffImporter
 
         if (! $loaded) {
             return [
-                'imported' => 0,
-                'skipped' => 0,
-                'errors' => [__('XLIFF XML is ongeldig of kon niet veilig worden verwerkt.', 'webactueel-translate-language-dropdowns')],
-                'xml_errors' => array_slice(array_map(static fn($error): string => trim((string) $error->message), $errors), 0, 5),
+                'error' => [
+                    'imported' => 0,
+                    'skipped' => 0,
+                    'errors' => [__('XLIFF XML is ongeldig of kon niet veilig worden verwerkt.', 'webactueel-translate-language-dropdowns')],
+                    'xml_errors' => array_slice(array_map(static fn($error): string => trim((string) $error->message), $errors), 0, 5),
+                ],
             ];
         }
 
@@ -76,91 +123,91 @@ final class XliffImporter
         $xpath->registerNamespace('x', 'urn:oasis:names:tc:xliff:document:1.2');
         $units = $xpath->query('//*[local-name()="trans-unit"]');
         if (! $units instanceof \DOMNodeList || $units->length === 0) {
-            return ['imported' => 0, 'skipped' => 0, 'errors' => [__('XLIFF bevat geen trans-unit regels.', 'webactueel-translate-language-dropdowns')]];
+            return [
+                'error' => [
+                    'imported' => 0,
+                    'skipped' => 0,
+                    'errors' => [__('XLIFF bevat geen trans-unit regels.', 'webactueel-translate-language-dropdowns')],
+                ],
+            ];
         }
 
-        $repo = new TranslationRepository();
-        $imported = 0;
-        $skipped = 0;
-        $lineErrors = [];
-        $seen = [];
-        $truncated = false;
-        $count = 0;
+        return ['units' => $units];
+    }
 
-        foreach ($units as $unit) {
-            if (! $unit instanceof \DOMElement) {
-                continue;
-            }
-            $count++;
-            if ($count > $maxRows) {
-                $truncated = true;
-                $lineErrors[] = sprintf(__('XLIFF import gestopt na %d units. Verdeel grotere imports in kleinere bestanden.', 'webactueel-translate-language-dropdowns'), $maxRows);
-                break;
-            }
-
-            $file = $this->closest_file($unit);
-            $language = $file instanceof \DOMElement ? sanitize_key((string) $file->getAttribute('target-language')) : '';
-            $language = $language !== '' ? $language : sanitize_key((string) $unit->getAttribute('target-language'));
-            if ($language === '' || ($languages && ! in_array($language, $languages, true)) || ! $this->is_translatable_language($language)) {
-                $skipped++;
-                continue;
-            }
-
-            $hash = sanitize_text_field((string) $unit->getAttribute('resname'));
-            if ($hash === '') {
-                $id = sanitize_text_field((string) $unit->getAttribute('id'));
-                $hash = preg_replace('/:.+$/', '', $id) ?: '';
-            }
-            $source = $this->child_text($unit, 'source');
-            $target = trim(wp_kses_post($this->child_text($unit, 'target')));
-            if ($target === '') {
-                $skipped++;
-                continue;
-            }
-
-            $rowKey = $hash . ':' . $language;
-            if ($hash !== '' && isset($seen[$rowKey])) {
-                $skipped++;
-                continue;
-            }
-            if ($hash !== '') {
-                $seen[$rowKey] = true;
-            }
-
-            $stringId = 0;
-            if ($hash !== '' && strlen($hash) >= 16) {
-                $stringId = (int) $wpdb->get_var($wpdb->prepare('SELECT id FROM `' . Tables::sql_identifier(Tables::strings()) . '` WHERE hash = %s', $hash));
-            }
-            if (! $stringId && trim($source) !== '') {
-                $context = $this->extract_note_value($unit, 'context');
-                $sourceType = sanitize_key($this->extract_note_value($unit, 'source_type'));
-                $sourceId = absint($this->extract_note_value($unit, 'source_id'));
-                $stringId = $repo->upsert_string(wp_kses_post($source), $sourceType, $sourceId, $context);
-            }
-            if (! $stringId) {
-                $skipped++;
-                $lineErrors[] = __('XLIFF unit overgeslagen: geen herkenbare hash of brontekst.', 'webactueel-translate-language-dropdowns');
-                continue;
-            }
-
-            $status = $this->map_state_to_status($this->target_state($unit));
-            if ($repo->save_translation($stringId, $language, $target, $status, 'xliff')) {
-                $imported++;
-            } else {
-                $skipped++;
-            }
+    /**
+     * @param array<int, string> $languages
+     * @param array<string, bool> $seen
+     * @return array{imported:int,skipped:int,errors:array<int, string>}
+     */
+    private function import_xliff_unit(\DOMElement $unit, array $languages, TranslationRepository $repo, array &$seen): array
+    {
+        $language = $this->xliff_unit_language($unit);
+        if ($language === '' || ($languages && ! in_array($language, $languages, true)) || ! $this->is_translatable_language($language)) {
+            return ['imported' => 0, 'skipped' => 1, 'errors' => []];
         }
 
-        CacheInvalidator::bump();
-        do_action('wat_after_xliff_import', $imported, $lineErrors);
+        $hash = $this->xliff_unit_hash($unit);
+        $source = $this->child_text($unit, 'source');
+        $target = trim(wp_kses_post($this->child_text($unit, 'target')));
+        if ($target === '') {
+            return ['imported' => 0, 'skipped' => 1, 'errors' => []];
+        }
 
-        return [
-            'imported' => $imported,
-            'skipped' => $skipped,
-            'max_units' => $maxRows,
-            'truncated' => $truncated,
-            'errors' => array_slice($lineErrors, 0, 50),
-        ];
+        $rowKey = $hash . ':' . $language;
+        if ($hash !== '' && isset($seen[$rowKey])) {
+            return ['imported' => 0, 'skipped' => 1, 'errors' => []];
+        }
+        if ($hash !== '') {
+            $seen[$rowKey] = true;
+        }
+
+        $stringId = $this->xliff_unit_string_id($unit, $hash, $source, $repo);
+        if (! $stringId) {
+            return [
+                'imported' => 0,
+                'skipped' => 1,
+                'errors' => [__('XLIFF unit overgeslagen: geen herkenbare hash of brontekst.', 'webactueel-translate-language-dropdowns')],
+            ];
+        }
+
+        $status = $this->map_state_to_status($this->target_state($unit));
+        if ($repo->save_translation($stringId, $language, $target, $status, 'xliff')) {
+            return ['imported' => 1, 'skipped' => 0, 'errors' => []];
+        }
+
+        return ['imported' => 0, 'skipped' => 1, 'errors' => []];
+    }
+
+    private function xliff_unit_language(\DOMElement $unit): string
+    {
+        $file = $this->closest_file($unit);
+        $language = $file instanceof \DOMElement ? sanitize_key((string) $file->getAttribute('target-language')) : '';
+        return $language !== '' ? $language : sanitize_key((string) $unit->getAttribute('target-language'));
+    }
+
+    private function xliff_unit_hash(\DOMElement $unit): string
+    {
+        $hash = sanitize_text_field((string) $unit->getAttribute('resname'));
+        if ($hash !== '') {
+            return $hash;
+        }
+
+        $id = sanitize_text_field((string) $unit->getAttribute('id'));
+        return preg_replace('/:.+$/', '', $id) ?: '';
+    }
+
+    private function xliff_unit_string_id(\DOMElement $unit, string $hash, string $source, TranslationRepository $repo): int
+    {
+        $stringId = $this->find_string_id_by_hash($hash);
+        if ($stringId || trim($source) === '') {
+            return $stringId;
+        }
+
+        $context = $this->extract_note_value($unit, 'context');
+        $sourceType = sanitize_key($this->extract_note_value($unit, 'source_type'));
+        $sourceId = absint($this->extract_note_value($unit, 'source_id'));
+        return $repo->upsert_string(wp_kses_post($source), $sourceType, $sourceId, $context);
     }
 
     private function validate_upload(array $file): string

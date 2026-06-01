@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Automation;
 
 use Webactueel\Translate\Database\Tables;
+use Webactueel\Translate\Support\Formatting;
 use Webactueel\Translate\Support\Input;
 
 if (! defined('ABSPATH')) {
@@ -44,14 +45,16 @@ final class AiUsageLedger
     {
         global $wpdb;
         $days = max(1, min(365, absint($days)));
-        $table = Tables::sql_identifier(Tables::ai_usage());
+        $table = Tables::ai_usage();
         $since = gmdate('Y-m-d H:i:s', time() - ($days * DAY_IN_SECONDS));
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT COUNT(*) AS calls, COALESCE(SUM(source_chars),0) AS source_chars, COALESCE(SUM(output_chars),0) AS output_chars, COALESCE(SUM(estimated_words),0) AS estimated_words, COALESCE(SUM(memory_reused),0) AS memory_reused, COALESCE(SUM(glossary_terms),0) AS glossary_terms FROM `{$table}` WHERE created_at >= %s",
+            "SELECT COUNT(*) AS calls, COALESCE(SUM(source_chars),0) AS source_chars, COALESCE(SUM(output_chars),0) AS output_chars, COALESCE(SUM(estimated_words),0) AS estimated_words, COALESCE(SUM(memory_reused),0) AS memory_reused, COALESCE(SUM(glossary_terms),0) AS glossary_terms FROM %i WHERE created_at >= %s",
+            $table,
             $since
         ), ARRAY_A);
         $byLanguage = $wpdb->get_results($wpdb->prepare(
-            "SELECT target_language, COUNT(*) AS calls, COALESCE(SUM(estimated_words),0) AS estimated_words, COALESCE(SUM(memory_reused),0) AS memory_reused FROM `{$table}` WHERE created_at >= %s GROUP BY target_language ORDER BY calls DESC LIMIT 20",
+            "SELECT target_language, COUNT(*) AS calls, COALESCE(SUM(estimated_words),0) AS estimated_words, COALESCE(SUM(memory_reused),0) AS memory_reused FROM %i WHERE created_at >= %s GROUP BY target_language ORDER BY calls DESC LIMIT 20",
+            $table,
             $since
         ), ARRAY_A);
 
@@ -89,18 +92,18 @@ final class AiUsageLedger
         $days = max(1, min(365, absint($days)));
         $limit = max(1, min(50000, absint($limit)));
         $targetLanguage = sanitize_key($targetLanguage);
-        $table = Tables::sql_identifier(Tables::ai_usage());
+        $table = Tables::ai_usage();
         $since = gmdate('Y-m-d H:i:s', time() - ($days * DAY_IN_SECONDS));
 
         $where = 'created_at >= %s';
-        $params = [$since];
+        $params = [$table, $since];
         if ($targetLanguage !== '') {
             $where .= ' AND target_language = %s';
             $params[] = $targetLanguage;
         }
         $params[] = $limit;
 
-        $sql = "SELECT created_at, job_id, string_id, provider, model, source_language, target_language, source_chars, output_chars, estimated_words, memory_reused, glossary_terms FROM `{$table}` WHERE {$where} ORDER BY created_at DESC, id DESC LIMIT %d";
+        $sql = "SELECT created_at, job_id, string_id, provider, model, source_language, target_language, source_chars, output_chars, estimated_words, memory_reused, glossary_terms FROM %i WHERE {$where} ORDER BY created_at DESC, id DESC LIMIT %d";
         $rows = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Plugin-owned table name; WHERE is built from a fixed allow-list with placeholders.
 
         return is_array($rows) ? $rows : [];
@@ -117,38 +120,9 @@ final class AiUsageLedger
             return '';
         }
 
-        $columns = ['date', 'job_id', 'string_id', 'provider', 'model', 'source_language', 'target_language', 'source_chars', 'output_chars', 'estimated_words', 'memory_reused', 'glossary_terms'];
-        fputcsv($handle, $columns, ',', '"', '');
-
-        $totalWords = 0;
-        $totalSourceChars = 0;
-        $totalOutputChars = 0;
-        $memoryReused = 0;
-        foreach ($rows as $row) {
-            $line = [
-                self::csv_cell((string) ($row['created_at'] ?? '')),
-                absint($row['job_id'] ?? 0),
-                absint($row['string_id'] ?? 0),
-                self::csv_cell((string) ($row['provider'] ?? '')),
-                self::csv_cell((string) ($row['model'] ?? '')),
-                self::csv_cell((string) ($row['source_language'] ?? '')),
-                self::csv_cell((string) ($row['target_language'] ?? '')),
-                absint($row['source_chars'] ?? 0),
-                absint($row['output_chars'] ?? 0),
-                absint($row['estimated_words'] ?? 0),
-                absint($row['memory_reused'] ?? 0),
-                absint($row['glossary_terms'] ?? 0),
-            ];
-            fputcsv($handle, $line, ',', '"', '');
-            $totalWords += absint($row['estimated_words'] ?? 0);
-            $totalSourceChars += absint($row['source_chars'] ?? 0);
-            $totalOutputChars += absint($row['output_chars'] ?? 0);
-            $memoryReused += absint($row['memory_reused'] ?? 0);
-        }
-
-        // Summary footer for quick invoicing without re-aggregating in a spreadsheet.
-        fputcsv($handle, [], ',', '"', '');
-        fputcsv($handle, ['TOTAL', count($rows), '', '', '', '', '', $totalSourceChars, $totalOutputChars, $totalWords, $memoryReused, ''], ',', '"', '');
+        fputcsv($handle, self::usage_csv_columns(), ',', '"', '');
+        $totals = self::write_usage_csv_rows($handle, $rows);
+        self::write_usage_csv_summary($handle, $rows, $totals);
 
         rewind($handle);
         $csv = (string) stream_get_contents($handle);
@@ -157,19 +131,48 @@ final class AiUsageLedger
         return $csv;
     }
 
-    /**
-     * Guard a CSV cell against spreadsheet formula injection.
-     */
-    private static function csv_cell(string $value): string
+    private static function usage_csv_columns(): array
     {
-        $trimmed = ltrim($value, " \t\r\n");
-        if ($trimmed !== '' && preg_match('/^[=+\-@]/', $trimmed)) {
-            return "'" . $value;
+        return ['date', 'job_id', 'string_id', 'provider', 'model', 'source_language', 'target_language', 'source_chars', 'output_chars', 'estimated_words', 'memory_reused', 'glossary_terms'];
+    }
+
+    private static function write_usage_csv_rows($handle, array $rows): array
+    {
+        $totals = ['words' => 0, 'source_chars' => 0, 'output_chars' => 0, 'memory_reused' => 0];
+        foreach ($rows as $row) {
+            fputcsv($handle, self::usage_csv_row($row), ',', '"', '');
+            $totals['words'] += absint($row['estimated_words'] ?? 0);
+            $totals['source_chars'] += absint($row['source_chars'] ?? 0);
+            $totals['output_chars'] += absint($row['output_chars'] ?? 0);
+            $totals['memory_reused'] += absint($row['memory_reused'] ?? 0);
         }
-        if ($value !== '' && preg_match('/^[\t\r\n]/', $value)) {
-            return "'" . $value;
-        }
-        return $value;
+
+        return $totals;
+    }
+
+    private static function usage_csv_row(array $row): array
+    {
+        return [
+            Formatting::csv_cell((string) ($row['created_at'] ?? '')),
+            absint($row['job_id'] ?? 0),
+            absint($row['string_id'] ?? 0),
+            Formatting::csv_cell((string) ($row['provider'] ?? '')),
+            Formatting::csv_cell((string) ($row['model'] ?? '')),
+            Formatting::csv_cell((string) ($row['source_language'] ?? '')),
+            Formatting::csv_cell((string) ($row['target_language'] ?? '')),
+            absint($row['source_chars'] ?? 0),
+            absint($row['output_chars'] ?? 0),
+            absint($row['estimated_words'] ?? 0),
+            absint($row['memory_reused'] ?? 0),
+            absint($row['glossary_terms'] ?? 0),
+        ];
+    }
+
+    private static function write_usage_csv_summary($handle, array $rows, array $totals): void
+    {
+        // Summary footer for quick invoicing without re-aggregating in a spreadsheet.
+        fputcsv($handle, [], ',', '"', '');
+        fputcsv($handle, ['TOTAL', count($rows), '', '', '', '', '', $totals['source_chars'], $totals['output_chars'], $totals['words'], $totals['memory_reused'], ''], ',', '"', '');
     }
 
     private static function estimate_words(string $text): int

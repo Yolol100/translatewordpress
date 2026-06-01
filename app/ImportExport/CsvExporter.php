@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webactueel\Translate\ImportExport;
 
 use Webactueel\Translate\Database\Tables;
+use Webactueel\Translate\Support\Formatting;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -27,8 +28,8 @@ final class CsvExporter
         $languages = $this->normalize_languages($languages);
         if (! $languages) {
             $languages = array_map('strval', (array) $wpdb->get_col(
-                'SELECT code FROM `' . Tables::sql_identifier(Tables::languages()) . '` WHERE is_active = 1 AND is_default = 0 ORDER BY native_name ASC'
-            )); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $wpdb->prepare('SELECT code FROM %i WHERE is_active = 1 AND is_default = 0 ORDER BY native_name ASC', Tables::languages())
+            ));
         }
         $mode = sanitize_key($mode ?: 'all');
         $missingOnly = in_array($mode, ['missing', 'new'], true);
@@ -36,32 +37,14 @@ final class CsvExporter
         if ($languages) {
             $placeholders = implode(',', array_fill(0, count($languages), '%s'));
             $where = $missingOnly ? ' WHERE (t.id IS NULL OR t.translated_text = "")' : '';
-            $stringsTable = Tables::sql_identifier(Tables::strings());
-            $languagesTable = Tables::sql_identifier(Tables::languages());
-            $translationsTable = Tables::sql_identifier(Tables::translations());
-            $sql = 'SELECT s.hash, s.source_type, s.source_id, s.context, s.original_text, l.code as language_code, COALESCE(t.translated_text, "") as translated_text, COALESCE(t.status, "new") as status FROM `' . $stringsTable . '` s INNER JOIN `' . $languagesTable . '` l ON l.code IN (' . $placeholders . ') LEFT JOIN `' . $translationsTable . '` t ON s.id = t.string_id AND t.language_code = l.code' . $where . ' ORDER BY s.id DESC, l.code ASC LIMIT 10000';
-            return $wpdb->get_results($wpdb->prepare($sql, $languages), ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $sql = 'SELECT s.hash, s.source_type, s.source_id, s.context, s.original_text, l.code as language_code, COALESCE(t.translated_text, "") as translated_text, COALESCE(t.status, "new") as status FROM %i s INNER JOIN %i l ON l.code IN (' . $placeholders . ') LEFT JOIN %i t ON s.id = t.string_id AND t.language_code = l.code' . $where . ' ORDER BY s.id DESC, l.code ASC LIMIT 10000';
+            $params = array_merge([Tables::strings(), Tables::languages(), Tables::translations()], $languages);
+            return $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A) ?: [];
         }
 
         $where = $missingOnly ? ' WHERE (t.id IS NULL OR t.translated_text = "")' : '';
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $translationsTable = Tables::sql_identifier(Tables::translations());
-        $sql = 'SELECT s.hash, s.source_type, s.source_id, s.context, s.original_text, COALESCE(t.language_code, "") as language_code, COALESCE(t.translated_text, "") as translated_text, COALESCE(t.status, s.status) as status FROM `' . $stringsTable . '` s LEFT JOIN `' . $translationsTable . '` t ON s.id = t.string_id' . $where . ' ORDER BY s.id DESC LIMIT 5000';
-        return $wpdb->get_results($sql, ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-    }
-
-    private function escape_csv_cell(string $value): string
-    {
-        // Guard against spreadsheet formula injection, including values where
-        // a formula character is hidden behind leading whitespace or tabs.
-        $trimmed = ltrim($value, " \t\r\n");
-        if ($trimmed !== '' && preg_match('/^[=+\-@]/', $trimmed)) {
-            return "'" . $value;
-        }
-        if ($value !== '' && preg_match('/^[\t\r\n]/', $value)) {
-            return "'" . $value;
-        }
-        return $value;
+        $sql = 'SELECT s.hash, s.source_type, s.source_id, s.context, s.original_text, COALESCE(t.language_code, "") as language_code, COALESCE(t.translated_text, "") as translated_text, COALESCE(t.status, s.status) as status FROM %i s LEFT JOIN %i t ON s.id = t.string_id' . $where . ' ORDER BY s.id DESC LIMIT 5000';
+        return $wpdb->get_results($wpdb->prepare($sql, Tables::strings(), Tables::translations()), ARRAY_A) ?: [];
     }
 
     public function csv_string(array $languages = [], string $mode = 'all'): string
@@ -76,7 +59,7 @@ final class CsvExporter
         foreach ($this->rows($languages, $mode) as $row) {
             foreach ($row as $field => $value) {
                 if (is_scalar($value)) {
-                    $row[$field] = $this->escape_csv_cell((string) $value);
+                    $row[$field] = Formatting::csv_cell((string) $value);
                 }
             }
             fputcsv($handle, $row, ',', '"', '');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webactueel\Translate\Support\Concerns;
 
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Support\Formatting;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -92,7 +93,7 @@ trait SanitizesSettingValues
         $lines = [];
         $append = static function (string $code, string $url) use (&$lines): void {
             $code = sanitize_key($code);
-            $url = self::sanitize_language_domain_url($url);
+            $url = Formatting::base_url($url);
             if ($code !== '' && $url !== '') {
                 $lines[] = $code . '|' . $url;
             }
@@ -120,27 +121,4 @@ trait SanitizesSettingValues
         return implode("\n", array_values(array_unique($lines)));
     }
 
-    private static function sanitize_language_domain_url(string $url): string
-    {
-        $url = esc_url_raw(trim($url), ['http', 'https']);
-        if ($url === '') {
-            return '';
-        }
-
-        $parts = wp_parse_url($url);
-        if (! is_array($parts)) {
-            return '';
-        }
-
-        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
-            return '';
-        }
-
-        $port = isset($parts['port']) ? ':' . absint($parts['port']) : '';
-        $path = isset($parts['path']) ? '/' . trim((string) $parts['path'], '/') : '';
-
-        return rtrim($scheme . '://' . $host . $port . $path, '/');
-    }
 }

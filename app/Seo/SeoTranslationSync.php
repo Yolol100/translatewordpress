@@ -95,11 +95,12 @@ final class SeoTranslationSync
     private function string_row(int $stringId): ?array
     {
         global $wpdb;
-        $table = esc_sql(Tables::strings());
+        $table = Tables::strings();
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT source_type, source_id, context, source_key FROM `{$table}` WHERE id = %d LIMIT 1",
+            'SELECT source_type, source_id, context, source_key FROM %i WHERE id = %d LIMIT 1',
+            $table,
             $stringId
-        ), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Plugin-owned table name is escaped above.
+        ), ARRAY_A);
 
         return is_array($row) ? $row : null;
     }
@@ -113,12 +114,13 @@ final class SeoTranslationSync
     private function translation_value(int $stringId, string $language): string
     {
         global $wpdb;
-        $table = esc_sql(Tables::translations());
+        $table = Tables::translations();
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT translated_text, status FROM `{$table}` WHERE string_id = %d AND language_code = %s LIMIT 1",
+            'SELECT translated_text, status FROM %i WHERE string_id = %d AND language_code = %s LIMIT 1',
+            $table,
             $stringId,
             $language
-        ), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Plugin-owned table name is escaped above.
+        ), ARRAY_A);
 
         if (! is_array($row)) {
             return '';

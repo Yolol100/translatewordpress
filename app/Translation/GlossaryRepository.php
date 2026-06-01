@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webactueel\Translate\Translation;
 
-use Webactueel\Translate\Cache\CacheInvalidator;
+use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\Database\Tables;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
@@ -15,10 +15,8 @@ if (! defined('ABSPATH')) {
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables are plugin-owned.
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 // Reviewed: custom prefixed tables and public wat_* hooks are intentional.
 
 final class GlossaryRepository
@@ -27,12 +25,12 @@ final class GlossaryRepository
     public function all(string $languageCode = ''): array
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::glossary());
+        $table = Tables::glossary();
         $languageCode = sanitize_key($languageCode);
         if ($languageCode !== '') {
-            $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM `{$table}` WHERE language_code = %s ORDER BY source_term ASC, id DESC", $languageCode), ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE language_code = %s ORDER BY source_term ASC, id DESC', $table, $languageCode), ARRAY_A) ?: [];
         } else {
-            $rows = $wpdb->get_results("SELECT * FROM `{$table}` ORDER BY language_code ASC, source_term ASC, id DESC", ARRAY_A) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM %i ORDER BY language_code ASC, source_term ASC, id DESC', $table), ARRAY_A) ?: [];
         }
         return array_map([$this, 'normalize_row'], $rows);
     }
@@ -75,7 +73,7 @@ final class GlossaryRepository
         if (! $ok) {
             return ['error' => __('Woordenlijst opslaan mislukt.', 'webactueel-translate-language-dropdowns')];
         }
-        CacheInvalidator::bump();
+        TranslationCache::bump();
         return ['saved' => true, 'item' => $this->get($id)];
     }
 
@@ -87,7 +85,7 @@ final class GlossaryRepository
         }
         $deleted = $wpdb->delete(Tables::glossary(), ['id' => $id]);
         if ($deleted && $deleted > 0) {
-            CacheInvalidator::bump();
+            TranslationCache::bump();
             return true;
         }
         return false;
@@ -124,7 +122,7 @@ final class GlossaryRepository
     private function find_duplicate_id(string $source, string $language, bool $caseSensitive, int $excludeId = 0): int
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::glossary());
+        $table = Tables::glossary();
         $where = '`language_code` = %s AND `case_sensitive` = %d';
         $params = [$language, $caseSensitive ? 1 : 0];
         if ($caseSensitive) {
@@ -138,15 +136,16 @@ final class GlossaryRepository
             $where .= ' AND `id` <> %d';
             $params[] = $excludeId;
         }
-        $sql = "SELECT id FROM `{$table}` WHERE {$where} LIMIT 1"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is generated from plugin-owned helper; WHERE clause is whitelist-built above.
-        return (int) $wpdb->get_var($wpdb->prepare($sql, ...$params)); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared from whitelist-built SQL with placeholders and sanitized table name.
+        $sql = "SELECT id FROM %i WHERE {$where} LIMIT 1";
+        array_unshift($params, $table);
+        return (int) $wpdb->get_var($wpdb->prepare($sql, $params));
     }
 
     private function get(int $id): array
     {
         global $wpdb;
-        $table = Tables::sql_identifier(Tables::glossary());
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d LIMIT 1", $id), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $table = Tables::glossary();
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE id = %d LIMIT 1', $table, $id), ARRAY_A);
         return $this->normalize_row(is_array($row) ? $row : []);
     }
 

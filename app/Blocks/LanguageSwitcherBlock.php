@@ -28,12 +28,12 @@ final class LanguageSwitcherBlock
 
         $editor_asset_file = WAT_PLUGIN_DIR . 'blocks/language-switcher/editor.asset.php';
         $editor_asset = is_readable($editor_asset_file) ? require $editor_asset_file : [
-            'dependencies' => ['wp-blocks', 'wp-element', 'wp-i18n', 'wp-server-side-render'],
+            'dependencies' => ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-server-side-render'],
             'version' => WAT_VERSION,
         ];
         $editor_dependencies = isset($editor_asset['dependencies']) && is_array($editor_asset['dependencies'])
             ? array_values(array_filter($editor_asset['dependencies'], 'is_string'))
-            : ['wp-blocks', 'wp-element', 'wp-i18n', 'wp-server-side-render'];
+            : ['wp-blocks', 'wp-block-editor', 'wp-element', 'wp-i18n', 'wp-server-side-render'];
         $editor_version = isset($editor_asset['version']) && is_scalar($editor_asset['version']) ? (string) $editor_asset['version'] : WAT_VERSION;
 
         wp_register_script(
@@ -51,7 +51,11 @@ final class LanguageSwitcherBlock
 
         register_block_type_from_metadata(WAT_PLUGIN_DIR . 'blocks/language-switcher', [
             'render_callback' => static function (): string {
-                FrontendBootstrap::enqueue_switcher_assets(! function_exists('wp_register_script_module'));
+                // The block declares the shared `...-switcher` handle as its viewScript,
+                // so WordPress enqueues exactly one switcher behaviour script. This call
+                // also guarantees the matching stylesheet loads even on setups that do
+                // not auto-enqueue block styles.
+                FrontendBootstrap::enqueue_switcher_assets();
                 return LanguageSwitcher::render([], true);
             },
         ]);

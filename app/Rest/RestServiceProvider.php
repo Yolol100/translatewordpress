@@ -17,12 +17,6 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-// Reviewed: custom prefixed tables and public wat_* hooks are intentional.
-
 final class RestServiceProvider
 {
     use ChecksRestPermissions;
@@ -39,5 +33,6 @@ final class RestServiceProvider
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'routes']);
+        add_filter('rest_pre_serve_request', [$this, 'serve_raw_export'], 10, 4);
     }
 }

@@ -55,8 +55,8 @@ final class TranslationQualityReport
     private static function counts(string $languageCode): array
     {
         global $wpdb;
-        $stringsTable = Tables::sql_identifier(Tables::strings());
-        $translationsTable = Tables::sql_identifier(Tables::translations());
+        $stringsTable = Tables::strings();
+        $translationsTable = Tables::translations();
 
         $row = $wpdb->get_row(
             $wpdb->prepare(
@@ -71,8 +71,10 @@ final class TranslationQualityReport
                     SUM(CASE WHEN t.origin = 'ai' THEN 1 ELSE 0 END) AS ai_origin,
                     SUM(CASE WHEN t.id IS NOT NULL AND TRIM(COALESCE(t.translated_text, '')) = TRIM(COALESCE(s.original_text, '')) THEN 1 ELSE 0 END) AS identical_to_source,
                     SUM(CASE WHEN t.id IS NOT NULL AND t.translated_text LIKE '%<%' AND t.translated_text NOT LIKE '%>%' THEN 1 ELSE 0 END) AS possible_broken_markup
-                FROM `{$stringsTable}` s
-                LEFT JOIN `{$translationsTable}` t ON t.string_id = s.id AND t.language_code = %s",
+                FROM %i s
+                LEFT JOIN %i t ON t.string_id = s.id AND t.language_code = %s",
+                $stringsTable,
+                $translationsTable,
                 $languageCode
             ),
             ARRAY_A

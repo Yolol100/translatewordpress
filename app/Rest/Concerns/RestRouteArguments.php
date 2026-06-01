@@ -148,12 +148,28 @@ trait RestRouteArguments
                 'sanitize_callback' => static fn($value): string => preg_replace('/[^a-zA-Z0-9]/', '', Input::scalar_string($value)),
                 'validate_callback' => static fn($value): bool => is_scalar($value) && preg_match('/^[a-zA-Z0-9]+$/', (string) $value) === 1,
             ],
-            'languages' => [
-                'validate_callback' => [self::class, 'validate_key_list'],
-                'sanitize_callback' => static function ($value): array {
-                    return Input::key_list($value);
-                },
+            'languages' => $this->key_list_arg(),
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function export_args(): array
+    {
+        return [
+            'languages' => $this->key_list_arg(),
+            'mode' => [
+                'type' => 'string',
+                'enum' => ['all', 'missing', 'new'],
+                'sanitize_callback' => 'sanitize_key',
             ],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function import_languages_args(): array
+    {
+        return [
+            'languages' => $this->key_list_arg(),
         ];
     }
 
@@ -175,8 +191,30 @@ trait RestRouteArguments
 
     private function settings_args(): array
     {
+        return array_merge(
+            $this->settings_boolean_args(),
+            $this->settings_ai_args(),
+            $this->settings_numeric_args(),
+            $this->settings_domain_args(),
+            $this->settings_switcher_args(),
+            $this->settings_exclusion_args()
+        );
+    }
+
+    private function key_list_arg(): array
+    {
+        return [
+            'validate_callback' => [self::class, 'validate_key_list'],
+            'sanitize_callback' => static function ($value): array {
+                return Input::key_list($value);
+            },
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_boolean_args(): array
+    {
         $boolean = ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'];
-        $textarea = ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'];
 
         return [
             'frontend_enabled' => $boolean,
@@ -199,6 +237,15 @@ trait RestRouteArguments
             'ai_enabled' => $boolean,
             'ai_review_required' => $boolean,
             'performance_monitoring' => $boolean,
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_ai_args(): array
+    {
+        $boolean = ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'];
+
+        return [
             'ai_provider' => [
                 'type' => 'string',
                 'enum' => ['openai', 'deepl', 'openai_compatible'],
@@ -229,13 +276,34 @@ trait RestRouteArguments
                 'enum' => ['default', 'more', 'less', 'prefer_more', 'prefer_less'],
                 'sanitize_callback' => 'sanitize_key',
             ],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_numeric_args(): array
+    {
+        return [
             'max_buffer_size' => ['type' => 'integer', 'minimum' => 100000, 'maximum' => 5000000, 'sanitize_callback' => 'absint'],
             'max_replacements' => ['type' => 'integer', 'minimum' => 10, 'maximum' => 5000, 'sanitize_callback' => 'absint'],
             'scan_batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint'],
             'cache_ttl' => ['type' => 'integer', 'minimum' => 300, 'maximum' => 604800, 'sanitize_callback' => 'absint'],
             'csv_preview_rows' => ['type' => 'integer', 'minimum' => 20, 'maximum' => 1000, 'sanitize_callback' => 'absint'],
             'csv_import_max_rows' => ['type' => 'integer', 'minimum' => 100, 'maximum' => 50000, 'sanitize_callback' => 'absint'],
-            'language_domains' => $textarea,
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_domain_args(): array
+    {
+        return [
+            'language_domains' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_switcher_args(): array
+    {
+        return [
             'switcher_layout' => [
                 'type' => 'string',
                 'enum' => ['dropdown', 'inline', 'flags_name', 'flags', 'code', 'flag_code', 'name_code', 'flags_name_code'],
@@ -247,6 +315,15 @@ trait RestRouteArguments
                 'enum' => ['bottom-right', 'bottom-left', 'top-right', 'top-left'],
                 'sanitize_callback' => 'sanitize_key',
             ],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function settings_exclusion_args(): array
+    {
+        $textarea = ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'];
+
+        return [
             'exclude_selectors' => $textarea,
             'exclude_paths' => $textarea,
         ];
@@ -255,12 +332,7 @@ trait RestRouteArguments
     private function preferences_args(): array
     {
         return [
-            'dashboard_order' => [
-                'validate_callback' => [self::class, 'validate_key_list'],
-                'sanitize_callback' => static function ($value): array {
-                    return Input::key_list($value);
-                },
-            ],
+            'dashboard_order' => $this->key_list_arg(),
         ];
     }
 }

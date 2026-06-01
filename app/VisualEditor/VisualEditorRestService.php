@@ -37,7 +37,7 @@ final class VisualEditorRestService
             'callback' => [$this, 'preview_segment'],
             'permission_callback' => [$this, 'can_save_segment'],
             'args' => [
-                'original' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
+                'original' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field', 'validate_callback' => [self::class, 'validate_visual_editor_text']],
                 'language' => [
                     'type' => 'string',
                     'required' => true,
@@ -52,28 +52,84 @@ final class VisualEditorRestService
             'callback' => [$this, 'save_segment'],
             'permission_callback' => [$this, 'can_save_segment'],
             'args' => [
-                'original' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-                'translation' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'wp_kses_post'],
+                'original' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field', 'validate_callback' => [self::class, 'validate_visual_editor_text']],
+                'translation' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_textarea_field', 'validate_callback' => [self::class, 'validate_visual_editor_translation']],
                 'language' => [
                     'type' => 'string',
                     'required' => true,
                     'sanitize_callback' => 'sanitize_key',
                     'validate_callback' => static fn($value): bool => is_scalar($value) && preg_match('/^[a-z]{2,3}(?:[-_][a-z0-9]{2,8})?$/i', (string) $value) === 1,
                 ],
-                'selector' => ['type' => 'string', 'required' => false, 'sanitize_callback' => 'sanitize_text_field'],
-                'url' => ['type' => 'string', 'format' => 'uri', 'required' => false, 'sanitize_callback' => 'esc_url_raw'],
+                'selector' => ['type' => 'string', 'required' => false, 'sanitize_callback' => 'sanitize_text_field', 'validate_callback' => [self::class, 'validate_visual_editor_selector']],
+                'url' => ['type' => 'string', 'format' => 'uri', 'required' => false, 'sanitize_callback' => [self::class, 'sanitize_visual_editor_url'], 'validate_callback' => [self::class, 'validate_visual_editor_url']],
             ],
         ]);
     }
 
     public function can_save_segment(): bool
     {
-        if (current_user_can('manage_options')) {
+        return current_user_can('manage_options') || $this->can_translate();
+    }
+
+    public static function validate_visual_editor_text($value): bool
+    {
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $text = trim(sanitize_text_field((string) $value));
+        $length = function_exists('mb_strlen') ? mb_strlen($text) : strlen($text);
+
+        return $length >= 2 && $length <= 300;
+    }
+
+    public static function validate_visual_editor_translation($value): bool
+    {
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $text = trim(sanitize_textarea_field((string) $value));
+        $length = function_exists('mb_strlen') ? mb_strlen($text) : strlen($text);
+
+        return $length >= 1 && $length <= 1000;
+    }
+
+    public static function validate_visual_editor_selector($value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $selector = sanitize_text_field((string) $value);
+        $length = function_exists('mb_strlen') ? mb_strlen($selector) : strlen($selector);
+
+        return $length <= 300 && strpos($selector, "\0") === false;
+    }
+
+    public static function sanitize_visual_editor_url($value): string
+    {
+        $url = esc_url_raw((string) $value);
+        if ($url === '') {
+            return '';
+        }
+
+        $homeHost = wp_parse_url(home_url(), PHP_URL_HOST);
+        $urlHost = wp_parse_url($url, PHP_URL_HOST);
+
+        return is_string($homeHost) && is_string($urlHost) && strcasecmp($homeHost, $urlHost) === 0 ? $url : '';
+    }
+
+    public static function validate_visual_editor_url($value): bool
+    {
+        if ($value === null || $value === '') {
             return true;
         }
 
-        $settings = Settings::all();
-        return ! empty($settings['translator_review_required']) && $this->can_translate();
+        return self::sanitize_visual_editor_url($value) !== '';
     }
 
 
@@ -122,13 +178,15 @@ final class VisualEditorRestService
             return [];
         }
 
-        $stringsTable = esc_sql(\Webactueel\Translate\Database\Tables::strings());
-        $translationsTable = esc_sql(\Webactueel\Translate\Database\Tables::translations());
+        $stringsTable = \Webactueel\Translate\Database\Tables::strings();
+        $translationsTable = \Webactueel\Translate\Database\Tables::translations();
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT t.translated_text, t.status, t.origin FROM `{$stringsTable}` s INNER JOIN `{$translationsTable}` t ON t.string_id = s.id WHERE s.normalized_text = %s AND t.language_code = %s AND TRIM(t.translated_text) <> '' ORDER BY t.updated_at DESC, t.id DESC LIMIT 1",
+            "SELECT t.translated_text, t.status, t.origin FROM %i s INNER JOIN %i t ON t.string_id = s.id WHERE s.normalized_text = %s AND t.language_code = %s AND TRIM(t.translated_text) <> '' ORDER BY t.updated_at DESC, t.id DESC LIMIT 1",
+            $stringsTable,
+            $translationsTable,
             $normalized,
             $language
-        ), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Plugin-owned table names are escaped above.
+        ), ARRAY_A);
 
         return is_array($row) ? [
             'translated_text' => (string) ($row['translated_text'] ?? ''),
@@ -140,10 +198,10 @@ final class VisualEditorRestService
     public function save_segment(WP_REST_Request $request): WP_REST_Response
     {
         $original = Input::text($request->get_param('original'));
-        $translation = (string) wp_kses_post((string) $request->get_param('translation'));
+        $translation = trim(sanitize_textarea_field((string) $request->get_param('translation')));
         $language = Input::key($request->get_param('language'));
         $selector = Input::text($request->get_param('selector'));
-        $url = esc_url_raw((string) $request->get_param('url'));
+        $url = self::sanitize_visual_editor_url($request->get_param('url'));
 
         if ($original === '' || $translation === '' || $language === '') {
             return new WP_REST_Response([

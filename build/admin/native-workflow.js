@@ -34,6 +34,22 @@
     return parseInt(value || 0, 10).toLocaleString('nl-NL');
   }
 
+  function storageGet(key, fallback) {
+    try {
+      return window.localStorage ? (window.localStorage.getItem(key) || fallback || '') : (fallback || '');
+    } catch (e) {
+      return fallback || '';
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      if (window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch (e) {}
+  }
+
   function api(path, options) {
     return apiFetch(Object.assign({}, options || {}, { path: '/webactueel-translate-language-dropdowns/v1' + path }));
   }
@@ -80,7 +96,7 @@
 
   function currentAdminTab() {
     try {
-      return new URLSearchParams(window.location.search).get('wat_tab') || window.localStorage.getItem('wat_tab') || 'dashboard';
+      return new URLSearchParams(window.location.search).get('wat_tab') || storageGet('wat_tab', 'dashboard') || 'dashboard';
     } catch (e) {
       return 'dashboard';
     }
@@ -101,7 +117,7 @@
 
   function pushAdminTab(tabName) {
     try {
-      window.localStorage.setItem('wat_tab', tabName);
+      storageSet('wat_tab', tabName);
       var url = new URL(window.location.href);
       url.searchParams.set('wat_tab', tabName);
       window.history.pushState({}, '', url.toString());
@@ -125,7 +141,7 @@
 
   function NativeWorkflowPanel() {
     var languages = useState({ loading: true, error: '', items: [] });
-    var language = useState(window.localStorage.getItem('wat_workflow_language') || '');
+    var language = useState(storageGet('wat_workflow_language', ''));
     var quality = useState({ loading: false, error: '', data: null });
     var context = useState({ loading: false, error: '', data: null });
     var jobs = useState({ loading: true, error: '', data: null });
@@ -141,7 +157,7 @@
           languages[1]({ loading: false, error: '', items: items });
           if (!language[0] && fallback && fallback.code) {
             language[1](fallback.code);
-            window.localStorage.setItem('wat_workflow_language', fallback.code);
+            storageSet('wat_workflow_language', fallback.code);
           }
         })
         .catch(function (error) {
@@ -195,7 +211,7 @@
 
     function changeLanguage(value) {
       language[1](value);
-      window.localStorage.setItem('wat_workflow_language', value);
+      storageSet('wat_workflow_language', value);
     }
 
     var languageOptions = (languages[0].items || [])

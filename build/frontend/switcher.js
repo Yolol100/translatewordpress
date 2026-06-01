@@ -1,4 +1,14 @@
+/* Frontend language switcher behaviour. */
+/* Single shared script: registered as the `...-switcher` handle and used for the block (viewScript), */
+/* the shortcode and the floating switcher, so WordPress only ever enqueues and runs it once. */
+/* The window.watLanguageSwitcherBound guard is extra insurance against caching/concatenation plugins. */
 (function(){
+  if (window.watLanguageSwitcherBound) {
+    document.documentElement.classList.add('wat-switcher-ready');
+    return;
+  }
+  window.watLanguageSwitcherBound = true;
+
   document.documentElement.classList.add('wat-switcher-ready');
 
   function eachNode(nodes, callback) {

@@ -1,0 +1,245 @@
+/* Native WordPress workflow panel for Webactueel Translate. Scoped to the plugin admin wrapper. */
+.webactueel-translate-admin.wat-native-workflow-shell {
+  margin: 0 0 20px;
+}
+
+.webactueel-translate-admin.wat-native-workflow-shell[hidden],
+.webactueel-translate-admin.is-workflow-tab-active .wat-workflow-tab-content {
+  display: none;
+}
+
+.webactueel-translate-admin .wat-native-workflow-root {
+  max-width: 1280px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-card.components-card {
+  border-color: var(--wp-components-color-gray-300, #dcdcde);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.webactueel-translate-admin .wat-native-workflow-card .components-card__header {
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px 24px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-card .components-card__body {
+  padding: 20px 24px 24px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-heading {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.webactueel-translate-admin .wat-native-workflow-heading h2 {
+  margin: 0;
+  color: var(--wp-components-color-foreground, #1d2327);
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.webactueel-translate-admin .wat-native-workflow-heading p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--wp-components-color-gray-700, #646970);
+}
+
+.webactueel-translate-admin .wat-native-workflow-eyebrow {
+  width: fit-content;
+  border: 1px solid var(--wp-components-color-gray-400, #c3c4c7);
+  border-radius: 999px;
+  background: var(--wp-components-color-gray-100, #f6f7f7);
+  color: var(--wp-components-color-gray-900, #50575e);
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.webactueel-translate-admin .wat-native-workflow-header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-header-actions .components-base-control {
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
+.webactueel-translate-admin .wat-native-workflow-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  width: fit-content;
+  border: 1px solid var(--wp-components-color-gray-400, #c3c4c7);
+  border-radius: 999px;
+  background: var(--wp-components-color-gray-100, #f6f7f7);
+  color: var(--wp-components-color-gray-900, #50575e);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.webactueel-translate-admin .wat-native-workflow-badge.is-success {
+  border-color: var(--wat-workflow-success-border, #b8d8be);
+  background: var(--wat-workflow-success-bg, #edfaef);
+  color: var(--wat-workflow-success-text, #0a7a29);
+}
+
+.webactueel-translate-admin .wat-native-workflow-badge.is-warning {
+  border-color: var(--wat-workflow-warning-border, #e8cf77);
+  background: var(--wat-workflow-warning-bg, #fff8db);
+  color: var(--wat-workflow-warning-text, #8a5c00);
+}
+
+.webactueel-translate-admin .wat-native-workflow-badge.is-info {
+  border-color: var(--wat-workflow-info-border, #b8d6fb);
+  background: var(--wat-workflow-info-bg, #f0f6fc);
+  color: var(--wp-admin-theme-color-darker-10, #135e96);
+}
+
+.webactueel-translate-admin .wat-native-workflow-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--wp-components-color-gray-700, #646970);
+  margin-bottom: 16px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-metric {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--wp-components-color-gray-300, #dcdcde);
+  border-radius: 8px;
+  background: var(--wp-components-color-background, #fff);
+  padding: 14px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-metric span {
+  color: var(--wp-components-color-gray-700, #646970);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.webactueel-translate-admin .wat-native-workflow-metric strong {
+  color: var(--wp-components-color-foreground, #1d2327);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.webactueel-translate-admin .wat-native-workflow-metric small {
+  color: var(--wp-components-color-gray-700, #646970);
+}
+
+.webactueel-translate-admin .wat-native-workflow-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--wp-components-color-gray-200, #f0f0f1);
+  margin: 0 0 18px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--wp-admin-theme-color, #2271b1);
+  transition: width 180ms ease;
+}
+
+.webactueel-translate-admin .wat-native-workflow-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-panels .components-panel {
+  border-color: var(--wp-components-color-gray-300, #dcdcde);
+}
+
+.webactueel-translate-admin .wat-native-workflow-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.webactueel-translate-admin .wat-native-workflow-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  border: 1px solid var(--wp-components-color-gray-300, #dcdcde);
+  border-radius: 8px;
+  background: var(--wp-components-color-background, #fff);
+  padding: 12px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-list strong {
+  display: block;
+  color: var(--wp-components-color-foreground, #1d2327);
+  margin-bottom: 4px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-list p,
+.webactueel-translate-admin .wat-native-workflow-list small,
+.webactueel-translate-admin .wat-native-workflow-empty p {
+  margin: 0;
+  color: var(--wp-components-color-gray-700, #646970);
+}
+
+.webactueel-translate-admin .wat-native-workflow-empty {
+  border: 1px dashed var(--wp-components-color-gray-400, #c3c4c7);
+  border-radius: 8px;
+  background: var(--wp-components-color-gray-100, #f6f7f7);
+  padding: 14px;
+}
+
+.webactueel-translate-admin .wat-native-workflow-empty strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--wp-components-color-foreground, #1d2327);
+}
+
+.webactueel-translate-admin .wat-native-workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+@media (max-width: 960px) {
+  .webactueel-translate-admin .wat-native-workflow-card .components-card__header,
+  .webactueel-translate-admin .wat-native-workflow-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .webactueel-translate-admin .wat-native-workflow-grid,
+  .webactueel-translate-admin .wat-native-workflow-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .webactueel-translate-admin .wat-native-workflow-header-actions .components-base-control {
+    min-width: 0;
+  }
+}
+
+.webactueel-translate-admin .wat-native-workflow-loading-inline { display: inline-flex; gap: 8px; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .webactueel-translate-admin .wat-native-workflow-progress span {
+    transition: none;
+  }
+}
