@@ -8,6 +8,7 @@ use Webactueel\Translate\Rest\Concerns\CsvEndpoints;
 use Webactueel\Translate\Rest\Concerns\DashboardLanguageEndpoints;
 use Webactueel\Translate\Rest\Concerns\GlossarySettingsEndpoints;
 use Webactueel\Translate\Rest\Concerns\HealthCheckEndpoints;
+use Webactueel\Translate\Rest\Concerns\ControlCenterEndpoints;
 use Webactueel\Translate\Rest\Concerns\RegistersRestRoutes;
 use Webactueel\Translate\Rest\Concerns\ScanEndpoints;
 use Webactueel\Translate\Rest\Concerns\TranslationEndpoints;
@@ -27,6 +28,7 @@ final class RestServiceProvider
     use CsvEndpoints;
     use GlossarySettingsEndpoints;
     use HealthCheckEndpoints;
+    use ControlCenterEndpoints;
 
     private string $namespace = 'webactueel-translate-language-dropdowns/v1';
 

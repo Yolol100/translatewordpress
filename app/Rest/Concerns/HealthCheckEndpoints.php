@@ -7,6 +7,9 @@ namespace Webactueel\Translate\Rest\Concerns;
 use Webactueel\Translate\Compatibility\CompatibilityRegistry;
 use Webactueel\Translate\Database\Tables;
 use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Seo\SeoAuditService;
+use Webactueel\Translate\Translation\TranslationCoverageReporter;
+use Webactueel\Translate\WooCommerce\WooCommerceCoverageReporter;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -48,6 +51,9 @@ trait HealthCheckEndpoints
             'rest' => $this->rest_health_check(),
             'ai' => $this->ai_health_check($settings),
             'frontend' => $this->frontend_health_check($settings),
+            'seo' => $this->seo_health_check(),
+            'coverage' => $this->coverage_health_check(),
+            'woocommerce' => $this->woocommerce_health_check(),
             'compatibility' => $this->compatibility_health_check(),
             'debug' => $this->debug_health_check(),
         ];
@@ -121,6 +127,64 @@ trait HealthCheckEndpoints
             'label' => __('Frontend-renderer', 'webactueel-translate-language-dropdowns'),
             'status' => $enabled ? 'pass' : 'info',
             'detail' => $enabled ? __('Frontendvertaling staat aan.', 'webactueel-translate-language-dropdowns') : __('Frontendvertaling staat uit.', 'webactueel-translate-language-dropdowns'),
+        ];
+    }
+
+
+    private function seo_health_check(): array
+    {
+        $report = (new SeoAuditService())->report();
+        $summary = $report['summary'] ?? [];
+        $warn = absint($summary['warn'] ?? 0);
+        $fail = absint($summary['fail'] ?? 0);
+
+        return [
+            'label' => __('Meertalige SEO', 'webactueel-translate-language-dropdowns'),
+            'status' => $fail > 0 ? 'fail' : ($warn > 0 ? 'warn' : 'pass'),
+            'detail' => sprintf(
+                /* translators: 1: warning count, 2: failure count. */
+                __('SEO-check: %1$d waarschuwingen, %2$d fouten.', 'webactueel-translate-language-dropdowns'),
+                $warn,
+                $fail
+            ),
+            'report' => $report,
+        ];
+    }
+
+    private function coverage_health_check(): array
+    {
+        $coverage = TranslationCoverageReporter::summary();
+        $average = (float) ($coverage['average_percent'] ?? 0.0);
+
+        return [
+            'label' => __('Vertaaldekking', 'webactueel-translate-language-dropdowns'),
+            'status' => $average >= 80.0 ? 'pass' : ($average > 0.0 ? 'warn' : 'info'),
+            'detail' => sprintf(
+                /* translators: %s: average translation coverage percentage. */
+                __('Gemiddelde dekking voor niet-standaardtalen: %s%%.', 'webactueel-translate-language-dropdowns'),
+                number_format_i18n($average, 1)
+            ),
+            'coverage' => $coverage,
+        ];
+    }
+
+    private function woocommerce_health_check(): array
+    {
+        $report = (new WooCommerceCoverageReporter())->report();
+        $summary = $report['summary'] ?? [];
+        $warn = absint($summary['warn'] ?? 0);
+        $fail = absint($summary['fail'] ?? 0);
+
+        return [
+            'label' => __('WooCommerce taalveiligheid', 'webactueel-translate-language-dropdowns'),
+            'status' => $fail > 0 ? 'fail' : ($warn > 0 ? 'warn' : 'pass'),
+            'detail' => sprintf(
+                /* translators: 1: warning count, 2: failure count. */
+                __('WooCommerce-check: %1$d waarschuwingen, %2$d fouten.', 'webactueel-translate-language-dropdowns'),
+                $warn,
+                $fail
+            ),
+            'report' => $report,
         ];
     }
 

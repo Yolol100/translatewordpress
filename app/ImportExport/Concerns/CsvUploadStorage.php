@@ -173,7 +173,7 @@ trait CsvUploadStorage
 
         $cutoff = time() - HOUR_IN_SECONDS;
         foreach ((array) glob(trailingslashit($dir) . '*.csv') as $file) {
-            if (is_string($file) && is_file($file) && filemtime($file) !== false && filemtime($file) < $cutoff) {
+            if (is_string($file) && is_file($file) && self::is_preview_path($file) && filemtime($file) !== false && filemtime($file) < $cutoff) {
                 wp_delete_file($file);
             }
         }
@@ -200,6 +200,9 @@ trait CsvUploadStorage
         }
 
         $size = Input::absint($file['size'] ?? 0);
+        if ($size <= 0) {
+            return __('CSV bestand is leeg.', 'webactueel-translate-language-dropdowns');
+        }
         if ($size > 10 * MB_IN_BYTES) {
             return __('CSV bestand is groter dan 10 MB.', 'webactueel-translate-language-dropdowns');
         }
@@ -247,7 +250,7 @@ trait CsvUploadStorage
             }
         }
 
-        return is_readable($tmpPath);
+        return $name !== '' && strtolower(pathinfo($name, PATHINFO_EXTENSION)) === 'csv' && is_readable($tmpPath);
     }
 
     private static function upload_error_message(int $error): string
@@ -272,7 +275,7 @@ trait CsvUploadStorage
     /**
      * Move a verified browser upload into the private CSV preview directory.
      *
-     * The generated target path is revalidated after the move so later preview/import
+     * The target path is revalidated after the move so later preview/import
      * steps only read files owned by this plugin workflow.
      */
     private function copy_to_temp(string $source, string $name): string

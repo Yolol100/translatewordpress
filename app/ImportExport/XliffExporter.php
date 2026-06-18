@@ -30,6 +30,10 @@ final class XliffExporter
 
     public function xliff_string(array $languages = [], string $mode = 'all'): string
     {
+        if (! class_exists('DOMDocument') || ! class_exists('DOMElement')) {
+            return '';
+        }
+
         $dom = $this->create_xliff_document();
         $xliff = $dom->documentElement;
         if (! $xliff instanceof \DOMElement) {

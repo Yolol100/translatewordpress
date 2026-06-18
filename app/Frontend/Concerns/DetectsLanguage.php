@@ -95,10 +95,31 @@ trait DetectsLanguage
             return '';
         }
 
+        $candidates = [];
         foreach (explode(',', $header) as $part) {
-            $code = sanitize_key(strtolower(substr(trim($part), 0, 2)));
-            if ($code !== '') {
-                return $code;
+            $pieces = array_map('trim', explode(';', (string) $part));
+            $code = sanitize_key(strtolower(substr((string) ($pieces[0] ?? ''), 0, 2)));
+            if ($code === '') {
+                continue;
+            }
+
+            $quality = 1.0;
+            foreach (array_slice($pieces, 1) as $piece) {
+                if (stripos($piece, 'q=') === 0) {
+                    $quality = max(0.0, min(1.0, (float) substr($piece, 2)));
+                }
+            }
+            if ($quality <= 0.0) {
+                continue;
+            }
+
+            $candidates[] = ['code' => $code, 'q' => $quality];
+        }
+
+        usort($candidates, static fn(array $a, array $b): int => ($b['q'] <=> $a['q']));
+        foreach ($candidates as $candidate) {
+            if (self::language_exists($candidate['code'])) {
+                return $candidate['code'];
             }
         }
 

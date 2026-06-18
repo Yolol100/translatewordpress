@@ -25,6 +25,7 @@ trait AiProviderConfiguration
             'model' => self::model($settings, $provider),
             'tone' => Input::key($settings['ai_tone'] ?? 'professional'),
             'formality' => Input::key($settings['ai_formality'] ?? 'default'),
+            'contextProfileEnabled' => ! empty($settings['ai_context_enabled']),
             'hasApiKey' => self::api_key($provider) !== '',
             'hasEndpoint' => $provider !== 'openai_compatible' || self::custom_endpoint($settings) !== '',
             'providers' => self::providers(),
@@ -39,7 +40,7 @@ trait AiProviderConfiguration
     private static function provider(array $settings): string
     {
         $provider = Input::key($settings['ai_provider'] ?? 'openai');
-        return in_array($provider, ['openai', 'deepl', 'openai_compatible'], true) ? $provider : 'openai';
+        return in_array($provider, ['openai', 'deepl', 'openai_compatible', 'google_translate'], true) ? $provider : 'openai';
     }
 
     private static function model(array $settings, string $provider): string
@@ -53,6 +54,7 @@ trait AiProviderConfiguration
         return [
             ['label' => 'OpenAI', 'value' => 'openai'],
             ['label' => 'DeepL', 'value' => 'deepl'],
+            ['label' => 'Google Translate', 'value' => 'google_translate'],
             ['label' => __('OpenAI-compatible API', 'webactueel-translate-language-dropdowns'), 'value' => 'openai_compatible'],
         ];
     }
@@ -79,9 +81,6 @@ trait AiProviderConfiguration
      */
     private static function api_key(string $provider): string
     {
-        $constant = $provider === 'deepl' ? 'WAT_DEEPL_API_KEY' : ($provider === 'openai_compatible' ? 'WAT_OPENAI_COMPATIBLE_API_KEY' : 'WAT_OPENAI_API_KEY');
-        $key = defined($constant) ? (string) constant($constant) : Settings::ai_api_key($provider);
-        $filtered = apply_filters('wat_ai_api_key', $key, $provider);
-        return is_scalar($filtered) ? trim((string) $filtered) : '';
+        return Settings::ai_api_key($provider);
     }
 }

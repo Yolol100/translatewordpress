@@ -163,6 +163,14 @@ final class Input
         return isset($_SERVER[$key]) ? self::text($_SERVER[$key], $default) : $default;
     }
 
+    public static function server_raw(string $key, string $default = ''): string
+    {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Raw URL/server values must preserve percent-encoding; control bytes are stripped below.
+        $value = isset($_SERVER[$key]) ? self::scalar_string($_SERVER[$key], $default) : $default;
+        $value = str_replace(["\r", "\n", "\0"], '', $value);
+        return preg_replace('/[\x00-\x1F\x7F]/', '', $value) ?: '';
+    }
+
     public static function server_method(string $default = 'GET'): string
     {
         $method = strtoupper(self::server_text('REQUEST_METHOD', $default));

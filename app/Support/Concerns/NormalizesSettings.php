@@ -27,19 +27,26 @@ trait NormalizesSettings
         $settings['url_mode'] = 'subdirectory';
         $settings['max_buffer_size'] = self::bounded_absint($settings['max_buffer_size'] ?? 2097152, 2097152, 100000, 5000000);
         $settings['max_replacements'] = self::bounded_absint($settings['max_replacements'] ?? 1000, 1000, 10, 5000);
+        $settings['gettext_discovery_max_per_request'] = self::bounded_absint($settings['gettext_discovery_max_per_request'] ?? 50, 50, 1, 500);
+        $settings['runtime_discovery_max_per_request'] = self::bounded_absint($settings['runtime_discovery_max_per_request'] ?? 100, 100, 1, 1000);
         $settings['scan_batch_size'] = self::bounded_absint($settings['scan_batch_size'] ?? 25, 25, 1, 100);
         $settings['cache_ttl'] = self::bounded_absint($settings['cache_ttl'] ?? (12 * HOUR_IN_SECONDS), 12 * HOUR_IN_SECONDS, 300, DAY_IN_SECONDS * 7);
         $settings['csv_preview_rows'] = self::bounded_absint($settings['csv_preview_rows'] ?? 250, 250, 20, 1000);
         $settings['csv_import_max_rows'] = self::bounded_absint($settings['csv_import_max_rows'] ?? 10000, 10000, 100, 50000);
-        $settings['ai_provider'] = self::allowed_key($settings['ai_provider'] ?? 'openai', ['openai', 'deepl', 'openai_compatible'], 'openai');
+        $settings['ai_provider'] = self::allowed_key($settings['ai_provider'] ?? 'openai', ['openai', 'deepl', 'openai_compatible', 'google_translate'], 'openai');
         $settings['ai_model'] = self::sanitize_ai_model($settings['ai_model'] ?? ($settings['ai_provider'] === 'deepl' ? 'deepl-api' : 'gpt-4o-mini'), $settings['ai_provider']);
         $settings['ai_custom_endpoint'] = self::sanitize_ai_endpoint($settings['ai_custom_endpoint'] ?? '');
         $settings['ai_tone'] = self::allowed_key($settings['ai_tone'] ?? 'professional', ['professional', 'friendly', 'formal', 'casual', 'seo'], 'professional');
         $settings['ai_formality'] = self::allowed_key($settings['ai_formality'] ?? 'default', ['default', 'more', 'less', 'prefer_more', 'prefer_less'], 'default');
+        $settings['ai_site_context'] = self::limited_textarea($settings['ai_site_context'] ?? '', 1000);
+        $settings['ai_target_audience'] = self::limited_textarea($settings['ai_target_audience'] ?? '', 500);
+        $settings['ai_brand_terms'] = self::limited_textarea($settings['ai_brand_terms'] ?? '', 1000);
+        $settings['ai_do_not_translate'] = self::limited_textarea($settings['ai_do_not_translate'] ?? '', 1000);
         $settings['switcher_layout'] = self::allowed_key($settings['switcher_layout'] ?? 'dropdown', self::switcher_layouts(), 'dropdown');
         $settings['switcher_style'] = self::allowed_key($settings['switcher_style'] ?? 'light', self::switcher_styles(), 'light');
         $settings['switcher_position'] = self::allowed_key($settings['switcher_position'] ?? 'bottom-right', self::switcher_positions(), 'bottom-right');
         $settings['language_domains'] = self::sanitize_language_domains($settings['language_domains'] ?? '');
+        $settings['gettext_discovery_domains'] = self::sanitize_discovery_domains($settings['gettext_discovery_domains'] ?? self::defaults()['gettext_discovery_domains']);
         $settings['exclude_selectors'] = Input::textarea($settings['exclude_selectors'] ?? self::defaults()['exclude_selectors']);
         $settings['exclude_paths'] = Input::textarea($settings['exclude_paths'] ?? self::defaults()['exclude_paths']);
 

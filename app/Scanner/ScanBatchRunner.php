@@ -42,7 +42,23 @@ final class ScanBatchRunner
             return ['product'];
         }
         $postTypes = get_post_types(['public' => true], 'names');
-        return array_values((array) apply_filters('wat_scanner_post_types', $postTypes, $type));
+        $filtered = apply_filters('wat_scanner_post_types', $postTypes, $type);
+        if (! is_array($filtered)) {
+            $filtered = $postTypes;
+        }
+
+        $clean = [];
+        foreach ($filtered as $postType) {
+            if (! is_scalar($postType)) {
+                continue;
+            }
+            $postType = sanitize_key((string) $postType);
+            if ($postType !== '' && post_type_exists($postType)) {
+                $clean[] = $postType;
+            }
+        }
+
+        return array_values(array_unique($clean));
     }
 
     public function run(int $jobId, int $batchSize = 25): array
@@ -55,28 +71,53 @@ final class ScanBatchRunner
             return $job;
         }
 
-        $batchSize = max(1, min(100, $batchSize));
-        $type = sanitize_key((string) $job['type']);
-        $lastCursor = absint($job['cursor_value'] ?? 0);
-        $ids = $this->fetch_post_ids(self::post_types_for($type), $lastCursor, $batchSize);
-
-        if (! $ids) {
-            return $this->complete_empty_job($jobId);
+        if (! self::acquire_job_lock($jobId)) {
+            return $job;
         }
 
-        $summary = $this->scan_posts_for_job($ids, $type, $lastCursor, $batchSize, $jobId);
-        $this->jobs->update($jobId, $this->scan_update_payload($job, $summary));
+        try {
+            $batchSize = max(1, min(100, $batchSize));
+            $type = sanitize_key((string) $job['type']);
+            $lastCursor = absint($job['cursor_value'] ?? 0);
+            $ids = $this->fetch_post_ids(self::post_types_for($type), $lastCursor, $batchSize);
 
-        $job = $this->jobs->get($jobId);
-        if (! empty($summary['is_done'])) {
-            do_action('wat_after_scan_job', $jobId, $job);
+            if (! $ids) {
+                return $this->complete_job_with_site_structures($jobId, $job, $type);
+            }
+
+            $summary = $this->scan_posts_for_job($ids, $type, $lastCursor, $batchSize, $jobId);
+            $this->jobs->update($jobId, $this->scan_update_payload($job, $summary));
+
+            $job = $this->jobs->get($jobId);
+            if (! empty($summary['is_done'])) {
+                do_action('wat_after_scan_job', $jobId, $job);
+            }
+            return $job;
+        } finally {
+            self::release_job_lock($jobId);
         }
-        return $job;
     }
 
     private static function is_terminal_status(string $status): bool
     {
         return in_array($status, ['completed', 'failed', 'stopped', 'paused'], true);
+    }
+
+
+    private static function acquire_job_lock(int $jobId): bool
+    {
+        $lockName = 'wat_scan_job_lock_' . absint($jobId);
+        $lockAge = (int) get_option($lockName, 0);
+        if ($lockAge > 0 && $lockAge < (time() - 300)) {
+            delete_option($lockName);
+        }
+
+        return add_option($lockName, (string) time(), '', false);
+    }
+
+    private static function release_job_lock(int $jobId): void
+    {
+        delete_option('wat_scan_job_lock_' . absint($jobId));
     }
 
     /** @param array<int, string> $postTypes @return array<int, int> */
@@ -112,16 +153,157 @@ final class ScanBatchRunner
         return array_values(array_filter(array_map('absint', $ids)));
     }
 
-    private function complete_empty_job(int $jobId): array
+    private function complete_job_with_site_structures(int $jobId, array $job, string $type): array
     {
+        $siteSummary = in_array($type, ['full', 'woocommerce'], true) ? $this->scan_site_structures($type) : ['found' => 0, 'processed' => 0, 'errors' => 0];
         $this->jobs->update($jobId, [
             'status' => 'completed',
+            'processed_items' => absint($job['processed_items'] ?? 0) + $siteSummary['processed'],
+            'found_strings' => absint($job['found_strings'] ?? 0) + $siteSummary['found'],
+            'errors_count' => absint($job['errors_count'] ?? 0) + $siteSummary['errors'],
             'message' => __('Scan voltooid.', 'webactueel-translate-language-dropdowns'),
             'completed_at' => current_time('mysql'),
         ]);
         $job = $this->jobs->get($jobId);
         do_action('wat_after_scan_job', $jobId, $job);
         return $job;
+    }
+
+    /** @return array{found:int,processed:int,errors:int} */
+    private function scan_site_structures(string $type): array
+    {
+        $summary = ['found' => 0, 'processed' => 0, 'errors' => 0];
+        foreach ([
+            [$this, 'scan_navigation_menus'],
+            [$this, 'scan_active_widgets'],
+            fn(): int => $this->scan_terms($type),
+        ] as $callback) {
+            try {
+                $summary['found'] += (int) $callback();
+                $summary['processed']++;
+            } catch (\Throwable $e) {
+                $summary['errors']++;
+                do_action('wat_log', 'error', 'Site-structuur scan fout', ['error' => $e->getMessage()]);
+            }
+        }
+        return $summary;
+    }
+
+    private function scan_navigation_menus(): int
+    {
+        $menus = wp_get_nav_menus();
+        if (! is_array($menus)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($menus as $menu) {
+            if (! $menu instanceof \WP_Term) {
+                continue;
+            }
+            $menuId = absint($menu->term_id);
+            $count += $this->scan_text($menu->name, 'nav_menu', $menuId, 'menu_name', 'menu:' . $menuId . ':name');
+            $items = wp_get_nav_menu_items($menuId, ['post_status' => 'publish']);
+            if (! is_array($items)) {
+                continue;
+            }
+            foreach ($items as $item) {
+                $itemId = absint($item->ID ?? 0);
+                if ($itemId < 1) {
+                    continue;
+                }
+                $count += $this->scan_text((string) ($item->title ?? ''), 'nav_menu', $itemId, 'menu_item_title', 'menu:' . $menuId . ':item:' . $itemId . ':title');
+                $count += $this->scan_text((string) ($item->attr_title ?? ''), 'nav_menu', $itemId, 'menu_item_attr_title', 'menu:' . $menuId . ':item:' . $itemId . ':attr_title');
+                $count += $this->scan_text((string) ($item->description ?? ''), 'nav_menu', $itemId, 'menu_item_description', 'menu:' . $menuId . ':item:' . $itemId . ':description');
+            }
+        }
+        return $count;
+    }
+
+    private function scan_active_widgets(): int
+    {
+        $sidebars = get_option('sidebars_widgets', []);
+        if (! is_array($sidebars)) {
+            return 0;
+        }
+
+        $count = 0;
+        $widgetOptions = [];
+        foreach ($sidebars as $sidebarId => $widgetIds) {
+            if ($sidebarId === 'wp_inactive_widgets' || ! is_array($widgetIds)) {
+                continue;
+            }
+            foreach ($widgetIds as $widgetId) {
+                if (! is_string($widgetId) || ! preg_match('/^(.+)-(\d+)$/', $widgetId, $matches)) {
+                    continue;
+                }
+                $base = sanitize_key($matches[1]);
+                $number = absint($matches[2]);
+                if ($base === '' || $number < 1) {
+                    continue;
+                }
+                if (! array_key_exists($base, $widgetOptions)) {
+                    $option = get_option('widget_' . $base, []);
+                    $widgetOptions[$base] = is_array($option) ? $option : [];
+                }
+                $instance = $widgetOptions[$base][$number] ?? null;
+                if (is_array($instance)) {
+                    $count += $this->scan_mixed($instance, 'widget', $number, 'widget_' . $base, 'widget:' . $base . ':' . $number);
+                }
+            }
+        }
+        return $count;
+    }
+
+    private function scan_terms(string $type): int
+    {
+        $taxonomies = $this->taxonomies_for_scan($type);
+        if ($taxonomies === []) {
+            return 0;
+        }
+
+        $terms = get_terms([
+            'taxonomy' => $taxonomies,
+            'hide_empty' => false,
+            'fields' => 'all',
+        ]);
+        if (is_wp_error($terms) || ! is_array($terms)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($terms as $term) {
+            if (! $term instanceof \WP_Term) {
+                continue;
+            }
+            $termId = absint($term->term_id);
+            $sourceType = 'term_' . sanitize_key($term->taxonomy);
+            $count += $this->scan_text($term->name, $sourceType, $termId, 'term_name', 'term:' . $term->taxonomy . ':' . $termId . ':name');
+            $count += $this->scan_html($term->description, $sourceType, $termId, 'term_description', 'term:' . $term->taxonomy . ':' . $termId . ':description', false);
+        }
+        return $count;
+    }
+
+    /** @return list<string> */
+    private function taxonomies_for_scan(string $type): array
+    {
+        if ($type === 'woocommerce') {
+            return array_values(array_filter(['product_cat', 'product_tag'], static fn(string $taxonomy): bool => taxonomy_exists($taxonomy)));
+        }
+
+        $taxonomies = get_taxonomies(['public' => true], 'names');
+        if (! is_array($taxonomies)) {
+            return [];
+        }
+
+        $clean = [];
+        foreach ($taxonomies as $taxonomy) {
+            $taxonomy = sanitize_key((string) $taxonomy);
+            if ($taxonomy !== '' && taxonomy_exists($taxonomy) && $taxonomy !== 'nav_menu') {
+                $clean[] = $taxonomy;
+            }
+        }
+        return array_values(array_unique($clean));
     }
 
     /**

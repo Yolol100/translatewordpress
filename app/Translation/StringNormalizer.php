@@ -42,4 +42,9 @@ final class StringNormalizer
     {
         return hash('sha256', self::normalize($text) . '|' . sanitize_key($context));
     }
+
+    public static function is_hash(string $hash): bool
+    {
+        return preg_match('/\A[a-f0-9]{64}\z/i', $hash) === 1;
+    }
 }

@@ -36,7 +36,28 @@ final class Logger
 
     private static function scrub_context(array $context): array
     {
-        $blocked = ['password', 'pass', 'pwd', 'nonce', '_wpnonce', 'cookie', 'authorization', 'token', 'secret', 'key'];
+        $blocked = [
+            'password',
+            'pass',
+            'pwd',
+            'nonce',
+            '_wpnonce',
+            'cookie',
+            'authorization',
+            'token',
+            'secret',
+            'key',
+            'api_key',
+            'prompt',
+            'response',
+            'content',
+            'html',
+            'original',
+            'source_text',
+            'target_text',
+            'translated_text',
+            'translation',
+        ];
         $clean = [];
 
         foreach ($context as $key => $value) {
@@ -51,7 +72,11 @@ final class Logger
             if (is_array($value)) {
                 $clean[$key] = self::scrub_context($value);
             } elseif (is_scalar($value) || $value === null) {
-                $clean[$key] = $value;
+                if (is_string($value) && strlen($value) > 500) {
+                    $clean[$key] = substr($value, 0, 500) . '... [truncated]';
+                } else {
+                    $clean[$key] = $value;
+                }
             } else {
                 $clean[$key] = '[non-scalar]';
             }

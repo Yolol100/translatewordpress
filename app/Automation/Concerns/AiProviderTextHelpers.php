@@ -65,6 +65,53 @@ trait AiProviderTextHelpers
         return strtoupper(str_replace('_', '-', sanitize_key($language)));
     }
 
+
+    /** @param array<string, mixed> $settings */
+    private static function ai_context_prompt(array $settings): string
+    {
+        if (empty($settings['ai_context_enabled'])) {
+            return '';
+        }
+
+        $lines = [];
+        $siteContext = trim(sanitize_textarea_field(Input::scalar_string($settings['ai_site_context'] ?? '')));
+        $audience = trim(sanitize_textarea_field(Input::scalar_string($settings['ai_target_audience'] ?? '')));
+        $brandTerms = self::prompt_lines_from_textarea(Input::scalar_string($settings['ai_brand_terms'] ?? ''), 30);
+        $doNotTranslate = self::prompt_lines_from_textarea(Input::scalar_string($settings['ai_do_not_translate'] ?? ''), 30);
+
+        if ($siteContext !== '') {
+            $lines[] = 'Website context: ' . $siteContext;
+        }
+        if ($audience !== '') {
+            $lines[] = 'Target audience: ' . $audience;
+        }
+        if ($brandTerms !== []) {
+            $lines[] = 'Brand/terminology to keep consistent: ' . implode(', ', $brandTerms);
+        }
+        if ($doNotTranslate !== []) {
+            $lines[] = 'Do not translate these terms; copy them exactly: ' . implode(', ', $doNotTranslate);
+        }
+
+        return $lines === [] ? '' : "\n\nTranslation context profile:\n" . implode("\n", $lines);
+    }
+
+    /** @return list<string> */
+    private static function prompt_lines_from_textarea(string $value, int $limit): array
+    {
+        $items = [];
+        foreach (preg_split('/\r\n|\r|\n/', $value) ?: [] as $line) {
+            $line = trim(sanitize_text_field((string) $line));
+            if ($line !== '') {
+                $items[] = $line;
+            }
+            if (count($items) >= $limit) {
+                break;
+            }
+        }
+
+        return array_values(array_unique($items));
+    }
+
     /** @param array<int, array<string, mixed>> $terms */
     private static function glossary_prompt(array $terms): string
     {

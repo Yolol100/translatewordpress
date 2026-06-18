@@ -196,9 +196,9 @@ final class MediaTranslationManager
         return $attr;
     }
 
-    public function translate_attachment_url(string $url, int $attachmentId): string
+    public function translate_attachment_url($url, int $attachmentId)
     {
-        if ($this->urlGuard || ! $this->should_translate_frontend_media()) {
+        if (! is_string($url) || $url === '' || $this->urlGuard || ! $this->should_translate_frontend_media()) {
             return $url;
         }
 
@@ -262,9 +262,9 @@ final class MediaTranslationManager
             $base,
             absint($values['attachment_id'] ?? 0),
             esc_html__('Vertaald alt-tekst', 'webactueel-translate-language-dropdowns'),
-            esc_attr((string) ($values['alt'] ?? '')),
+            esc_attr(Input::scalar_string($values['alt'] ?? '')),
             esc_html__('Vertaalde titel', 'webactueel-translate-language-dropdowns'),
-            esc_attr((string) ($values['title'] ?? ''))
+            esc_attr(Input::scalar_string($values['title'] ?? ''))
         );
     }
 }

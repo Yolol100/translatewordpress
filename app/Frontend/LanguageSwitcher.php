@@ -7,6 +7,7 @@ namespace Webactueel\Translate\Frontend;
 use Webactueel\Translate\Frontend\Concerns\RendersLanguageSwitcher;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Translation\TranslationCoverageReporter;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -43,6 +44,17 @@ final class LanguageSwitcher
         }
 
         $current = LanguageDetector::current_language();
+        if (! empty($settings['conditional_publish_enabled'])) {
+            $languages = self::filter_fully_published_languages($languages, $current);
+            if (count($languages) < 2) {
+                return '';
+            }
+        } elseif (! empty($settings['switcher_hide_untranslated'])) {
+            $languages = self::filter_languages_with_translations($languages, $current);
+            if (count($languages) < 2) {
+                return '';
+            }
+        }
         $layout = Input::key($settings['switcher_layout'] ?? 'dropdown');
         $layout = in_array($layout, ['dropdown', 'inline', 'flags_name', 'flags', 'code', 'flag_code', 'name_code', 'flags_name_code'], true) ? $layout : 'dropdown';
         $style = Input::key($settings['switcher_style'] ?? 'light');
@@ -65,6 +77,51 @@ final class LanguageSwitcher
         }
 
         return self::list($classes, $languages, $current, $layout);
+    }
+
+
+    /**
+     * Hide globally empty target languages while keeping the default/current language visible.
+     *
+     * This mirrors competitor UX patterns without pretending page-level translation coverage
+     * is known on every request. Page-level hiding can be layered on later with a runtime
+     * context check after runtime review.
+     *
+     * @param array<int, array<string, mixed>> $languages
+     * @return array<int, array<string, mixed>>
+     */
+    private static function filter_fully_published_languages(array $languages, string $current): array
+    {
+        $default = LanguageDetector::default_language();
+        $visible = [];
+        foreach ($languages as $language) {
+            $code = Input::key($language['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+            if ($code === $current || $code === $default || TranslationCoverageReporter::language_is_fully_published($code)) {
+                $visible[] = $language;
+            }
+        }
+
+        return $visible;
+    }
+
+    private static function filter_languages_with_translations(array $languages, string $current): array
+    {
+        $default = LanguageDetector::default_language();
+        $visible = [];
+        foreach ($languages as $language) {
+            $code = Input::key($language['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+            if ($code === $current || $code === $default || TranslationCoverageReporter::language_has_published_translations($code)) {
+                $visible[] = $language;
+            }
+        }
+
+        return $visible;
     }
 
     private static function settings(array $overrides): array

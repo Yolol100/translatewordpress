@@ -8,6 +8,8 @@ use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\ImportExport\Concerns\SharedImportHelpers;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Translation\StringNormalizer;
 use Webactueel\Translate\Translation\TranslationRepository;
 
 if (! defined('ABSPATH')) {
@@ -101,12 +103,37 @@ final class XliffImporter
      */
     private function load_xliff_units(string $path): array
     {
+        if (! class_exists('DOMDocument') || ! class_exists('DOMXPath') || ! extension_loaded('libxml')) {
+            return [
+                'error' => [
+                    'imported' => 0,
+                    'skipped' => 0,
+                    'errors' => [__('XLIFF import vereist de PHP DOM/ext-xml extensie.', 'webactueel-translate-language-dropdowns')],
+                ],
+            ];
+        }
+
+        if ($this->xliff_contains_disallowed_dtd($path)) {
+            return [
+                'error' => [
+                    'imported' => 0,
+                    'skipped' => 0,
+                    'errors' => [__('XLIFF XML bevat een DTD of entity-definitie en is geblokkeerd.', 'webactueel-translate-language-dropdowns')],
+                ],
+            ];
+        }
+
         $previous = libxml_use_internal_errors(true);
         $dom = new \DOMDocument();
-        $loaded = $dom->load($path, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
-        $errors = libxml_get_errors();
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
+        $dom->resolveExternals = false;
+        $dom->substituteEntities = false;
+        try {
+            $loaded = $dom->load($path, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+            $errors = libxml_get_errors();
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
 
         if (! $loaded) {
             return [
@@ -133,6 +160,37 @@ final class XliffImporter
         }
 
         return ['units' => $units];
+    }
+
+    private function xliff_contains_disallowed_dtd(string $path): bool
+    {
+        // DTDs and entity declarations are not needed for the plugin-created XLIFF
+        // roundtrip and create avoidable parser/resource-risk in uploaded XML.
+        $handle = fopen($path, 'rb'); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Local uploaded/imported XML scan before DOM parsing.
+        if (! is_resource($handle)) {
+            return true;
+        }
+
+        $buffer = '';
+        try {
+            while (! feof($handle)) {
+                $chunk = fread($handle, 8192); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Local uploaded/imported XML scan before DOM parsing.
+                if (! is_string($chunk)) {
+                    return true;
+                }
+
+                $buffer .= $chunk;
+                if (preg_match('/<!\s*(?:DOCTYPE|ENTITY)\b/i', $buffer) === 1) {
+                    return true;
+                }
+
+                $buffer = substr($buffer, -32);
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return false;
     }
 
     /**
@@ -171,12 +229,26 @@ final class XliffImporter
             ];
         }
 
-        $status = $this->map_state_to_status($this->target_state($unit));
+        $status = $this->apply_import_review_policy($this->map_state_to_status($this->target_state($unit)));
         if ($repo->save_translation($stringId, $language, $target, $status, 'xliff')) {
             return ['imported' => 1, 'skipped' => 0, 'errors' => []];
         }
 
-        return ['imported' => 0, 'skipped' => 1, 'errors' => []];
+        return [
+            'imported' => 0,
+            'skipped' => 1,
+            'errors' => [__('XLIFF unit overgeslagen: vertaling kon niet worden opgeslagen.', 'webactueel-translate-language-dropdowns')],
+        ];
+    }
+
+    private function apply_import_review_policy(string $status): string
+    {
+        $settings = Settings::all();
+        if (! current_user_can('manage_options') && ! empty($settings['translator_review_required']) && in_array($status, ['published', 'reviewed'], true)) {
+            return 'needs_review';
+        }
+
+        return $status;
     }
 
     private function xliff_unit_language(\DOMElement $unit): string
@@ -189,12 +261,13 @@ final class XliffImporter
     private function xliff_unit_hash(\DOMElement $unit): string
     {
         $hash = sanitize_text_field((string) $unit->getAttribute('resname'));
-        if ($hash !== '') {
+        if (StringNormalizer::is_hash($hash)) {
             return $hash;
         }
 
         $id = sanitize_text_field((string) $unit->getAttribute('id'));
-        return preg_replace('/:.+$/', '', $id) ?: '';
+        $hash = preg_replace('/:.+$/', '', $id) ?: '';
+        return StringNormalizer::is_hash($hash) ? $hash : '';
     }
 
     private function xliff_unit_string_id(\DOMElement $unit, string $hash, string $source, TranslationRepository $repo): int
@@ -213,7 +286,7 @@ final class XliffImporter
     private function validate_upload(array $file): string
     {
         $tmpName = Input::scalar_string($file['tmp_name'] ?? '');
-        $name = Input::scalar_string($file['name'] ?? '');
+        $name = sanitize_file_name(Input::scalar_string($file['name'] ?? ''));
         $error = isset($file['error']) ? absint($file['error']) : UPLOAD_ERR_NO_FILE;
         if ($error !== UPLOAD_ERR_OK) {
             return __('Geen geldig XLIFF uploadbestand ontvangen.', 'webactueel-translate-language-dropdowns');
@@ -244,7 +317,9 @@ final class XliffImporter
                 return '';
             }
         }
-        $head = file_get_contents($tmpName, false, null, 0, 512); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Small upload sniff for XML root only.
+        $sniffBytes = (int) apply_filters('wat_xliff_import_sniff_bytes', 16 * 1024);
+        $sniffBytes = max(512, min(128 * 1024, $sniffBytes));
+        $head = file_get_contents($tmpName, false, null, 0, $sniffBytes); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Bounded upload sniff for XML root only.
         if (! is_string($head) || stripos($head, '<xliff') === false) {
             return __('Upload lijkt geen XLIFF XML bestand te zijn.', 'webactueel-translate-language-dropdowns');
         }

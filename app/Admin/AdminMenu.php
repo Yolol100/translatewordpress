@@ -91,15 +91,12 @@ final class AdminMenu
         wp_enqueue_style('wp-components');
         wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', WAT_PLUGIN_URL . 'build/shared/design-system.css', ['wp-components'], $version);
         wp_enqueue_style('webactueel-translate-language-dropdowns-admin', WAT_PLUGIN_URL . 'build/admin/index.css', ['webactueel-translate-language-dropdowns-design-system'], $version);
-        wp_enqueue_style('webactueel-translate-language-dropdowns-native-workflow', WAT_PLUGIN_URL . 'build/admin/native-workflow.css', ['webactueel-translate-language-dropdowns-admin'], $version);
     }
 
     private function enqueue_admin_scripts(array $dependencies, string $version): void
     {
         wp_enqueue_script('webactueel-translate-language-dropdowns-admin', WAT_PLUGIN_URL . 'build/admin/index.js', $dependencies, $version, true);
-        wp_enqueue_script('webactueel-translate-language-dropdowns-native-workflow', WAT_PLUGIN_URL . 'build/admin/native-workflow.js', ['webactueel-translate-language-dropdowns-admin'], $version, true);
         wp_set_script_translations('webactueel-translate-language-dropdowns-admin', 'webactueel-translate-language-dropdowns', WAT_PLUGIN_DIR . 'languages');
-        wp_set_script_translations('webactueel-translate-language-dropdowns-native-workflow', 'webactueel-translate-language-dropdowns', WAT_PLUGIN_DIR . 'languages');
     }
 
     private function localize_admin_config(): void
@@ -200,7 +197,6 @@ final class AdminMenu
         echo '<noscript><div class="notice notice-warning inline"><p>' . esc_html__('JavaScript is nodig om Webactueel Translate volledig te beheren. Controleer browserinstellingen, beveiligingsplugins en console-errors.', 'webactueel-translate-language-dropdowns') . '</p></div></noscript>';
         echo '</div>';
         echo '</div>';
-        echo '<div id="webactueel-translate-native-workflow-root" class="webactueel-translate-admin wat-native-workflow-shell" hidden></div>';
         echo '</div>';
     }
 }

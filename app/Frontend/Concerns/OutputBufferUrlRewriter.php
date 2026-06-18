@@ -26,7 +26,7 @@ trait OutputBufferUrlRewriter
             ['query' => '//a[@href]', 'attribute' => 'href'],
         ]);
         foreach ($targets as $target) {
-            if (! is_array($target) || empty($target['query']) || empty($target['attribute'])) {
+            if (! is_array($target) || empty($target['query']) || empty($target['attribute']) || ! is_scalar($target['query']) || ! is_scalar($target['attribute'])) {
                 continue;
             }
             $query = (string) $target['query'];
@@ -72,6 +72,11 @@ trait OutputBufferUrlRewriter
         if ($parsed === false) {
             return $href;
         }
+        $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
+        if ($scheme !== '' && ! in_array($scheme, ['http', 'https'], true)) {
+            return $href;
+        }
+
         $host = strtolower((string) ($parsed['host'] ?? ''));
         if ($host !== '' && $homeHost !== '' && $host !== $homeHost) {
             return $href;

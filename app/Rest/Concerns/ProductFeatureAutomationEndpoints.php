@@ -52,7 +52,7 @@ trait ProductFeatureAutomationEndpoints
             'sample_size' => count($sample),
             'average_source_characters' => $average,
             'estimated_source_characters' => $estimatedCharacters,
-            'estimated_tokens_note' => __('Gebruik dit als ruwe volume-indicatie. Werkelijke tokenkosten verschillen per provider, taal, model en prompt.', 'webactueel-translate-language-dropdowns'),
+            'estimated_tokens_note' => __('Gebruik dit als ruwe volume-indicatie. Werkelijke tokenkosten verschillen per provider, taal, model en AI-verzoek.', 'webactueel-translate-language-dropdowns'),
             'recommended_batch_size' => min(20, max(1, (int) apply_filters('wat_ai_recommended_batch_size', 10))),
             'review_required' => ! empty(Settings::all()['ai_review_required']),
         ];

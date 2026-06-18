@@ -7,6 +7,9 @@ namespace Webactueel\Translate\Rest\Concerns;
 use Webactueel\Translate\Compatibility\CompatibilityRegistry;
 use Webactueel\Translate\Database\Tables;
 use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Seo\SeoAuditService;
+use Webactueel\Translate\Translation\TranslationCoverageReporter;
+use Webactueel\Translate\WooCommerce\WooCommerceCoverageReporter;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -52,6 +55,9 @@ trait DashboardLanguageEndpoints
             'compatibility' => CompatibilityRegistry::detected(),
             'multilingualConflict' => CompatibilityRegistry::has_multilingual_conflict(),
             'frontendLimited' => CompatibilityRegistry::should_disable_frontend_replacement(),
+            'translationCoverage' => TranslationCoverageReporter::summary(),
+            'seoAudit' => (new SeoAuditService())->report(),
+            'woocommerceCoverage' => (new WooCommerceCoverageReporter())->report(),
         ];
     }
 }

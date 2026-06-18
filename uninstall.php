@@ -89,24 +89,31 @@ $wpdb->query(
 ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier placeholder is prepared and prefix is controlled by this plugin.
 
 $wat_temp_dir = trailingslashit(get_temp_dir()) . 'webactueel-translate-language-dropdowns';
-if (is_dir($wat_temp_dir)) {
+$wat_real_temp_dir = realpath($wat_temp_dir);
+if ($wat_real_temp_dir && is_dir($wat_real_temp_dir) && basename($wat_real_temp_dir) === 'webactueel-translate-language-dropdowns') {
     $wat_files = array_merge(
-        (array) glob(trailingslashit($wat_temp_dir) . '*'),
-        (array) glob(trailingslashit($wat_temp_dir) . '.*')
+        (array) glob(trailingslashit($wat_real_temp_dir) . '*'),
+        (array) glob(trailingslashit($wat_real_temp_dir) . '.*')
     );
     foreach ($wat_files as $wat_file) {
         if (! is_string($wat_file) || in_array(basename($wat_file), ['.', '..'], true)) {
             continue;
         }
-        if (is_file($wat_file)) {
-            wp_delete_file($wat_file);
+
+        $wat_real_file = realpath($wat_file);
+        if (! $wat_real_file || strpos($wat_real_file, trailingslashit($wat_real_temp_dir)) !== 0) {
+            continue;
+        }
+
+        if (is_file($wat_real_file)) {
+            wp_delete_file($wat_real_file);
         }
     }
 
     // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_scandir -- Best-effort check before removing this plugin's own temporary directory.
-    $wat_remaining_files = array_diff(scandir($wat_temp_dir) ?: [], ['.', '..']);
+    $wat_remaining_files = array_diff(scandir($wat_real_temp_dir) ?: [], ['.', '..']);
     if ($wat_remaining_files === []) {
         // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Best-effort removal of this plugin's own temporary directory after deleting contained files.
-        rmdir($wat_temp_dir);
+        rmdir($wat_real_temp_dir);
     }
 }

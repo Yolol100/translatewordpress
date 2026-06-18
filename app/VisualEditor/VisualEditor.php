@@ -8,6 +8,7 @@ use Webactueel\Translate\Frontend\LanguageDetector;
 use Webactueel\Translate\Frontend\LanguageRouter;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Workflow\TranslatorRoles;
+use Webactueel\Translate\Support\Settings;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -60,15 +61,27 @@ final class VisualEditor
 
         wp_enqueue_style('webactueel-translate-language-dropdowns-design-system', WAT_PLUGIN_URL . 'build/shared/design-system.css', [], WAT_VERSION);
         wp_enqueue_style('wat-visual-editor', WAT_PLUGIN_URL . 'build/frontend/visual-editor.css', ['webactueel-translate-language-dropdowns-design-system'], WAT_VERSION);
-        wp_enqueue_script('wat-visual-editor', WAT_PLUGIN_URL . 'build/frontend/visual-editor.js', ['wp-element', 'wp-api-fetch', 'wp-i18n'], WAT_VERSION, true);
+        wp_enqueue_script('wat-visual-editor', WAT_PLUGIN_URL . 'build/frontend/visual-editor.js', ['wp-element', 'wp-api-fetch', 'wp-i18n'], WAT_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
         wp_set_script_translations('wat-visual-editor', 'webactueel-translate-language-dropdowns', WAT_PLUGIN_DIR . 'languages');
 
+        $settings = Settings::all();
         $config = [
             'restUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1/visual-editor/segment')),
+            'bulkRestUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1/visual-editor/segments')),
+            'suggestUrl' => esc_url_raw(rest_url('webactueel-translate-language-dropdowns/v1/visual-editor/suggestion')),
             'nonce' => wp_create_nonce('wp_rest'),
             'language' => $targetLanguage,
+            'sourceLanguage' => LanguageDetector::default_language(),
             'languages' => $this->editable_languages(),
+            'statuses' => $this->status_options($settings),
             'maxSegments' => 300,
+            'maxBulkSegments' => 120,
+            'canPublish' => current_user_can('manage_options') || empty($settings['translator_review_required']),
+            'reviewRequired' => ! empty($settings['translator_review_required']),
+            'aiEnabled' => ! empty($settings['ai_enabled']),
+            'aiHasKey' => ! empty($settings['ai_has_api_key']),
+            'aiProvider' => sanitize_key($settings['ai_provider'] ?? ''),
+            'aiContextEnabled' => ! empty($settings['ai_context_enabled']),
             'protectedSelectors' => BuilderCompatibility::protected_selectors(),
             'builders' => BuilderCompatibility::detect_active_builders(),
         ];
@@ -81,6 +94,25 @@ final class VisualEditor
             'window.watVisualEditor = ' . $configJson . ';',
             'before'
         );
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     * @return array<int, array{value:string,label:string}>
+     */
+    private function status_options(array $settings): array
+    {
+        $options = [
+            ['value' => 'draft', 'label' => __('Concept', 'webactueel-translate-language-dropdowns')],
+            ['value' => 'needs_review', 'label' => __('Review nodig', 'webactueel-translate-language-dropdowns')],
+        ];
+
+        if (current_user_can('manage_options') || empty($settings['translator_review_required'])) {
+            $options[] = ['value' => 'reviewed', 'label' => __('Reviewed', 'webactueel-translate-language-dropdowns')];
+            $options[] = ['value' => 'published', 'label' => __('Gepubliceerd', 'webactueel-translate-language-dropdowns')];
+        }
+
+        return $options;
     }
 
     /**

@@ -48,14 +48,46 @@ trait RestRouteArguments
             return true;
         }
 
-        // Allow custom OpenAI-compatible model identifiers while keeping the value
-        // shape safe; Settings::update() still normalizes non-compatible providers
-        // back to their allow-listed models.
-        if (function_exists('mb_strlen') ? mb_strlen($model) > 120 : strlen($model) > 120) {
+        // Keep model identifiers shape-safe; Settings::update() applies the
+        // provider-specific allow-list, including OpenAI-compatible models extended
+        // through the wat_allowed_ai_models filter.
+        if (function_exists('mb_strlen') ? mb_strlen($model) > 128 : strlen($model) > 128) {
             return false;
         }
 
         return preg_match('/^[A-Za-z0-9._:\/\-]+$/', $model) === 1;
+    }
+
+    public static function validate_due_at($value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $value = sanitize_text_field((string) $value);
+        if (strlen($value) > 40) {
+            return false;
+        }
+
+        return strtotime($value) !== false;
+    }
+
+    public static function validate_assignee_id($value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (! is_scalar($value)) {
+            return false;
+        }
+
+        $userId = absint($value);
+        return $userId === 0 || user_can($userId, \Webactueel\Translate\Workflow\TranslatorRoles::CAP_TRANSLATE);
     }
 
     private function id_arg(): array
@@ -219,10 +251,14 @@ trait RestRouteArguments
         return [
             'frontend_enabled' => $boolean,
             'safe_mode' => $boolean,
+            'frontend_strict_request_guard' => $boolean,
             'compatibility_override' => $boolean,
             'browser_redirect' => $boolean,
             'media_translation_enabled' => $boolean,
             'woocommerce_deep_translation_enabled' => $boolean,
+            'gettext_discovery_enabled' => $boolean,
+            'runtime_discovery_enabled' => $boolean,
+            'conditional_publish_enabled' => $boolean,
             'translator_review_required' => $boolean,
             'remember_language' => $boolean,
             'hreflang_enabled' => $boolean,
@@ -234,8 +270,10 @@ trait RestRouteArguments
             'delete_data_on_uninstall' => $boolean,
             'debug_logging' => $boolean,
             'switcher_floating' => $boolean,
+            'switcher_hide_untranslated' => $boolean,
             'ai_enabled' => $boolean,
             'ai_review_required' => $boolean,
+            'ai_context_enabled' => $boolean,
             'performance_monitoring' => $boolean,
         ];
     }
@@ -248,7 +286,7 @@ trait RestRouteArguments
         return [
             'ai_provider' => [
                 'type' => 'string',
-                'enum' => ['openai', 'deepl', 'openai_compatible'],
+                'enum' => ['openai', 'deepl', 'openai_compatible', 'google_translate'],
                 'sanitize_callback' => 'sanitize_key',
             ],
             'ai_model' => [
@@ -276,6 +314,10 @@ trait RestRouteArguments
                 'enum' => ['default', 'more', 'less', 'prefer_more', 'prefer_less'],
                 'sanitize_callback' => 'sanitize_key',
             ],
+            'ai_site_context' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+            'ai_target_audience' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+            'ai_brand_terms' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+            'ai_do_not_translate' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
         ];
     }
 
@@ -285,6 +327,8 @@ trait RestRouteArguments
         return [
             'max_buffer_size' => ['type' => 'integer', 'minimum' => 100000, 'maximum' => 5000000, 'sanitize_callback' => 'absint'],
             'max_replacements' => ['type' => 'integer', 'minimum' => 10, 'maximum' => 5000, 'sanitize_callback' => 'absint'],
+            'gettext_discovery_max_per_request' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 500, 'sanitize_callback' => 'absint'],
+            'runtime_discovery_max_per_request' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 1000, 'sanitize_callback' => 'absint'],
             'scan_batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint'],
             'cache_ttl' => ['type' => 'integer', 'minimum' => 300, 'maximum' => 604800, 'sanitize_callback' => 'absint'],
             'csv_preview_rows' => ['type' => 'integer', 'minimum' => 20, 'maximum' => 1000, 'sanitize_callback' => 'absint'],
@@ -297,6 +341,7 @@ trait RestRouteArguments
     {
         return [
             'language_domains' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
+            'gettext_discovery_domains' => ['type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field'],
         ];
     }
 

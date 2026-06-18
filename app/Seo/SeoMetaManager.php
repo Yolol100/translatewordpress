@@ -57,26 +57,30 @@ final class SeoMetaManager
         echo '<meta name="description" content="' . esc_attr($description) . '" />' . "\n";
     }
 
-    public function seo_title(string $title): string
+    public function seo_title($title)
     {
-        if (! is_singular()) {
+        if (! is_string($title) || ! is_singular()) {
             return $title;
         }
         $translated = self::post_seo_value(get_queried_object_id(), 'title');
         return $translated !== '' ? $translated : $title;
     }
 
-    public function seo_description(string $description): string
+    public function seo_description($description)
     {
-        if (! is_singular()) {
+        if (! is_string($description) || ! is_singular()) {
             return $description;
         }
         $translated = self::post_seo_value(get_queried_object_id(), 'description');
         return $translated !== '' ? $translated : $description;
     }
 
-    public function canonical(string $canonical): string
+    public function canonical($canonical)
     {
+        if (! is_string($canonical)) {
+            return $canonical;
+        }
+
         $translated = self::current_canonical_url();
         return $translated !== '' ? $translated : $canonical;
     }

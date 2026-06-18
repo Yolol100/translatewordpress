@@ -69,6 +69,7 @@ final class MultilingualSitemapManager
         status_header(200);
         nocache_headers();
         header('Content-Type: application/xml; charset=UTF-8');
+        header('X-Content-Type-Options: nosniff');
 
         if (in_array($type, ['posts', 'terms'], true)) {
             echo $this->urlset_xml($type, $page); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML is escaped by builder methods.

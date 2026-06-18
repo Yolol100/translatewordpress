@@ -8,6 +8,7 @@ use Webactueel\Translate\Compatibility\CompatibilityRegistry;
 use Webactueel\Translate\Seo\HreflangManager;
 use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Translation\TranslationCoverageReporter;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -34,11 +35,51 @@ final class FrontendBootstrap
         add_filter('allowed_redirect_hosts', [LanguageDomainMapper::class, 'allowed_redirect_hosts']);
         add_action('template_redirect', [LanguageRouter::class, 'handle_switch_request'], -100);
         add_action('template_redirect', [LanguageRouter::class, 'maybe_browser_redirect'], -90);
+        add_action('template_redirect', [$this, 'maybe_redirect_unpublished_language'], -80);
         add_action('template_redirect', [$this, 'maybe_start_buffer'], 0);
         add_shortcode('webactueel_translate_switcher', [$this, 'switcher_shortcode']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend']);
         add_action('wp_head', [$this, 'hreflang'], 5);
         add_action('wp_footer', [$this, 'maybe_render_floating_switcher'], 20);
+    }
+
+    public function maybe_redirect_unpublished_language(): void
+    {
+        $settings = Settings::all();
+        if (empty($settings['conditional_publish_enabled']) || ! $this->is_safe_redirect_request($settings)) {
+            return;
+        }
+
+        $language = LanguageDetector::current_language();
+        if ($language === '' || LanguageDetector::is_default_language($language) || TranslationCoverageReporter::language_is_fully_published($language)) {
+            return;
+        }
+
+        $targetUrl = LanguageRouter::clean_language_url_for_current_request(LanguageDetector::default_language());
+        if ($targetUrl !== '' && ! headers_sent()) {
+            wp_safe_redirect($targetUrl, 302);
+            exit;
+        }
+    }
+
+    private function is_safe_redirect_request(array $settings): bool
+    {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return false;
+        }
+        if ((defined('REST_REQUEST') && REST_REQUEST) || (defined('XMLRPC_REQUEST') && XMLRPC_REQUEST)) {
+            return false;
+        }
+        if (Input::server_method() !== 'GET') {
+            return false;
+        }
+        if (LanguageRouter::is_excluded_request_path(Input::scalar_string($settings['exclude_paths'] ?? ''))) {
+            return false;
+        }
+        if (is_feed() || is_robots() || (function_exists('is_sitemap') && is_sitemap())) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -87,7 +128,40 @@ final class FrontendBootstrap
         if (! empty($settings['safe_mode']) && function_exists('is_cart') && (is_cart() || is_checkout() || is_account_page())) {
             return false;
         }
+        if (! empty($settings['frontend_strict_request_guard']) && $this->is_strictly_excluded_frontend_request($uri)) {
+            return false;
+        }
         return (bool) apply_filters('wat_should_translate_request', true, $uri, $settings);
+    }
+
+    private function is_strictly_excluded_frontend_request(string $uri): bool
+    {
+        $path = Input::scalar_string(wp_parse_url($uri, PHP_URL_PATH));
+        $path = '/' . ltrim($path, '/');
+
+        if (function_exists('is_preview') && is_preview()) {
+            return true;
+        }
+        if (function_exists('is_embed') && is_embed()) {
+            return true;
+        }
+        if (function_exists('is_trackback') && is_trackback()) {
+            return true;
+        }
+        if (preg_match('#/(?:wp-json|wp-admin|wp-login\.php|xmlrpc\.php|wp-cron\.php)(?:/|$)#i', $path) === 1) {
+            return true;
+        }
+        if (preg_match('/\.(?:xml|json|txt|csv|pdf|zip|webmanifest|ico)(?:$|[?#])/i', $uri) === 1) {
+            return true;
+        }
+
+        foreach (['preview', 'preview_id', 'preview_nonce', 'customize_changeset_uuid', 'elementor-preview', 'fl_builder', 'et_fb', 'vc_editable', 'bricks', 'oxygen_iframe', 'ct_builder', 'tb-preview'] as $key) {
+            if (Input::get_exists($key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function enqueue_frontend(): void
@@ -114,7 +188,7 @@ final class FrontendBootstrap
             wp_register_style('webactueel-translate-language-dropdowns-switcher', WAT_PLUGIN_URL . 'build/frontend/switcher.css', ['webactueel-translate-language-dropdowns-design-system'], WAT_VERSION);
         }
         if (! wp_script_is('webactueel-translate-language-dropdowns-switcher', 'registered')) {
-            wp_register_script('webactueel-translate-language-dropdowns-switcher', WAT_PLUGIN_URL . 'build/frontend/switcher.js', [], WAT_VERSION, true);
+            wp_register_script('webactueel-translate-language-dropdowns-switcher', WAT_PLUGIN_URL . 'build/frontend/switcher.js', [], WAT_VERSION, ['in_footer' => true, 'strategy' => 'defer']);
         }
     }
 

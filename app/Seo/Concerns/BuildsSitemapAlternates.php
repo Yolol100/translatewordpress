@@ -33,6 +33,26 @@ trait BuildsSitemapAlternates
         );
     }
 
+    private function sitemap_hreflang_code(string $code): string
+    {
+        $code = str_replace('_', '-', trim($code));
+        if ($code === '') {
+            return '';
+        }
+
+        $parts = array_values(array_filter(explode('-', $code), static fn(string $part): bool => $part !== ''));
+        if ($parts === []) {
+            return '';
+        }
+
+        $parts[0] = strtolower($parts[0]);
+        if (isset($parts[1])) {
+            $parts[1] = strtoupper($parts[1]);
+        }
+
+        return implode('-', $parts);
+    }
+
     /**
      * @param callable(int, string): string $pathResolver Resolves the language-specific path for the current sitemap item.
      * @return array<int, array{hreflang:string, href:string}>
@@ -48,7 +68,7 @@ trait BuildsSitemapAlternates
 
             $href = UrlMapping::url_for_path($code, $pathResolver($objectId, $code));
             if ($href !== '') {
-                $alternates[] = ['hreflang' => $code, 'href' => $href];
+                $alternates[] = ['hreflang' => $this->sitemap_hreflang_code($code), 'href' => $href];
             }
         }
 

@@ -29,11 +29,26 @@ trait CsvPreviewReader
             return $this->csv_preview_error(__('CSV header ontbreekt.', 'webactueel-translate-language-dropdowns'));
         }
 
+        $duplicates = array_unique(array_diff_assoc($header, array_unique($header)));
+        if ($duplicates) {
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
+            fclose($handle);
+            return $this->csv_preview_error(sprintf(
+                /* translators: %s: comma-separated duplicate CSV column names. */
+                __('CSV header bevat dubbele kolommen: %s', 'webactueel-translate-language-dropdowns'),
+                implode(', ', $duplicates)
+            ));
+        }
+
         $missing = array_diff($this->required, $header);
         if ($missing) {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
             fclose($handle);
-            return $this->csv_preview_error(sprintf(__('CSV header mist: %s', 'webactueel-translate-language-dropdowns'), implode(', ', $missing)));
+            return $this->csv_preview_error(sprintf(
+                /* translators: %s: comma-separated missing CSV column names. */
+                __('CSV header mist: %s', 'webactueel-translate-language-dropdowns'),
+                implode(', ', $missing)
+            ));
         }
 
         $preview = $this->read_preview_rows($handle, $header, $delimiter, $limit);

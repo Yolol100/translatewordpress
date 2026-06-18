@@ -53,19 +53,49 @@ final class WooCommerceSupport
         return array_values(array_unique(array_merge($paths, ['/cart/', '/checkout/', '/my-account/', '/order-pay/'])));
     }
 
-    public function translate_product_string(string $value, $product = null): string
+    public function translate_product_string($value, $product = null)
     {
-        return $this->translate($value);
+        return is_string($value) && $value !== '' ? $this->translate($value) : $value;
     }
 
-    public function translate_product_attribute(string $value, $product = null, string $attribute = ''): string
+    public function translate_product_attribute($value, $product = null, string $attribute = '')
     {
-        return $this->translate($value);
+        return is_string($value) && $value !== '' ? $this->translate($value) : $value;
     }
 
-    public function translate_order_item_name(string $name, $item = null): string
+    public function translate_order_item_name($name, $item = null)
     {
+        if (! is_string($name) || $name === '' || ! $this->should_translate_order_item_name($item)) {
+            return $name;
+        }
+
         return $this->translate($name);
+    }
+
+    /**
+     * Order item names are used in checkout, account, emails and admin order screens.
+     * Keep this off by default unless a site explicitly opts in for that surface.
+     */
+    private function should_translate_order_item_name($item = null): bool
+    {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron() || wp_is_json_request()) {
+            return false;
+        }
+
+        if ((function_exists('is_checkout') && is_checkout())
+            || (function_exists('is_account_page') && is_account_page())
+            || (function_exists('is_wc_endpoint_url') && (is_wc_endpoint_url('order-pay') || is_wc_endpoint_url('order-received')))) {
+            return false;
+        }
+
+        if (doing_action('woocommerce_email_order_details')
+            || doing_action('woocommerce_email_order_items')
+            || doing_action('woocommerce_order_item_meta_start')
+            || doing_action('woocommerce_order_item_meta_end')) {
+            return false;
+        }
+
+        return (bool) apply_filters('wat_translate_woocommerce_order_item_name', false, $item);
     }
 
     /**

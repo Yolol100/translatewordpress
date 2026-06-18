@@ -9,7 +9,7 @@ use Webactueel\Translate\Automation\Concerns\AiProviderConfiguration;
 use Webactueel\Translate\Automation\Concerns\AiProviderTextHelpers;
 use Webactueel\Translate\Automation\Concerns\AiRateLimiter;
 use Webactueel\Translate\Automation\Concerns\DeepLTranslationClient;
-use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Automation\Concerns\GoogleTranslationClient;
 use Webactueel\Translate\Support\Settings;
 use WP_Error;
 
@@ -26,6 +26,7 @@ final class AiTranslationService
     use AiChatCompletionClient;
     use AiProviderTextHelpers;
     use DeepLTranslationClient;
+    use GoogleTranslationClient;
 
     /**
      * Translate one text through a configured AI provider.
@@ -52,16 +53,20 @@ final class AiTranslationService
         $provider = self::provider($settings);
         $apiKey = self::api_key($provider);
         if ($apiKey === '') {
-            return new WP_Error('wat_ai_missing_key', __('Geen AI API-sleutel gevonden. Vul je API-sleutel in bij AI-assistent of definieer een serverconstante.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
+            return new WP_Error('wat_ai_missing_key', __('Geen AI API-sleutel gevonden. Configureer de sleutel via WAT_OPENAI_API_KEY, WAT_DEEPL_API_KEY, WAT_OPENAI_COMPATIBLE_API_KEY, WAT_GOOGLE_TRANSLATE_API_KEY of de wat_ai_api_key filter. Database-opslag via de beheerinterface is standaard uitgeschakeld en werkt alleen na expliciete opt-in.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
         }
 
-        $rateLimit = self::check_rate_limit();
+        $rateLimit = self::check_rate_limit($context);
         if (is_wp_error($rateLimit)) {
             return $rateLimit;
         }
 
         if ($provider === 'deepl') {
             return $this->translate_deepl($apiKey, $text, $sourceLanguage, $targetLanguage, $settings, $context);
+        }
+
+        if ($provider === 'google_translate') {
+            return $this->translate_google_translate($apiKey, $text, $sourceLanguage, $targetLanguage, $settings, $context);
         }
 
         if ($provider === 'openai_compatible') {

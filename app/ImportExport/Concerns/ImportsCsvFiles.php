@@ -6,7 +6,9 @@ namespace Webactueel\Translate\ImportExport\Concerns;
 
 use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\Support\Input;
+use Webactueel\Translate\Support\Settings;
 use Webactueel\Translate\Support\Concerns\ValidatesLanguages;
+use Webactueel\Translate\Translation\StringNormalizer;
 use Webactueel\Translate\Translation\TranslationRepository;
 
 if (! defined('ABSPATH')) {
@@ -38,6 +40,21 @@ trait ImportsCsvFiles
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
             fclose($handle);
             return ['imported' => 0, 'errors' => [__('CSV header mist verplichte kolommen.', 'webactueel-translate-language-dropdowns')]];
+        }
+
+        $duplicates = array_unique(array_diff_assoc($header, array_unique($header)));
+        if ($duplicates) {
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing native CSV stream.
+            fclose($handle);
+            return [
+                'imported' => 0,
+                'skipped' => 0,
+                'errors' => [sprintf(
+                    /* translators: %s: comma-separated duplicate CSV column names. */
+                    __('CSV header bevat dubbele kolommen: %s', 'webactueel-translate-language-dropdowns'),
+                    implode(', ', $duplicates)
+                )],
+            ];
         }
 
         $repo = new TranslationRepository();
@@ -120,19 +137,25 @@ trait ImportsCsvFiles
         $data = array_combine($header, $row);
         $hash = Input::text($data['hash'] ?? '');
         $lang = Input::key($data['language_code'] ?? '');
+        $original = trim(wp_kses_post(Input::scalar_string($data['original_text'] ?? '')));
         $translated = trim(wp_kses_post(Input::scalar_string($data['translated_text'] ?? '')));
-        $rowKey = $hash . ':' . $lang;
 
-        if (isset($seen[$rowKey])) {
-            return $this->csv_row_skip_error($line, __('Regel %d: dubbele hash/language combinatie in import overgeslagen.', 'webactueel-translate-language-dropdowns'));
+        if ($lang === '') {
+            return $this->csv_row_skip_error($line, __('Regel %d: language_code ontbreekt.', 'webactueel-translate-language-dropdowns'));
         }
-        $seen[$rowKey] = true;
-
-        if ($hash === '' || strlen($hash) < 16 || $lang === '') {
-            return $this->csv_row_skip_error($line, __('Regel %d: hash of language_code ontbreekt of is ongeldig.', 'webactueel-translate-language-dropdowns'));
+        if ($original === '') {
+            return $this->csv_row_skip_error($line, __('Regel %d: original_text ontbreekt.', 'webactueel-translate-language-dropdowns'));
         }
         if ($translated === '') {
             return $this->csv_row_skip_error($line, __('Regel %d: translated_text ontbreekt.', 'webactueel-translate-language-dropdowns'));
+        }
+
+        $rowKey = $this->csv_row_import_key($data, $hash, $lang);
+        if ($rowKey !== '' && isset($seen[$rowKey])) {
+            return $this->csv_row_skip_error($line, __('Regel %d: dubbele importregel voor dezelfde doelstring/taal overgeslagen.', 'webactueel-translate-language-dropdowns'));
+        }
+        if ($rowKey !== '') {
+            $seen[$rowKey] = true;
         }
         if ($languages && ! in_array($lang, $languages, true)) {
             return ['imported' => 0, 'skipped' => 1, 'errors' => []];
@@ -141,24 +164,47 @@ trait ImportsCsvFiles
             return [
                 'imported' => 0,
                 'skipped' => 1,
-                'errors' => [sprintf(__('Regel %1$d: taal %2$s is geen actieve vertaaltaal.', 'webactueel-translate-language-dropdowns'), $line, $lang)],
+                'errors' => [sprintf(
+                    /* translators: 1: CSV row number, 2: language code. */
+                    __('Regel %1$d: taal %2$s is geen actieve vertaaltaal.', 'webactueel-translate-language-dropdowns'),
+                    $line,
+                    $lang
+                )],
             ];
         }
 
         $stringId = $this->csv_row_string_id($data, $hash, $repo);
         $status = Input::key($data['status'] ?? '');
-        if ($status !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review'], true)) {
+        if (in_array($status, ['new', 'missing'], true)) {
+            $status = '';
+        }
+        if ($status !== '' && ! in_array($status, ['draft', 'reviewed', 'published', 'ignored', 'needs_review', 'outdated'], true)) {
             return $this->csv_row_skip_error($line, __('Regel %d: status is ongeldig.', 'webactueel-translate-language-dropdowns'));
         }
         if ($status === '') {
             $status = 'published';
         }
+        $status = $this->apply_import_review_policy($status);
 
         if ($stringId && $repo->save_translation($stringId, $lang, $translated, $status, 'csv')) {
             return ['imported' => 1, 'skipped' => 0, 'errors' => []];
         }
 
-        return ['imported' => 0, 'skipped' => 0, 'errors' => []];
+        return [
+            'imported' => 0,
+            'skipped' => 1,
+            'errors' => [sprintf(__('Regel %d: vertaling kon niet worden opgeslagen.', 'webactueel-translate-language-dropdowns'), $line)],
+        ];
+    }
+
+    private function apply_import_review_policy(string $status): string
+    {
+        $settings = Settings::all();
+        if (! current_user_can('manage_options') && ! empty($settings['translator_review_required']) && in_array($status, ['published', 'reviewed'], true)) {
+            return 'needs_review';
+        }
+
+        return $status;
     }
 
     /** @return array{imported:int,skipped:int,errors:array<int, string>} */
@@ -172,15 +218,45 @@ trait ImportsCsvFiles
     }
 
     /** @param array<string, mixed> $data */
+    private function csv_row_import_key(array $data, string $hash, string $lang): string
+    {
+        if ($lang === '') {
+            return '';
+        }
+
+        if (StringNormalizer::is_hash($hash)) {
+            return 'hash:' . strtolower($hash) . ':' . $lang;
+        }
+
+        $original = trim(wp_kses_post(Input::scalar_string($data['original_text'] ?? '')));
+        if ($original === '') {
+            return '';
+        }
+
+        return 'fallback:' . hash('sha256', StringNormalizer::normalize($original)) . ':'
+            . Input::key($data['source_type'] ?? '') . ':'
+            . Input::absint($data['source_id'] ?? 0) . ':'
+            . hash('sha256', Input::text($data['context'] ?? '')) . ':'
+            . $lang;
+    }
+
+    /** @param array<string, mixed> $data */
     private function csv_row_string_id(array $data, string $hash, TranslationRepository $repo): int
     {
-        $stringId = $this->find_string_id_by_hash($hash);
-        if ($stringId) {
-            return $stringId;
+        if (StringNormalizer::is_hash($hash)) {
+            $stringId = $this->find_string_id_by_hash($hash);
+            if ($stringId) {
+                return $stringId;
+            }
+        }
+
+        $original = trim(wp_kses_post(Input::scalar_string($data['original_text'] ?? '')));
+        if ($original === '') {
+            return 0;
         }
 
         return $repo->upsert_string(
-            wp_kses_post(Input::scalar_string($data['original_text'] ?? '')),
+            $original,
             Input::key($data['source_type'] ?? ''),
             Input::absint($data['source_id'] ?? 0),
             Input::text($data['context'] ?? '')

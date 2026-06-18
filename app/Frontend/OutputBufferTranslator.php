@@ -27,6 +27,7 @@ final class OutputBufferTranslator
     private bool $started = false;
     private int $lastReplacementCount = 0;
     private int $lastUrlRewriteCount = 0;
+    private int $lastRuntimeDiscoveryCount = 0;
 
     public function __construct(string $language, array $settings)
     {
@@ -75,7 +76,7 @@ final class OutputBufferTranslator
 
     private function can_translate_buffer(string $html, array &$requestContext): bool
     {
-        if (! $this->is_html_response($html) || strpos($html, 'wat:disable-output-translation') !== false) {
+        if (! $this->is_html_response($html) || strpos($html, 'wat:disable-output-translation') !== false || strpos($html, "\0") !== false) {
             return false;
         }
 
@@ -118,6 +119,7 @@ final class OutputBufferTranslator
             'map_size' => count($map),
             'replacement_count' => $this->lastReplacementCount,
             'url_rewrite_count' => $this->lastUrlRewriteCount,
+            'runtime_discovery_count' => $this->lastRuntimeDiscoveryCount,
             'request_path' => Input::scalar_string($requestContext['path'] ?? ''),
             'memory_peak_mb' => round(memory_get_peak_usage(true) / 1048576, 2),
         ];
@@ -135,7 +137,7 @@ final class OutputBufferTranslator
      */
     private function request_context(): array
     {
-        $uri = Input::server_text('REQUEST_URI');
+        $uri = Input::server_raw('REQUEST_URI');
         $path = Input::scalar_string(wp_parse_url($uri, PHP_URL_PATH));
 
         return [

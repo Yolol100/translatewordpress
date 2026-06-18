@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Webactueel Translate
  * Description: Universal frontend translation plugin with manual translations, setup workflow, clean language URLs, CSV/XLIFF import/export, SEO foundations and compatibility-safe output translation.
- * Version: 2.4.13
+ * Version: 2.7.13
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Webactueel
@@ -10,6 +10,7 @@
  * Domain Path: /languages
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Update URI: false
  */
 
 declare(strict_types=1);
@@ -18,7 +19,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('WAT_VERSION', '2.4.13');
+define('WAT_VERSION', '2.7.13');
 define('WAT_PLUGIN_FILE', __FILE__);
 define('WAT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WAT_PLUGIN_URL', plugin_dir_url(__FILE__));

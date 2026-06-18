@@ -6,22 +6,28 @@ namespace Webactueel\Translate\Rest\Concerns;
 
 if (! defined('ABSPATH')) {
     exit;
-
 }
 
 trait RegistersRestRoutes
 {
     use RestRouteArguments;
     /**
-     * Register current and legacy REST namespaces.
+     * Register REST routes.
      *
-     * Keep `webactueel-translate/v1` until all existing admin bundles and external
-     * integrations have migrated to `webactueel-translate-language-dropdowns/v1`.
+     * The historical `webactueel-translate/v1` namespace is disabled by default to
+     * avoid doubling the public endpoint surface. Existing integrations can opt in
+     * temporarily while they migrate to the canonical namespace.
      */
     public function routes(): void
     {
         $primary_namespace = $this->namespace;
-        foreach (array_unique([$primary_namespace, 'webactueel-translate/v1']) as $namespace) {
+        $namespaces = [$primary_namespace];
+
+        if ((bool) apply_filters('wat_register_legacy_rest_namespace', false)) {
+            $namespaces[] = 'webactueel-translate/v1';
+        }
+
+        foreach (array_unique($namespaces) as $namespace) {
             $this->namespace = $namespace;
             $this->register_routes();
         }
@@ -32,6 +38,9 @@ trait RegistersRestRoutes
     {
         $this->route('/dashboard', 'GET', 'dashboard');
         $this->route('/health', 'GET', 'health');
+        $this->route('/seo/audit', 'GET', 'seo_audit');
+        $this->route('/translation-coverage', 'GET', 'translation_coverage');
+        $this->route('/woocommerce/coverage', 'GET', 'woocommerce_coverage');
         register_rest_route($this->namespace, '/languages', [
             ['methods' => 'GET', 'callback' => [$this, 'languages'], 'permission_callback' => [$this, 'can_manage']],
             ['methods' => 'POST', 'callback' => [$this, 'save_language'], 'permission_callback' => [$this, 'can_manage'], 'args' => $this->language_args()],

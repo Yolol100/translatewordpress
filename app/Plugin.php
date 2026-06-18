@@ -19,6 +19,7 @@ use Webactueel\Translate\Automation\ContentChangeWatcher;
 use Webactueel\Translate\Cache\TranslationCache;
 use Webactueel\Translate\Database\Schema;
 use Webactueel\Translate\Frontend\FrontendBootstrap;
+use Webactueel\Translate\Frontend\GettextStringDiscovery;
 use Webactueel\Translate\Frontend\LanguageRouter;
 use Webactueel\Translate\ImportExport\CsvExporter;
 use Webactueel\Translate\Installer\ReplacementManager;
@@ -94,13 +95,16 @@ final class Plugin
         (new UrlMappingAdmin())->register();
         (new RestServiceProvider())->register();
         (new FrontendBootstrap())->register();
+        (new GettextStringDiscovery())->register();
         $this->register_product_features();
         (new TranslatorRoles())->register();
         (new ContentChangeWatcher())->register();
         (new SeoTranslationSync())->register();
 
         add_action('admin_init', [Schema::class, 'maybe_install'], 1);
-        add_action('rest_api_init', [Schema::class, 'maybe_install'], 1);
+        if ((bool) apply_filters('wat_enable_rest_schema_auto_install', false)) {
+            add_action('rest_api_init', [Schema::class, 'maybe_install'], 1);
+        }
 
         Privacy::register();
         Diagnostics::register_wp_cli();
@@ -182,10 +186,10 @@ final class Plugin
         }
         $targetLanguage = Input::get_key('target_language');
         $csv = \Webactueel\Translate\Automation\AiUsageLedger::export_csv($days, $targetLanguage);
-        $filename = 'webactueel-translate-ai-usage-' . gmdate('Ymd') . '.csv';
+        $filename = sanitize_file_name('webactueel-translate-ai-usage-' . gmdate('Ymd') . '.csv');
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: attachment; filename="' . str_replace(["\r", "\n"], '', $filename) . '"');
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');

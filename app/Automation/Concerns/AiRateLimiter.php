@@ -17,7 +17,7 @@ trait AiRateLimiter
      *
      * @return true|WP_Error
      */
-    private static function check_rate_limit()
+    private static function check_rate_limit(array $context = [])
     {
         $limit = (int) apply_filters('wat_ai_rate_limit_per_minute', 20);
         if ($limit <= 0) {
@@ -27,8 +27,19 @@ trait AiRateLimiter
         $optionName = self::rate_limit_option_name();
         $count = self::increment_rate_limit_counter($optionName);
         if ($count < 1) {
-            // Counter write failed; fail open so a transient DB hiccup cannot block translation.
-            return true;
+            if (! empty($context['batch']) || ! empty($context['job_id']) || ! empty($context['string_id'])) {
+                return new WP_Error(
+                    'wat_ai_rate_limit_counter_failed',
+                    __('AI-batch is tijdelijk gepauzeerd omdat de rate-limit teller niet kon worden bijgewerkt.', 'webactueel-translate-language-dropdowns'),
+                    ['status' => 503]
+                );
+            }
+
+            return apply_filters('wat_ai_rate_limit_fail_open', true, $context) ? true : new WP_Error(
+                'wat_ai_rate_limit_counter_failed',
+                __('AI-vertaling is tijdelijk niet beschikbaar omdat de rate-limit teller niet kon worden bijgewerkt.', 'webactueel-translate-language-dropdowns'),
+                ['status' => 503]
+            );
         }
 
         if ($count > $limit) {
@@ -50,9 +61,9 @@ trait AiRateLimiter
     {
         $userId = function_exists('get_current_user_id') ? (int) get_current_user_id() : 0;
         $bucket = $userId > 0 ? 'user_' . $userId : 'anonymous';
-        $window = (string) floor(time() / MINUTE_IN_SECONDS);
+        $window = (int) floor(time() / MINUTE_IN_SECONDS);
 
-        return 'wat_ai_rate_' . md5($bucket . '|' . $window);
+        return 'wat_ai_rate_' . $window . '_' . md5($bucket);
     }
 
     private static function increment_rate_limit_counter(string $optionName): int
@@ -63,7 +74,8 @@ trait AiRateLimiter
         // is atomic, so concurrent translate/batch calls cannot all read the same
         // pre-increment value and blow past the per-minute provider cap.
         $affected = $wpdb->query($wpdb->prepare(
-            "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_value = LAST_INSERT_ID(CAST(option_value AS UNSIGNED) + 1)",
+            'INSERT INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_value = LAST_INSERT_ID(CAST(option_value AS UNSIGNED) + 1)',
+            $wpdb->options,
             $optionName,
             '1',
             'no'
@@ -97,7 +109,8 @@ trait AiRateLimiter
 
         // Fallback: re-read the stored value if LAST_INSERT_ID was unavailable.
         $count = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT CAST(option_value AS UNSIGNED) FROM {$wpdb->options} WHERE option_name = %s",
+            'SELECT CAST(option_value AS UNSIGNED) FROM %i WHERE option_name = %s',
+            $wpdb->options,
             $optionName
         )); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -108,11 +121,30 @@ trait AiRateLimiter
     {
         global $wpdb;
 
-        // Best-effort cleanup of expired windows so the options table does not grow unbounded.
-        $wpdb->query($wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name <> %s",
+        $currentWindow = self::rate_limit_window_from_option_name($currentOptionName);
+        $cutoffWindow = max(0, $currentWindow - 2);
+        $optionNames = $wpdb->get_col($wpdb->prepare(
+            'SELECT option_name FROM %i WHERE option_name LIKE %s AND option_name <> %s LIMIT 250',
+            $wpdb->options,
             $wpdb->esc_like('wat_ai_rate_') . '%',
             $currentOptionName
         )); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+        foreach (is_array($optionNames) ? $optionNames : [] as $optionName) {
+            $optionName = (string) $optionName;
+            $window = self::rate_limit_window_from_option_name($optionName);
+            if ($window === 0 || $window < $cutoffWindow) {
+                delete_option($optionName);
+            }
+        }
+    }
+
+    private static function rate_limit_window_from_option_name(string $optionName): int
+    {
+        if (preg_match('/^wat_ai_rate_(\d+)_/', $optionName, $matches) !== 1) {
+            return 0;
+        }
+
+        return max(0, absint($matches[1]));
     }
 }

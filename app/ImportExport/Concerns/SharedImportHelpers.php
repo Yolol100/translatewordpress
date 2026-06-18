@@ -7,6 +7,7 @@ namespace Webactueel\Translate\ImportExport\Concerns;
 use Webactueel\Translate\Database\Tables;
 use Webactueel\Translate\Support\Input;
 use Webactueel\Translate\Support\Settings;
+use Webactueel\Translate\Translation\StringNormalizer;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -35,7 +36,7 @@ trait SharedImportHelpers
 
     private function find_string_id_by_hash(string $hash): int
     {
-        if ($hash === '' || strlen($hash) < 16) {
+        if (! StringNormalizer::is_hash($hash)) {
             return 0;
         }
 

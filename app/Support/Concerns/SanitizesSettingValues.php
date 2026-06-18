@@ -19,10 +19,14 @@ trait SanitizesSettingValues
         return [
             'frontend_enabled',
             'safe_mode',
+            'frontend_strict_request_guard',
             'compatibility_override',
             'browser_redirect',
             'media_translation_enabled',
             'woocommerce_deep_translation_enabled',
+            'gettext_discovery_enabled',
+            'runtime_discovery_enabled',
+            'conditional_publish_enabled',
             'translator_review_required',
             'remember_language',
             'hreflang_enabled',
@@ -34,8 +38,10 @@ trait SanitizesSettingValues
             'delete_data_on_uninstall',
             'debug_logging',
             'switcher_floating',
+            'switcher_hide_untranslated',
             'ai_enabled',
             'ai_review_required',
+            'ai_context_enabled',
             'performance_monitoring',
         ];
     }
@@ -119,6 +125,29 @@ trait SanitizesSettingValues
             $append($code, $url);
         }
         return implode("\n", array_values(array_unique($lines)));
+    }
+
+    private static function limited_textarea($value, int $maxLength): string
+    {
+        $text = Input::textarea($value);
+        if ($maxLength > 0 && (function_exists('mb_strlen') ? mb_strlen($text) : strlen($text)) > $maxLength) {
+            return function_exists('mb_substr') ? mb_substr($text, 0, $maxLength) : substr($text, 0, $maxLength);
+        }
+
+        return $text;
+    }
+
+    private static function sanitize_discovery_domains($input): string
+    {
+        $domains = [];
+        foreach (preg_split('/\r\n|\r|\n|,/', Input::scalar_string($input)) ?: [] as $line) {
+            $domain = sanitize_key(trim((string) $line));
+            if ($domain !== '') {
+                $domains[] = $domain;
+            }
+        }
+
+        return implode("\n", array_values(array_unique($domains)));
     }
 
 }

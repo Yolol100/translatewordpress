@@ -63,8 +63,8 @@ trait ProductFeatureRouteDefinitions
                 'sanitize_callback' => 'sanitize_key',
             ],
             'batch_size' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'sanitize_callback' => 'absint'],
-            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint'],
-            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint', 'validate_callback' => [self::class, 'validate_assignee_id']],
+            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'validate_callback' => [self::class, 'validate_due_at']],
         ];
     }
 
@@ -80,8 +80,8 @@ trait ProductFeatureRouteDefinitions
     private function assignment_args(): array
     {
         return array_merge($this->id_arg(), [
-            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint'],
-            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+            'assigned_user_id' => ['type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint', 'validate_callback' => [self::class, 'validate_assignee_id']],
+            'due_at' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'validate_callback' => [self::class, 'validate_due_at']],
         ]);
     }
 
