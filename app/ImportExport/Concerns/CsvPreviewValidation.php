@@ -36,10 +36,9 @@ trait CsvPreviewValidation
             // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
             $errors[] = sprintf(__('Regel %d: original_text ontbreekt.', 'webactueel-translate-language-dropdowns'), $line);
         }
-        if (trim(Input::scalar_string($data['translated_text'] ?? '')) === '') {
-            // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.
-            $errors[] = sprintf(__('Regel %d: translated_text ontbreekt.', 'webactueel-translate-language-dropdowns'), $line);
-        }
+        // Empty translated_text is allowed in previews. Missing-translation exports intentionally
+        // contain empty translation cells so translators can fill them offline. The importer
+        // skips still-empty translation cells safely without treating the preview as broken.
         $status = Input::key($data['status'] ?? '');
         if ($status !== '' && ! in_array($status, ['new', 'missing', 'draft', 'reviewed', 'published', 'ignored', 'needs_review', 'outdated'], true)) {
             // translators: Placeholder values are replaced with runtime details such as a row number, language name or count.

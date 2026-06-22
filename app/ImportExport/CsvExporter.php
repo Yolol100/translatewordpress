@@ -38,7 +38,7 @@ final class CsvExporter
             $placeholders = implode(',', array_fill(0, count($languages), '%s'));
             $where = $missingOnly ? ' WHERE (t.id IS NULL OR t.translated_text = "")' : '';
             $sql = 'SELECT s.hash, s.source_type, s.source_id, s.context, s.original_text, l.code as language_code, COALESCE(t.translated_text, "") as translated_text, COALESCE(t.status, "new") as status FROM %i s INNER JOIN %i l ON l.code IN (' . $placeholders . ') LEFT JOIN %i t ON s.id = t.string_id AND t.language_code = l.code' . $where . ' ORDER BY s.id DESC, l.code ASC LIMIT 10000';
-            $params = array_merge([Tables::strings(), Tables::languages(), Tables::translations()], $languages);
+            $params = array_merge([Tables::strings(), Tables::languages()], $languages, [Tables::translations()]);
             return $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A) ?: [];
         }
 

@@ -35,7 +35,7 @@ trait AiRateLimiter
                 );
             }
 
-            return apply_filters('wat_ai_rate_limit_fail_open', true, $context) ? true : new WP_Error(
+            return apply_filters('wat_ai_rate_limit_fail_open', false, $context) ? true : new WP_Error(
                 'wat_ai_rate_limit_counter_failed',
                 __('AI-vertaling is tijdelijk niet beschikbaar omdat de rate-limit teller niet kon worden bijgewerkt.', 'webactueel-translate-language-dropdowns'),
                 ['status' => 503]

@@ -76,7 +76,7 @@ final class Settings
             'switcher_position' => 'bottom-right',
             'gettext_discovery_domains' => "default\nwoocommerce\nelementor\nwordpress-seo\nrank-math",
             'exclude_selectors' => ".notranslate\n[translate=\"no\"]\n#wpadminbar\n.wat-language-switcher",
-            'exclude_paths' => "/checkout/\n/cart/\n/my-account/\n/wp-login.php",
+            'exclude_paths' => "/checkout/\n/cart/\n/my-account/\n/order-pay/\n/order-received/\n/wp-login.php",
         ];
     }
 

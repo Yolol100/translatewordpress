@@ -17,6 +17,9 @@ final class BrowserLanguageRedirector
 {
     use CookieHelpers;
 
+    private const MAX_ACCEPT_LANGUAGE_LENGTH = 2048;
+    private const MAX_ACCEPT_LANGUAGE_CANDIDATES = 20;
+
     public static function maybe_browser_redirect(): void
     {
         $settings = Settings::all();
@@ -29,9 +32,14 @@ final class BrowserLanguageRedirector
             return;
         }
 
+        $targetUrl = self::browser_redirect_target_url($browser);
+        if ($targetUrl === '') {
+            return;
+        }
+
         self::remember_language($browser);
         if (! headers_sent()) {
-            wp_safe_redirect(self::browser_redirect_target_url($browser), 302);
+            wp_safe_redirect($targetUrl, 302);
             exit;
         }
     }
@@ -109,6 +117,7 @@ final class BrowserLanguageRedirector
             return '';
         }
 
+        $header = substr($header, 0, self::MAX_ACCEPT_LANGUAGE_LENGTH);
         return self::match_browser_language_candidate(self::browser_language_candidates($header));
     }
 
@@ -119,6 +128,10 @@ final class BrowserLanguageRedirector
     {
         $candidates = [];
         foreach (explode(',', $header) as $part) {
+            if (count($candidates) >= self::MAX_ACCEPT_LANGUAGE_CANDIDATES) {
+                break;
+            }
+
             $candidate = self::browser_language_candidate((string) $part);
             if ($candidate) {
                 $candidates[] = $candidate;
@@ -136,7 +149,7 @@ final class BrowserLanguageRedirector
     {
         $pieces = array_map('trim', explode(';', $part));
         $raw = strtolower(str_replace('_', '-', sanitize_text_field($pieces[0] ?? '')));
-        if ($raw === '') {
+        if ($raw === '' || strlen($raw) > 64 || preg_match('/^[a-z]{1,8}(?:-[a-z0-9]{1,8})*$/', $raw) !== 1) {
             return null;
         }
 

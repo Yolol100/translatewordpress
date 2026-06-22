@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Webactueel Translate 2.7.13\n"
+"Project-Id-Version: Webactueel Translate 2.7.82\n"
 "Report-Msgid-Bugs-To: https://webactueel.nl/\n"
 "POT-Creation-Date: 2026-05-15 00:00+0000\n"
 "MIME-Version: 1.0\n"
@@ -168,10 +168,6 @@ msgstr ""
 msgid "Alles wissen"
 msgstr ""
 
-#: build/admin/index.js:881
-msgid "Als exact dezelfde originele tekst ergens anders voorkomt, wordt deze vertaling automatisch overgenomen waar nog geen vertaling staat."
-msgstr ""
-
 #: build/admin/index.js:928 build/admin/index.js:1669
 msgid "Annuleren"
 msgstr ""
@@ -186,10 +182,6 @@ msgstr ""
 
 #: app/Automation/AiTranslationService.php:31
 msgid "API-sleutels worden niet in de database opgeslagen. Ingeschakelde AI-vertaling verstuurt de aangeboden tekst naar de gekozen externe provider; gebruik dit alleen voor content die extern verwerkt mag worden."
-msgstr ""
-
-#: build/admin/index.js:880
-msgid "Automatisch toepassen actief"
 msgstr ""
 
 #: app/Scanner/ScanBatchRunner.php:123
@@ -985,7 +977,7 @@ msgid "Nog geen termen voor deze selectie."
 msgstr ""
 
 #: build/admin/index.js:1856 build/admin/index.js:1857
-msgid "Nog geen woordenlijsttermen"
+msgid "Nog geen vaste termen"
 msgstr ""
 
 #: build/admin/index.js:459
@@ -1456,7 +1448,7 @@ msgid "Talen kiezen en exporteren"
 msgstr ""
 
 #: build/admin/index.js:1983
-msgid "Technische instellingen"
+msgid "Techniek en limieten"
 msgstr ""
 
 #: build/admin/index.js:1956
@@ -1699,7 +1691,7 @@ msgid "Voeg je eerste taal toe"
 msgstr ""
 
 #: build/admin/index.js:1856
-msgid "Voeg links je eerste term toe om vertalingen consistenter te maken."
+msgid "Leg belangrijke woorden, merknamen en vaktermen vast zodat vertalingen consequent blijven."
 msgstr ""
 
 #: build/admin/index.js:513
@@ -1857,7 +1849,7 @@ msgstr ""
 msgid "Versleep"
 msgstr ""
 
-msgid "Probleemoplossing"
+msgid "Logs en hulp"
 msgstr ""
 
 #: build/admin/index.js:386
@@ -2334,7 +2326,7 @@ msgid "CSV import maximum regels"
 msgstr ""
 
 #: build/admin/index.js
-msgid "CSV & back-up"
+msgid "Import/export"
 msgstr ""
 
 #: build/admin/index.js
@@ -2470,19 +2462,19 @@ msgid "Laatste controle vóór publicatie op desktop en mobiel."
 msgstr ""
 
 #: build/admin/index.js
-msgid "Bulkvertalingen, SEO-teksten en technische instellingen horen in Vertalingen, CSV & back-up of Instellingen."
+msgid "Bulkvertalingen, SEO-teksten en technische instellingen horen in Vertalingen, Import/export of Instellingen."
 msgstr ""
 
 #: build/admin/index.js
-msgid "Bulkwerk en herstel"
+msgid "Importeren en exporteren"
 msgstr ""
 
 #: build/admin/index.js
-msgid "Gebruik deze tab voor export, import, controlebestanden en woordenlijstbeheer. Dagelijks vertalen doe je in Vertalingen."
+msgid "Download vertalingen, importeer bijgewerkte bestanden en beheer woordenlijsttermen op een plek. Dagelijks vertalen doe je in Vertalingen."
 msgstr ""
 
 #: build/admin/index.js
-msgid "Beheerderstools"
+msgid "Beheerhulpmiddelen"
 msgstr ""
 
 #: build/admin/index.js
@@ -2990,7 +2982,7 @@ msgstr ""
 msgid "Laatste melding"
 msgstr ""
 
-msgid "Systeemcontrole"
+msgid "Statuscheck"
 msgstr ""
 
 msgid "Gezond"
@@ -3291,4 +3283,100 @@ msgstr ""
 
 #: build/admin/index.js:1757
 msgid "Kopiëren mislukt. Selecteer en kopieer de code handmatig."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Alle"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Fouten"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Statusfilters voor vertalingen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Vertaalstatus filteren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Review nodig: "
+msgstr ""
+
+#: build/admin/index.js
+msgid "teksten. Publicatie geblokkeerd."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Openstaande vertalingen: "
+msgstr ""
+
+#: build/admin/index.js
+msgid "Publicatie geblokkeerd."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Controleer de teksten die review nodig hebben voordat je publiceert."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Laatst geopend"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Openen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV exporteren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Download vertalingen voor controle, klantreview of externe vertaling."
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV importeren"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Importeer alleen regels voor de geselecteerde taal/talen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Importeer alle geldige talen uit de CSV."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Maak altijd eerst een preview. Import kan bestaande vertalingen aanpassen."
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV & woordenlijst"
+msgstr ""
+
+#: build/admin/index.js
+msgid "CSV import/export"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Download vertalingen, laat ze extern controleren en importeer ze veilig terug via preview."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Woordenlijst"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Leg merknamen, vaktermen en vaste vertalingen vast voor consistente output."
+msgstr ""
+
+#: build/admin/index.js
+msgid "Term toevoegen"
+msgstr ""
+
+#: build/admin/index.js
+msgid "Leg vaste termen vast zodat vertalingen consistent blijven."
 msgstr ""

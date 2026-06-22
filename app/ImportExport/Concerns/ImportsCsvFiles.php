@@ -147,7 +147,7 @@ trait ImportsCsvFiles
             return $this->csv_row_skip_error($line, __('Regel %d: original_text ontbreekt.', 'webactueel-translate-language-dropdowns'));
         }
         if ($translated === '') {
-            return $this->csv_row_skip_error($line, __('Regel %d: translated_text ontbreekt.', 'webactueel-translate-language-dropdowns'));
+            return ['imported' => 0, 'skipped' => 1, 'errors' => []];
         }
 
         $rowKey = $this->csv_row_import_key($data, $hash, $lang);

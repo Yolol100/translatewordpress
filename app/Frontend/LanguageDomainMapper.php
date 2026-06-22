@@ -97,12 +97,22 @@ final class LanguageDomainMapper
     public static function allowed_redirect_hosts(array $hosts): array
     {
         foreach (self::map() as $baseUrl) {
-            $host = self::host_from_url((string) $baseUrl);
-            if ($host !== '') {
+            foreach (self::redirect_hosts_from_url((string) $baseUrl) as $host) {
                 $hosts[] = $host;
             }
         }
         return array_values(array_unique(array_filter($hosts)));
+    }
+
+    /** @return list<string> */
+    private static function redirect_hosts_from_url(string $url): array
+    {
+        $rawHost = strtolower(trim((string) wp_parse_url($url, PHP_URL_HOST)));
+        if ($rawHost === '') {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter([$rawHost, self::normalize_host($rawHost)])));
     }
 
     private static function add_to_map(array &$map, string $code, string $url): void

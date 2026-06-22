@@ -138,7 +138,26 @@ trait RendersLanguageSwitcher
         $flag = sanitize_key($flag !== '' ? $flag : $code);
         $flagClass = $flag !== '' ? $flag : $code;
         $classes = 'wat-switcher-flag-chip wat-switcher-flag-chip--' . sanitize_html_class($code) . ' wat-switcher-flag-chip--' . sanitize_html_class($flagClass);
-        return '<span class="' . esc_attr($classes) . '" aria-hidden="true"></span>';
+        return '<span class="' . esc_attr($classes) . '" aria-hidden="true">' . esc_html(self::flag_emoji($flagClass, $code)) . '</span>';
+    }
+
+    private static function flag_emoji(string $flag, string $code): string
+    {
+        $key = sanitize_key($flag !== '' ? $flag : $code);
+        $fallbacks = [
+            'en' => 'gb',
+            'af' => 'za',
+        ];
+        $key = $fallbacks[$key] ?? $key;
+
+        if (! preg_match('/^[a-z]{2}$/', $key)) {
+            return '';
+        }
+
+        $first = 127397 + ord($key[0]);
+        $second = 127397 + ord($key[1]);
+
+        return html_entity_decode('&#' . $first . ';&#' . $second . ';', ENT_QUOTES, 'UTF-8');
     }
 
     public static function url_for(string $code): string

@@ -13,7 +13,7 @@ final class LanguagePathExclusions
     public static function is_excluded_request_path(string $patterns = ''): bool
     {
         $uri = LanguageUrlBuilder::request_uri();
-        $blocked = ['/wp-admin/', '/wp-login.php', '/wp-json/', '/xmlrpc.php', '/wp-cron.php', '/wp-comments-post.php', '/wc-api/', 'wc-ajax=', 'elementor-preview=', 'preview=true', 'customize.php'];
+        $blocked = ['/wp-admin/', '/wp-login.php', '/wp-json/', '/xmlrpc.php', '/wp-cron.php', '/wp-comments-post.php', '/wc-api/', 'wc-ajax=', '/checkout/', '/cart/', '/my-account/', '/order-pay/', '/order-received/', 'pay_for_order=', 'elementor-preview=', 'preview=true', 'customize.php'];
         foreach ($blocked as $part) {
             if (stripos($uri, $part) !== false) {
                 return true;

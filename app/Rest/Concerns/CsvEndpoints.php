@@ -59,13 +59,16 @@ trait CsvEndpoints
         return $result;
     }
 
-    public function csv_export(WP_REST_Request $request): WP_REST_Response
+    public function csv_export(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         $rawLanguages = $request->get_param('languages');
         if (is_string($rawLanguages)) {
             $rawLanguages = explode(',', $rawLanguages);
         }
         $languages = Input::key_list($rawLanguages);
+        if ($request->has_param('languages') && empty($languages)) {
+            return new WP_Error('wat_csv_export_no_languages', __('Kies minimaal één actieve doeltaal voor de CSV-export.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
+        }
         $mode = Input::key($request->get_param('mode') ?: 'all');
         $csv = (new CsvExporter())->csv_string($languages, $mode);
         $response = $this->raw_export_response($csv);
@@ -86,6 +89,9 @@ trait CsvEndpoints
             $rawLanguages = explode(',', $rawLanguages);
         }
         $languages = Input::key_list($rawLanguages);
+        if ($request->has_param('languages') && empty($languages)) {
+            return new WP_Error('wat_xliff_export_no_languages', __('Kies minimaal één actieve doeltaal voor de XLIFF-export.', 'webactueel-translate-language-dropdowns'), ['status' => 400]);
+        }
         $mode = Input::key($request->get_param('mode') ?: 'all');
         $xliff = (new XliffExporter())->xliff_string($languages, $mode);
         if ($xliff === '') {

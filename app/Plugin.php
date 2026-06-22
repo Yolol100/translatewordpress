@@ -158,10 +158,14 @@ final class Plugin
         }
         check_admin_referer('wat_csv_export');
         $rawLanguagesValue = Input::get_array_text('languages');
+        $languagesWasSubmitted = array_key_exists('languages', $_GET) || array_key_exists('languages', $_POST);
         if (empty($rawLanguagesValue)) {
             $rawLanguagesValue = Input::get_text('languages');
         }
         $languages = Input::key_list($rawLanguagesValue);
+        if ($languagesWasSubmitted && empty($languages)) {
+            wp_die(esc_html__('Kies minimaal één actieve doeltaal voor de CSV-export.', 'webactueel-translate-language-dropdowns'));
+        }
         $mode = Input::get_key('mode', 'all');
         $csv = (new CsvExporter())->csv_string($languages, $mode);
         nocache_headers();

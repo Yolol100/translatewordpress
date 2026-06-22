@@ -178,6 +178,10 @@ final class LanguageRouter
         }
 
         $targetUrl = self::clean_language_url_for_current_request($targetLanguage);
+        if ($targetUrl === '') {
+            return;
+        }
+
         self::remember_language($targetLanguage);
 
         if (! headers_sent()) {

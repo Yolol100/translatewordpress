@@ -2,17 +2,15 @@
 Contributors: webactueel
 Tags: translation, multilingual, csv, elementor, acf
 Requires at least: 6.5
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.7.13
+Stable tag: 2.7.82
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Frontend translation plugin with manual translations, CSV/XLIFF import/export, scanning and a visual translation editor.
 
 Built for review-first agency workflows: scan content, translate manually or with AI assistance, review changes, then publish with more control.
-
-For maintainers, the package includes `RELEASE-CHECKLIST.md` and the `docs/` folder with architecture, database, security and staging-test notes. These files are intended for agency handoff, release review and future maintenance.
 
 == Description ==
 
@@ -92,6 +90,74 @@ When frontend language detection is enabled, the plugin can store the selected l
 
 == Upgrade Notice ==
 
+= 2.7.82 =
+Production/release-ready build for WordPress 7.0. Keeps the CSV preview/import/export hardening, keeps the corrected Import/export spacing and updates release metadata for deployment. Stage once more before production rollout.
+
+= 2.7.79 =
+* UI: verwijdert de contexttekst rechts naast de instellingen-sectietabs zodat de tabstrip compact en eenduidig blijft.
+
+Adds developer quality gates, PHPCS/WordPressCS configuration, npm asset sanity checks and a behavior-preserving Visual Editor/Language endpoint refactor split. Stage and run Plugin Check, PHPCS/WPCS and browser QA before production.
+
+= 2.7.75 =
+Performs a canonical admin CSS cleanup for the settings, language-switcher and Import/export layouts. Removes old conflicting layout blocks and keeps one scoped layout system. Stage and visually verify Instellingen, Talen & taalkiezer and Import/export before production.
+
+= 2.7.63 =
+Polishes the admin UI based on review feedback: removes CSV icons, stacks the CSV export button below the field, fixes the shortcode contrast bug, removes language table scrolling in Settings, tightens the translation modal height and moves the Visuele editor CTA to the top-right. Stage and visually verify Vertalingen, Import/export, Visuele editor and Instellingen before production.
+
+= 2.7.62 =
+Cleans up obsolete admin UI CSS from older CSV/glossary/tools variants and finalizes the Vaste termen card body structure. Stage and visually test Import/export, Vaste termen, Visuele editor and Settings before production.
+
+= 2.7.61 =
+Aligns the Visuele editor, Import/export, Vaste termen and Settings screens with the same closed WordPress-native plugin card rhythm used by Dashboard and Workflow. Stage and visually test all admin tabs before production.
+
+= 2.7.60 =
+Cleans up the Workflow tab panel structure so Publicatiecheck and Workflow per taal render as closed WordPress-native plugin cards with consistent headers, bodies and table containment. Stage and visually test Workflow before production.
+
+= 2.7.59 =
+Refines the translation and language modals into plugin-styled, viewport-safe editor dialogs. Stage and verify Vertalingen > Bewerken, language add modal, save buttons and browser console before production.
+
+= 2.7.58 =
+Restores closed dashboard card surfaces for language overview and recent scan results after the WordPress Components card reset. Stage and visually verify Overzicht before production.
+
+= 2.7.57 =
+Groups dashboard language and scan sections into proper WordPress-native cards, keeps the full-width admin layout and preserves the Workflow runtime fix. Stage and visually verify Overzicht, Vertalingen and Workflow before production.
+
+= 2.7.56 =
+Restores a full-width admin layout and brings back clearer card, tab and table styling after the workflow UI fix. Stage and visually verify Overzicht, Vertalingen and Workflow before production.
+
+= 2.7.55 =
+Fixes the Workflow tab runtime error and tightens the admin UI toward a compact WordPress-native React/SaaS plugin layout. Stage and visually verify all admin tabs before production.
+
+= 2.7.53 =
+Consolidates dashboard-only CSS layers and aligns the setup header CTA through the existing dashboard panel structure. Stage and visually verify the dashboard before production.
+
+= 2.7.52 =
+Tightens only the dashboard overview layout density and setup card hierarchy. Stage and visually verify the dashboard before production.
+
+= 2.7.49 =
+Cleans up the admin visual architecture for setup, workflow and visual-editor empty states. Stage and verify the admin UI before production.
+
+= 2.7.48 =
+Fixes a runtime admin loading error caused by the missing Translate/Import-export component after the UI cleanup. Stage and verify all admin tabs before production.
+
+= 2.7.45 =
+Corrects the admin UI state model after the Gutenberg-SaaS polish: no target-language setup now hides translation/import controls, removes hardcoded progress fallbacks and fixes the overview activation layout. Stage and visually verify all admin tabs before production.
+
+= 2.7.44 =
+Refines the admin UI into a Gutenberg-SaaS bridge: guided setup, consistent empty states, softer status badges, skeleton loading and data-consistent translation/visual-editor states. Stage and visually verify all admin tabs before production.
+
+= 2.7.42 =
+Fixes mapped-domain redirect host handling for language domains with www/non-normalized hosts. Stage and verify language switching before production.
+
+= 2.7.41 =
+Refines the Settings admin screen, removes Statuscheck from the primary tab row and moves technical checks under Settings. Stage and visually verify settings before production.
+
+= 2.7.26 =
+Restores the three overview status cards and refines the header action layout. Stage and visually verify the overview header/cards before production.
+
+= 2.7.21 =
+Adds safer WooCommerce payment-flow exclusions and light admin UX wording polish. Stage before production.
+
 = 2.7.13 =
 Restores safe CSV fallback matching for empty or invalid hashes while keeping SHA-256 hash-based matching strict. Stage CSV/XLIFF imports before production.
 
@@ -153,6 +219,151 @@ Documentation-only release polish. Run the included RELEASE-CHECKLIST.md on stag
 Technical maintenance release after the internal refactor pass. Install on staging first and verify language routing, settings/AI credentials, AI batch jobs, translation map/cache behavior, REST permissions, WooCommerce safe-mode pages and CSV/XLIFF import-export before production.
 
 == Changelog ==
+
+= 2.7.82 =
+* Updates plugin, readme, block and POT metadata to release version 2.7.82.
+* Updates Tested up to to WordPress 7.0 after staging verification on WordPress 7.0.
+* Keeps the CSV preview/import/export hardening and Import/export spacing fixes from 2.7.81.
+* Ships as a runtime-only production ZIP with no source maps, package manifests, node_modules or development test files.
+
+= 2.7.79 =
+* Splits Visual Editor REST argument/response helpers into dedicated concern traits without changing routes, option keys or payload names.
+* Splits language endpoint transaction/migration helpers into a dedicated concern trait.
+* Adds Composer, PHPCS/WPCS and npm quality-gate configuration for repeatable static checks.
+* Adds a distribution ignore file for runtime-only release packaging.
+* Keeps the existing admin UI, REST namespace, shortcode, hooks and database schema unchanged.
+
+= 2.7.75 =
+* Removes old conflicting admin CSS blocks for settings, language-switcher, AI/settings rows and CSV layout.
+* Replaces them with one canonical scoped layout layer for the affected admin surfaces.
+* Keeps equal-height card behavior for Talen/Taalkiezer and paired CSV cards.
+* Keeps segmented settings shorter while preserving existing option keys, REST routes, hooks and behavior.
+* Does not add !important, inline CSS or a loose override stylesheet.
+
+= 2.7.63 =
+Polishes the admin UI based on review feedback: removes CSV icons, stacks the CSV export button below the field, fixes the shortcode contrast bug, removes language table scrolling in Settings, tightens the translation modal height and moves the Visuele editor CTA to the top-right. Stage and visually verify Vertalingen, Import/export, Visuele editor and Instellingen before production.
+
+= 2.7.62 =
+* Removed obsolete admin CSS for older tools, CSV workflow and glossary layout variants that are no longer rendered by the admin bundle.
+* Wrapped the Vaste termen open state in an explicit card body for a cleaner header/body structure.
+* Kept dynamic progressbar inline styles only and avoided REST namespace, option key, shortcode tag, asset handle and database schema changes.
+
+= 2.7.61 =
+* Reworked Visuele editor history output into a contained card header/body pattern with a compact empty state.
+* Rebuilt Import/export CSV management and Vaste termen around the same card hierarchy used by Dashboard and Workflow.
+* Tightened Settings card surfaces, language/selector grouping, client option cards, selected-row state and modal textarea sizing.
+* Kept REST namespaces, option keys, shortcode tags, asset handles and database schema unchanged.
+
+= 2.7.60 =
+* Rebuilt the Workflow tab content as closed card panels for the publication check and per-language workflow table.
+* Moved the publication action into the card header and placed the blocking notice inside the card body.
+* Wrapped the workflow table in a contained card body so it no longer floats on the admin background.
+* Kept REST namespaces, option keys, shortcode tags, asset handles and database schema unchanged.
+
+= 2.7.59 =
+* Refined the custom admin modal system for translation editing and language management.
+* Keeps modal headers and footers fixed inside the viewport while only the modal body scrolls.
+* Removed the duplicate prominent translation-memory notice from the translation editor; the toggle help now owns that explanation.
+* Constrains the translation textarea to a usable editor size and keeps save actions visible.
+* No REST namespace, option key, shortcode tag, asset handle or database schema changes.
+
+= 2.7.58 =
+* Fixed dashboard section cards being visually flattened by the generic WordPress Components card reset.
+* Strengthened only the dashboard card selectors for language overview and recent scan results.
+* Kept the dashboard full-width layout, Workflow tab runtime fix and existing REST/API/schema identifiers unchanged.
+
+= 2.7.57 =
+* Reworked dashboard section ownership so language overview and recent scan results render as proper card panels with header actions.
+* Consolidated the full-width dashboard CSS into the existing admin stylesheet and removed the previous 2.7.56 footer refinement layer.
+* Kept the Workflow tab JavaScript fix intact and left REST namespaces, option keys, shortcode tags, asset handles and database schema unchanged.
+
+= 2.7.56 =
+* Restored the admin app to a full-width layout inside wp-admin.
+* Brought back clearer visual hierarchy for cards, tabs, filters and tables with subtle WordPress-native surface styling.
+* Kept the prior Workflow tab JavaScript fix intact and left REST namespaces, option keys, shortcode tags, asset handles and database schema unchanged.
+
+= 2.7.55 =
+* Fixed a Workflow tab runtime error caused by accidental `return__()` calls in the built admin bundle.
+* Tightened the admin page max-width, header density, dashboard metric cards, table wrappers, filters and status tabs for a more compact WordPress-native React/SaaS layout.
+* Kept existing REST namespaces, option keys, shortcode tags, asset handles and database schema unchanged.
+
+= 2.7.53 =
+* Consolidated duplicate active dashboard CSS selector layers in the canonical admin stylesheet.
+* Aligned the setup header CTA through the existing `DashboardPanel` header structure.
+* Kept dashboard shell spacing, full-width setup steps and removal of the separate “Volgende stap” card.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.52 =
+* Dashboard spacing cleanup for header, tab menu and dashboard content.
+* Kept the setup checklist full-width inside the setup panel and removed the separate next-step card.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.50 =
+* Dashboard-only visual density cleanup for the overview setup card.
+* Replaced the wide full-width setup stepper with a compact next-step card and compact progress chips.
+* Kept Workflow, Visual editor, Import/export and Settings rendering unchanged.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.49 =
+* Compact overview setup wizard with horizontal setup progress.
+* Replaced the Workflow empty state with the shared setup-required card pattern.
+* Replaced the Visual editor empty state with the shared setup-required card pattern.
+* Removed duplicate setup CTAs and delayed visual-editor stats/history until setup and scan context are available.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.48 =
+* Restored the missing Translate and Import/export admin component in the canonical admin build.
+* Keeps the clean 2.7.47 packaging, CSS cleanup, consistent version metadata and corrected ZIP root.
+
+= 2.7.45 =
+* Corrected the admin UI state model so setup, translation, visual editor and import/export screens no longer show live controls before a target language exists.
+* Removed hardcoded translation progress values and remaining demo/fallback language data from the admin app.
+* Replaced the dashboard overview layout that forced the activation card into a narrow left grid column.
+* Replaced the blocked workflow/visual-editor CTAs with one relevant next action.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.44 =
+* Reworked the overview setup area into a guided activation panel with five connected steps and one primary next action.
+* Removed mock translation fallback rows from the live translations table so empty/setup states stay consistent with dashboard data.
+* Added skeleton loading for translations and stronger SaaS-style empty states for setup and scan-required states.
+* Refined status badges, tabs, KPI cards, radial progress, table rows, inputs and switcher preview within the existing scoped admin stylesheet.
+* Tightened visual-editor counts so they no longer show fallback active-language/open-text data before setup.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.42 =
+* Fixed language-domain redirect host allow-listing so mapped hosts and their normalized equivalents are both accepted by wp_safe_redirect().
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.41 =
+* Removed Statuscheck from the primary navigation and moved technical checks into Settings as an advanced/support section.
+* Tightened the Settings layout so language, switcher and website translation options read more like plugin settings and less like a technical form dump.
+* Reduced visual weight around settings cards and advanced sections while keeping existing controls and behaviour intact.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.26 =
+* Restored the three separate overview status cards for Doeltalen, Vertaalstatus and Website scan.
+* Reworked the overview header action layout: setup badge above, last scan text next to the primary action.
+* Left the five translation status filters intact because they represent clear content states, not competing primary navigation.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.25 =
+* Compact empty overview KPI state for sites with no target languages or scans.
+* Removed duplicate workflow review summary; Publicatiecheck is now the primary blocker message.
+* CSV import now asks for confirmation before applying previewed imports and uses destructive button styling where available.
+* Strengthened KPI number hierarchy and responsive empty-summary styling.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.24 =
+* Removed loose browser ellipsis artifacts from translation/workflow table cells.
+* Removed duplicate setup CTA and redundant visual-editor secondary action.
+* Cleaned workflow language rows by combining code and language name into one column.
+* Kept the 1440px admin container, consistent card/filter/table system and overflow safeguards.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
+
+= 2.7.21 =
+* Added default and hardcoded safe-mode exclusions for WooCommerce order-pay/order-received payment flows.
+* Polished admin labels and empty-state guidance while keeping the interface full width.
+* No database schema, REST namespace, shortcode, option key or asset handle changes.
 
 = 2.7.13 =
 * Restored CSV preview/import fallback matching for rows with empty or invalid hashes when validated original text, source context and language data are present.
