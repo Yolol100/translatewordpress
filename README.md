@@ -1,5 +1,9 @@
 # Webactueel Translate
 
+> **Supporting portfolio project · WordPress/PHP · multilingual workflows · Elementor/ACF/WooCommerce · SEO**
+
+**Built by:** [Andrew Baeten](https://github.com/Yolol100) · [Portfolio cases](https://andrewbaeten.nl/category/cases)
+
 Webactueel Translate is a WordPress translation plugin for review-first multilingual workflows. It combines frontend-visible content scanning, manual and visual translation, CSV/XLIFF import and export, optional AI-assisted translation, multilingual SEO foundations and compatibility-aware output translation.
 
 The WordPress-style `readme.txt` remains the detailed distribution documentation and changelog. This `README.md` gives a concise GitHub overview of the project and how to use it.
