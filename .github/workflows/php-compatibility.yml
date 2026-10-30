@@ -30,6 +30,17 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
+      - name: Reject invalid root PHP sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            if [[ "$(head -c 5 "$file")" != '<?php' ]]; then
+              printf '::error file=%s::Root PHP source must start with the PHP opening tag.\n' "${file#./}"
+              exit 1
+            fi
+          done < <(find . -maxdepth 1 -type f -name '*.php' -print0)
+
       - name: Syntax check
         shell: bash
         run: |
