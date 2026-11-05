@@ -165,10 +165,19 @@ final class BrowserLanguageRedirector
     private static function browser_language_quality(array $pieces): float
     {
         $quality = 1.0;
+        $hasQuality = false;
         foreach (array_slice($pieces, 1) as $piece) {
-            if (stripos($piece, 'q=') === 0) {
-                $quality = max(0.0, min(1.0, (float) substr($piece, 2)));
+            if ($hasQuality || stripos($piece, 'q=') !== 0) {
+                return 0.0;
             }
+
+            $hasQuality = true;
+            $value = trim(substr($piece, 2));
+            if (! preg_match('/^(?:0(?:\\.[0-9]{0,3})?|1(?:\\.0{0,3})?)$/D', $value)) {
+                return 0.0;
+            }
+
+            $quality = (float) $value;
         }
 
         return $quality;
